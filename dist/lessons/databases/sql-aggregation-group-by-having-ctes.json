@@ -13,7 +13,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "Aggregation compresses many input rows into a smaller set of groups. Before writing GROUP BY, state what one output row represents. WHERE decides which input rows enter the groups; HAVING decides which completed groups survive."
+    "text": "Aggregation turns many rows into a summary. If a report should show one row per customer, GROUP BY customer_id defines that shape. WHERE decides which orders enter the calculation; HAVING decides which customer summaries stay in the final result. Always decide what one output row means before writing the query."
   },
   "concepts": [
     {
@@ -22,7 +22,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "GROUP BY partitions the filtered input rows into groups sharing the grouping values. Each output row represents one group, not one source row. Every selected expression must be grouped, aggregated, or otherwise valid under the database's grouping rules."
+          "text": "GROUP BY combines rows that share the same grouping values. If you group orders by customer_id, the result has one row per customer with matching orders, not one row per order. Every other selected value must be calculated, grouped, or chosen with a clear rule."
         },
         {
           "type": "code",
@@ -44,7 +44,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "COUNT(*) counts input rows. COUNT(column) counts rows where that expression is not NULL. Most standard aggregates such as SUM, AVG, MIN and MAX ignore NULL inputs; except for COUNT, aggregates generally return NULL when there are no non-NULL inputs. A grouped query with no input rows produces no groups at all."
+          "text": "COUNT(*) counts rows, while COUNT(delivered_at) counts only rows where delivered_at is not NULL. SUM and AVG ignore NULL values too. If there are no values to sum, SUM returns NULL rather than zero; use COALESCE only when showing zero matches the business meaning."
         },
         {
           "type": "code",
@@ -86,7 +86,7 @@
         },
         {
           "type": "paragraph",
-          "text": "WHERE runs logically before grouping, so it cannot normally filter on an aggregate calculated for that group. HAVING applies after grouping. A predicate that can be applied before aggregation should usually be in WHERE, reducing the rows to aggregate and clarifying intent."
+          "text": "WHERE filters individual rows before the database groups them. HAVING filters the groups after the totals or counts have been calculated. For example, use WHERE to keep paid orders, then HAVING COUNT(*) > 5 to keep customers with more than five paid orders."
         },
         {
           "type": "callout",
@@ -102,7 +102,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A scalar subquery returns one value; a derived table is a subquery in FROM; a correlated subquery refers to values from the outer query. EXISTS tests whether a subquery returns at least one row. The optimizer may transform equivalent formulations, so do not assume every subquery is inherently slow or every JOIN inherently fast."
+          "text": "A subquery is a query inside another query. It can return one value, a table of rows, or test whether any row exists with EXISTS. A correlated subquery refers to the current row of the outer query. None of these forms is automatically slow; first make sure it expresses the right result, then inspect the plan if performance matters."
         },
         {
           "type": "code",
@@ -122,7 +122,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A common table expression (WITH ... AS ...) gives a subquery a name and lets a complex query be expressed as stages. This can improve readability and reuse. In PostgreSQL, a side-effect-free CTE referenced once can often be folded into the parent query; a multiply referenced CTE may be materialized depending on planner choices and directives. Do not repeat the outdated blanket claim that every CTE is an optimization fence."
+          "text": "A CTE is a named step in a query, introduced with WITH. It can make a long report easier to read by naming an intermediate result, such as monthly revenue before filtering months. PostgreSQL may combine that step into the larger query, so a CTE is not automatically a performance barrier."
         },
         {
           "type": "code",
