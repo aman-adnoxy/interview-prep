@@ -1,0 +1,28 @@
+name: Trigger app deployment after content publish
+
+on:
+  workflow_run:
+    workflows: ["Validate content and publishing output"]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  deploy-app:
+    # Deploy only after a successful push to the content repository's main branch.
+    if: ${{ github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Vercel production deployment
+        env:
+          VERCEL_DEPLOY_HOOK_URL: ${{ secrets.VERCEL_DEPLOY_HOOK_URL }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -z "${VERCEL_DEPLOY_HOOK_URL}" ]]; then
+            echo "::error::Missing repository secret VERCEL_DEPLOY_HOOK_URL. Create a Vercel production deploy hook for interview-prep-app and save its URL as this secret in the interview-prep repository."
+            exit 1
+          fi
+          curl --fail --silent --show-error --request POST "${VERCEL_DEPLOY_HOOK_URL}"
