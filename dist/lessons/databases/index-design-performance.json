@@ -221,27 +221,27 @@
     {
       "id": "database-btree-structure-traversal-splits-q2",
       "type": "single_select",
-      "prompt": "Why does high fan-out matter?",
+      "prompt": "A B-tree index grows from 3 to 4 levels after many inserts. Which explanation is most consistent with B-tree behavior?",
       "options": [
         {
           "id": "a",
-          "text": "It reduces the number of tree levels"
+          "text": "A root split may have added a level after splits propagated upward."
         },
         {
           "id": "b",
-          "text": "It guarantees every query is O(1)"
+          "text": "Every insert adds one level to the tree."
         },
         {
           "id": "c",
-          "text": "It removes all heap access"
+          "text": "The database has converted the index into a linked list."
         },
         {
           "id": "d",
-          "text": "It keeps every page permanently in RAM"
+          "text": "The index is necessarily corrupt because balanced trees cannot change height."
         }
       ],
       "correctOptionId": "a",
-      "explanation": "More child ranges per page generally produce a shallower tree."
+      "explanation": "Leaf and parent splits can propagate upward. A root split can increase height, but ordinary inserts do not add a level each time."
     },
     {
       "id": "database-btree-structure-traversal-splits-q3",
@@ -346,52 +346,52 @@
     {
       "id": "database-btree-structure-traversal-splits-q7",
       "type": "single_select",
-      "prompt": "A unique-key lookup is slow in production. What should you inspect?",
+      "prompt": "A primary-key lookup returns one row but takes 180 ms in production. EXPLAIN (ANALYZE, BUFFERS) shows one index entry found and several heap blocks read from disk. What is the best next step?",
       "options": [
         {
           "id": "a",
-          "text": "Actual plan, buffers, heap fetches, row counts, and I/O"
+          "text": "Investigate heap-page I/O, cache state, and production latency before changing the B-tree."
         },
         {
           "id": "b",
-          "text": "Assume B-tree search is linear"
+          "text": "Replace the B-tree with a hash index because all equality lookups should use hashes."
         },
         {
           "id": "c",
-          "text": "Add every output column to every index"
+          "text": "Add every selected column to the index without checking write or storage cost."
         },
         {
           "id": "d",
-          "text": "Disable sequential scans permanently"
+          "text": "Force index scans globally because the current lookup already uses an index."
         }
       ],
       "correctOptionId": "a",
-      "explanation": "The slow part may be heap access, cache misses, visibility checks, or contention."
+      "explanation": "The index can locate the key efficiently while heap I/O dominates latency. Confirm representative buffer and I/O behavior before choosing a covering index or other change."
     },
     {
       "id": "database-btree-structure-traversal-splits-q8",
       "type": "single_select",
-      "prompt": "Which range-scan statement is correct?",
+      "prompt": "A query returns 45% of a large table using a range predicate. The B-tree can produce rows in order, but the plan's index path performs many scattered heap reads. Why might a sequential scan still win?",
       "options": [
         {
           "id": "a",
-          "text": "The tree locates the range start and ordered leaf entries can be traversed"
+          "text": "Reading a large fraction of the table sequentially may cost less than many scattered heap reads."
         },
         {
           "id": "b",
-          "text": "The tree restarts at root for every row"
+          "text": "B-trees cannot support range predicates."
         },
         {
           "id": "c",
-          "text": "Range scans always beat sequential scans"
+          "text": "An index scan is only valid when the predicate matches one row."
         },
         {
           "id": "d",
-          "text": "Range scans never fetch heap rows"
+          "text": "A sequential scan always ignores the WHERE clause."
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Range traversal is ordered, but broad ranges and heap fetches may be expensive."
+      "explanation": "An index provides an access path, not a guarantee of lower total cost. Selectivity, heap-page locality, ordering, and cache state affect the choice."
     },
     {
       "id": "database-btree-structure-traversal-splits-q9",
