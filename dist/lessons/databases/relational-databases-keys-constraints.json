@@ -13,7 +13,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "A relational database is not merely a collection of tables. It is a system for storing facts under explicit rules. A row represents a fact about an entity or relationship; keys identify which fact it is; constraints define which states are allowed. Application validation improves user experience, but database constraints are the final shared guardrail for every writer."
+    "text": "Imagine an orders screen that shows a customer's name beside every order. If we save the name and email on every order, a later email change means fixing many rows. A relational database helps us store each kind of fact in the right table and connect those tables with keys. Constraints then stop invalid data, even when two requests arrive at once."
   },
   "concepts": [
     {
@@ -22,7 +22,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A relation has a defined set of attributes (columns), and each row is a tuple containing values for those attributes. A table should model a stable entity or relationship—such as a customer, order, or order line—not mirror a UI page. One customer may have many orders, so customer and order facts normally belong in separate relations."
+          "text": "Think of a table as a list of facts about one kind of thing. A customers table describes customers; an orders table describes orders. One customer can have many orders, so the order row points to the customer instead of copying every customer detail into each order."
         },
         {
           "type": "paragraph",
@@ -52,7 +52,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A candidate key is a minimal set of attributes that uniquely identifies a row. One candidate key is selected as the primary key; other candidate keys can be enforced with UNIQUE constraints. A primary key is unique and NOT NULL. A foreign key is not an identity for the child row: it identifies the referenced parent row."
+          "text": "A primary key is the row's stable ID. A candidate key is any smallest set of columns that could uniquely identify the row. For example, user_id might be the primary key while email has a UNIQUE rule. Email can change, so it is not always a good permanent ID."
         },
         {
           "type": "table",
@@ -101,7 +101,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A foreign key ensures that a referencing value matches an eligible key in the referenced table, subject to NULL rules. It prevents orphaned references when all writes obey the database constraint. A foreign key does not automatically create an index on the referencing columns in PostgreSQL; consider one when parent deletes/updates or child lookups need it."
+          "text": "A foreign key is a database-enforced link to another row. If orders.customer_id points to customers.id, the database can reject an order for a customer who does not exist. In PostgreSQL, the link does not automatically create an index on orders.customer_id, so add one when your queries or parent deletes need it."
         },
         {
           "type": "code",
@@ -148,7 +148,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Constraints describe states the database must reject: NOT NULL for required values, UNIQUE for uniqueness, CHECK for row-level predicates, PRIMARY KEY for row identity, and FOREIGN KEY for referential integrity. Defaults provide values when a column is omitted; they do not replace constraints."
+          "text": "Constraints are rules the database checks before accepting data. NOT NULL means a value is required; UNIQUE prevents duplicates; CHECK enforces a rule on one row; a foreign key checks a relationship. A default fills in an omitted value, but it does not stop an invalid value from being supplied."
         },
         {
           "type": "code",
@@ -182,7 +182,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A constraint is valuable because it is enforced at the database boundary, not because it runs in a particular application layer. Most PostgreSQL constraints are checked immediately. Some UNIQUE, PRIMARY KEY, FOREIGN KEY, and EXCLUDE constraints can be declared DEFERRABLE and checked at transaction end or when explicitly requested. CHECK and NOT NULL constraints are not deferrable."
+          "text": "Imagine two requests both check whether a username is free. Both can see 'available' before either inserts. A UNIQUE constraint makes the database the final referee, so only one conflicting insert succeeds. Most constraints are checked immediately; some key and foreign-key constraints can be deferred until the transaction ends."
         },
         {
           "type": "code",
