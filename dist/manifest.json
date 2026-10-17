@@ -150,9 +150,10 @@
           "title": "Advanced Database Internals",
           "difficulty": "advanced",
           "order": 14,
-          "status": "upcoming",
+          "status": "published",
           "lessonPath": "/lessons/databases/advanced-database-internals.json",
-          "lessonId": "advanced-database-internals"
+          "lessonId": "advanced-database-internals",
+          "questionCount": 12
         },
         {
           "id": "redis-and-caching",
