@@ -15,7 +15,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "Choose a database by data shape, invariants, and queries. PostgreSQL and MongoDB both support indexes and transactions, but their data models and query ergonomics differ. Neither is universally more scalable or more correct."
+    "text": "Choose a database by asking what the application needs to store and how it will read and change that data. Orders, payments, and shared relationships often fit a relational model. A self-contained document that is usually read and updated as one unit may fit MongoDB well. Neither choice is automatically faster; the data model and queries decide."
   },
   "concepts": [
     {
@@ -24,7 +24,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "PostgreSQL fits relational data, foreign-key relationships, constraints, joins, and multi-row transactions. MongoDB is attractive when an aggregate is naturally document-shaped and read or updated together. Both can serve complex workloads; compare actual access patterns."
+          "text": "Start with the rules the application must never break. For example, an order must belong to a customer and payment totals must reconcile. PostgreSQL makes relationships, joins, and constraints explicit. MongoDB can fit data that is usually read and updated together as one document. Compare actual queries and rules rather than picking by popularity."
         },
         {
           "type": "table",
@@ -75,7 +75,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Embedding keeps related fields in one document and can make aggregate reads efficient and atomic. It becomes problematic for unbounded arrays, duplicated mutable data, or updates that must synchronize many copies. References avoid duplication but may require additional reads or lookups."
+          "text": "Embedding means keeping related data inside one document; referencing means storing an ID that points to another document. Embedding a small list of items in an order can make it easy to load the full order at once. But don't embed an unlimited stream of events or duplicate a changing product record everywhere. A purchase-time price belongs on the order because it records what was charged then."
         },
         {
           "type": "table",
@@ -126,7 +126,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "PostgreSQL transactions are central for invariants across related rows. MongoDB supports single-document atomicity and multi-document transactions. For cross-service workflows, neither database makes an external side effect atomic; use an outbox, idempotency keys, or a saga where needed."
+          "text": "A database transaction can keep related database changes together, but it cannot make an external action such as charging a payment provider part of the same transaction. Both PostgreSQL and MongoDB support transactions. For reliable events or external actions, use patterns such as an outbox and idempotent processing."
         },
         {
           "type": "code",
@@ -152,7 +152,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "PostgreSQL supports B-tree and specialized indexes plus JSONB operators; MongoDB supports compound, multikey, text, geospatial, and other indexes. In both systems, indexes consume storage and increase write work. Flexible schema still needs validation and migration plans."
+          "text": "Both databases support indexes, but the right type depends on the query. PostgreSQL can combine relational tables with JSONB for flexible attributes; MongoDB has indexes for document fields and arrays. In either system, indexes take space and slow some writes, and flexible fields still need validation and a plan for changes."
         },
         {
           "type": "code",
@@ -174,7 +174,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Using two databases adds duplicated data, synchronization, monitoring, backups, access control, and incident ownership. Define one authoritative owner for each data domain and make derived copies explicitly rebuildable."
+          "text": "Running two databases means operating two systems and keeping related data in sync. Decide which database owns each fact, how updates reach the other system, and how to repair a missed update. Add a second database only when a real workload benefit outweighs the extra deployment, backup, monitoring, and debugging work."
         },
         {
           "type": "steps",
