@@ -13,7 +13,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "NULL means a value is missing, unknown, or not applicable. Because we do not know the value, a comparison like `delivery_date = NULL` cannot be TRUE or FALSE in the usual way: it is UNKNOWN. WHERE keeps only TRUE results, so use IS NULL to find missing values and think carefully about what missing means."
+    "text": "NULL means a value is missing, unknown, or not applicable. Because we do not know the value, a comparison like delivery_date = NULL cannot be TRUE or FALSE in the usual way: it is UNKNOWN. WHERE keeps only TRUE results, so use IS NULL to find missing values and think carefully about what missing means."
   },
   "concepts": [
     {
@@ -22,7 +22,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "NULL is not zero, an empty string, or another ordinary value. If you compare a value with NULL, the result is usually UNKNOWN. WHERE keeps only rows where the condition is TRUE, so `WHERE delivery_date = NULL` finds nothing; write `WHERE delivery_date IS NULL` instead."
+          "text": "NULL is not zero, an empty string, or another ordinary value. Comparing a value with NULL usually gives UNKNOWN. WHERE keeps only rows where the condition is TRUE, so `WHERE delivery_date = NULL` finds nothing; write `WHERE delivery_date IS NULL` instead."
         },
         {
           "type": "table",
@@ -113,7 +113,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Use IS NULL to find missing values. PostgreSQL also has IS DISTINCT FROM and IS NOT DISTINCT FROM, which compare values without producing UNKNOWN. The second treats two NULLs as equal for comparison, so be careful: if many rows on both sides have NULL keys, a join can match all of them to each other."
+          "text": "Use IS NULL to find missing values. PostgreSQL also has IS DISTINCT FROM and IS NOT DISTINCT FROM, which compare values without producing UNKNOWN. The second treats two NULLs as equal, so if many rows on both sides have NULL keys, a join can match all of them to each other."
         },
         {
           "type": "code",
@@ -135,7 +135,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "NOT IN can surprise you when its list or subquery contains NULL. If no equal value is found, the result may be UNKNOWN instead of TRUE, so WHERE removes the row. NOT EXISTS is often safer, but you should still decide what to do when the value from the outer row is NULL."
+          "text": "NOT IN can surprise you when its list or subquery contains NULL. If no equal value is found, the result may be UNKNOWN instead of TRUE, so WHERE removes the row. NOT EXISTS is often safer, but still decide what to do when the outer row's value is NULL."
         },
         {
           "type": "code",
@@ -161,7 +161,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "NOT NULL says a value must be present. CHECK (quantity > 0) alone still allows NULL because the comparison is UNKNOWN, so use both rules when quantity is required and positive. By default, PostgreSQL UNIQUE also allows more than one NULL; newer versions offer NULLS NOT DISTINCT when NULLs should count as duplicates."
+          "text": "NOT NULL says a value must be present. CHECK (quantity > 0) alone still allows NULL because the comparison is UNKNOWN, so use both rules when quantity is required and positive. By default, PostgreSQL UNIQUE also allows more than one NULL; NULLS NOT DISTINCT changes that behavior in supported versions."
         },
         {
           "type": "code",
@@ -181,7 +181,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Before allowing NULL, decide what it means. Does the delivery date not exist because it is unknown, because the order has not shipped yet, or because delivery is not required? If those cases lead to different behavior, represent them separately instead of making the application guess."
+          "text": "Before allowing NULL, decide what it means. Is a delivery date unknown, not set because the order has not shipped, or unnecessary because no delivery is required? If those cases lead to different behavior, represent them separately instead of making the application guess."
         },
         {
           "type": "paragraph",
