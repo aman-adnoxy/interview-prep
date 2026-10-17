@@ -6,6 +6,36 @@
       "path": "/lessons/databases/index-fundamentals.json",
       "contentVersion": "2.0.0",
       "questionCount": 8
+    },
+    "relational-databases-keys-constraints": {
+      "path": "/lessons/databases/relational-databases-keys-constraints.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
+    "sql-joins": {
+      "path": "/lessons/databases/sql-joins.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
+    "sql-aggregation-group-by-having-ctes": {
+      "path": "/lessons/databases/sql-aggregation-group-by-having-ctes.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
+    "sql-null-semantics": {
+      "path": "/lessons/databases/sql-null-semantics.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
+    "schema-design-normalization": {
+      "path": "/lessons/databases/schema-design-normalization.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
+    "advanced-sql-window-functions-set-operations": {
+      "path": "/lessons/databases/advanced-sql-window-functions-set-operations.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
     }
   }
 }
