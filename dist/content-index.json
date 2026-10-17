@@ -12,13 +12,13 @@
       "contentVersion": "2.0.0",
       "questionCount": 8
     },
-    "relational-databases-keys-constraints": {
-      "path": "/lessons/databases/relational-databases-keys-constraints.json",
+    "database-schema-design-normalization": {
+      "path": "/lessons/databases/schema-design-normalization.json",
       "contentVersion": "2.0.0",
       "questionCount": 5
     },
-    "database-schema-design-normalization": {
-      "path": "/lessons/databases/schema-design-normalization.json",
+    "relational-databases-keys-constraints": {
+      "path": "/lessons/databases/relational-databases-keys-constraints.json",
       "contentVersion": "2.0.0",
       "questionCount": 5
     },
