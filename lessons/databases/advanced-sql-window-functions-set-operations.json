@@ -13,7 +13,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "GROUP BY collapses rows into groups. Window functions calculate across related rows while preserving each input row. Set operations combine result sets vertically. Latest-row-per-group is not just MAX(timestamp): it usually means selecting an entire row according to a deterministic ordering rule."
+    "text": "GROUP BY summarizes a group into one row. A window function calculates something about a group while keeping each original row visible. That makes it useful for ranking employees, comparing this month's sales with last month's, or finding the latest order for every customer."
   },
   "concepts": [
     {
@@ -22,7 +22,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A window function uses an OVER clause to define a partition, ordering, and sometimes a frame. Unlike GROUP BY, it normally returns one result for each input row. PARTITION BY resets the calculation for each group; ORDER BY defines sequence within the partition."
+          "text": "A window function calculates something across related rows without collapsing them into one row. You can show every order and also show that customer's running total. PARTITION BY says where the calculation restarts; ORDER BY says the sequence to use. Add a unique tie-breaker when timestamps can match."
         },
         {
           "type": "code",
@@ -77,7 +77,7 @@
         },
         {
           "type": "paragraph",
-          "text": "ROW_NUMBER assigns a unique sequence number to each row. RANK gives tied rows the same rank and leaves gaps after ties. DENSE_RANK gives tied rows the same rank without gaps. Choose based on whether the product asks for exactly N rows, top N rank positions, or top N distinct score levels."
+          "text": "ROW_NUMBER gives every row a different position. RANK gives tied scores the same rank and leaves a gap afterward; DENSE_RANK gives tied scores the same rank without a gap. Use ROW_NUMBER when you need exactly one winner, and RANK or DENSE_RANK when ties should share a position."
         },
         {
           "type": "callout",
@@ -134,7 +134,7 @@
         },
         {
           "type": "paragraph",
-          "text": "MAX(created_at) returns the latest timestamp, not the complete row. Joining the maximum timestamp back to the source can return multiple rows when timestamps tie. ROW_NUMBER with a stable tie-breaker selects one row deterministically. If the requirement is to return all tied latest rows, use RANK or join on the maximum timestamp with that semantics stated explicitly."
+          "text": "MAX(created_at) tells you the latest timestamp, not which full order row owns it. If two orders share that timestamp, joining back can return both. ROW_NUMBER with a tie-breaker such as order_id chooses one predictably; use RANK if you want all tied latest orders."
         },
         {
           "type": "code",
@@ -160,7 +160,7 @@
         },
         {
           "type": "paragraph",
-          "text": "LAG and LEAD access values from preceding or following rows in the ordered partition. They are useful for change detection, sequence analysis and period-over-period comparisons. Running aggregates need an explicit frame when default frame behavior around peers could surprise you."
+          "text": "LAG looks at an earlier row and LEAD at a later row in the chosen order. They help answer 'How did sales change from the previous month?' A running SUM can also use a window, but define the order and frame when ties matter."
         },
         {
           "type": "code",
@@ -176,7 +176,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Set operations combine query results with compatible column counts and compatible types. UNION removes duplicate result rows; UNION ALL retains them and is generally cheaper when deduplication is not required. INTERSECT returns rows present in both results; EXCEPT returns rows from the first result absent from the second. In PostgreSQL, result order is not guaranteed without an outer ORDER BY."
+          "text": "Set operations combine the results of two queries. UNION removes duplicate rows; UNION ALL keeps them and is usually cheaper. INTERSECT keeps rows found in both results; EXCEPT keeps rows from the first result that are absent from the second. Add ORDER BY if you need a guaranteed output order."
         },
         {
           "type": "code",
@@ -198,7 +198,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Window functions are evaluated after the WHERE clause at the same query level, so you generally cannot filter on a window alias in that level's WHERE. Wrap the window query in a CTE or derived table, then filter the computed value. Pay attention to NULL ordering and timestamp tie-breakers in latest-row queries."
+          "text": "You usually cannot filter on a window-function result in WHERE at the same query level because WHERE runs earlier. Put the window query in a CTE or subquery, then filter its result. Also decide how NULL or tied timestamps should be handled."
         },
         {
           "type": "code",
@@ -218,7 +218,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Challenge: return every customer, total successful payment amount, and latest order timestamp. Some orders have multiple payment attempts; some customers have no orders. Avoid double-counting payment rows and dropping inactive customers."
+          "text": "For a report with customer totals and latest order, calculate payments and orders at their own levels before joining them. Otherwise, several payment attempts can repeat an order row and inflate the total. Be clear whether revenue means successful captures, net of refunds, or something else."
         },
         {
           "type": "code",
