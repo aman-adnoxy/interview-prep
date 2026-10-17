@@ -34,27 +34,27 @@
         },
         {
           "type": "table",
-          "title": "Key distinctions",
+          "title": "What column order changes",
           "columns": [
-            "Concept",
-            "Mechanism",
-            "Trade-off"
+            "Index or query",
+            "What it can do well",
+            "Main limitation"
           ],
           "rows": [
             [
-              "Access path",
-              "Structure used to locate candidate rows",
-              "Does not guarantee planner selection."
+              "Index (tenant_id, status, created_at)",
+              "Find one tenant, then narrow by status and time.",
+              "A query filtering only by status cannot usually jump to one narrow range."
             ],
             [
-              "Physical work",
-              "Pages, tuple visibility, result rows",
-              "May dominate logical lookup cost."
+              "Index (tenant_id, created_at DESC)",
+              "Fetch one tenant's newest rows in order; LIMIT may stop early.",
+              "Does not directly provide one global newest-first list across all tenants."
             ],
             [
-              "Workload fit",
-              "Predicates, ordering, distribution",
-              "Requires measurement, not assumptions."
+              "INCLUDE (status)",
+              "Store status in the index to help return it without a table lookup when visibility permits.",
+              "Included columns do not change search order and make the index larger."
             ]
           ]
         }
@@ -113,13 +113,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query is slower than expected even though an index exists.",
+          "problem": "A tenant feed runs `WHERE tenant_id = 42 ORDER BY created_at DESC LIMIT 20` and returns only created_at and status.",
           "reasoning": [
-            "Check whether index keys and predicates align.",
-            "Compare estimated and actual row counts and inspect buffers.",
-            "Account for result size, heap access, and write/storage trade-offs."
+            "An index on `(tenant_id, created_at DESC)` can seek to one tenant and read the newest entries first.",
+            "Adding `INCLUDE (status)` may let the query get status from the index too, although PostgreSQL may still visit the heap when visibility information requires it.",
+            "Measure the read improvement against the larger index and extra work on inserts and updates."
           ],
-          "outcome": "Make a targeted change only after plan evidence supports the hypothesis."
+          "outcome": "Choose key columns for filtering and ordering. Use INCLUDE only when the saved table visits justify the added index size and write cost."
         }
       ]
     },
