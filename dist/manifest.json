@@ -170,8 +170,8 @@
           "order": 16,
           "status": "published",
           "lessonPath": "/lessons/databases/postgresql-vs-mongodb.json",
-          "lessonId": "postgresql-vs-mongodb",
-          "questionCount": 12
+          "questionCount": 12,
+          "lessonId": "postgresql-vs-mongodb"
         },
         {
           "id": "scaling-and-reliability",
