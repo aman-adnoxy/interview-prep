@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { validateLesson, semanticLessonErrors } from '../scripts/validate-content.mjs';
+import { validateLesson, semanticLessonErrors, validateCurriculum } from '../scripts/validate-content.mjs';
 const root=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'..');
 const lesson=JSON.parse(fs.readFileSync(path.join(root,'lessons/databases/index-fundamentals.json'),'utf8'));
 test('B-tree pilot validates',()=>assert.equal(validateLesson(lesson),true));
@@ -12,3 +12,8 @@ test('missing answer references are rejected',()=>{const c=structuredClone(lesso
 test('duplicate question IDs are rejected',()=>{const c=structuredClone(lesson);c.questions[1].id=c.questions[0].id;assert.ok(semanticLessonErrors(c).some(e=>e.includes('duplicate question id')));});
 test('table rows must match columns',()=>{const c=structuredClone(lesson);c.concepts.flatMap(x=>x.blocks).find(x=>x.type==='table').rows[0].pop();assert.ok(semanticLessonErrors(c).some(e=>e.includes('table row width')));});
 test('diagram edges must reference existing nodes',()=>{const c=structuredClone(lesson);c.concepts.flatMap(x=>x.blocks).find(x=>x.type==='diagram').edges[0].to='missing-node';assert.ok(semanticLessonErrors(c).some(e=>e.includes('diagram edge references missing node')));});
+
+test('published curriculum sections must resolve to an existing lesson', () => {
+  const curriculum = JSON.parse(fs.readFileSync(path.join(root, 'curriculum/manifest.json'), 'utf8'));
+  assert.throws(() => validateCurriculum(curriculum, new Map()), /published lesson missing/);
+});
