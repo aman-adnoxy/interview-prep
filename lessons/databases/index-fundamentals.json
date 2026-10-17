@@ -235,7 +235,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A sequential scan reads table pages and checks rows. An index scan looks up matching keys and may fetch the matching table rows. An index-only scan can avoid many table visits when the index contains the needed values and PostgreSQL can confirm row visibility."
+          "text": "A sequential scan reads table pages and checks rows. An index scan looks up matching keys and may fetch matching table rows. An index-only scan can avoid many table visits when the index contains the needed values and PostgreSQL can confirm row visibility."
         },
         {
           "type": "code",
