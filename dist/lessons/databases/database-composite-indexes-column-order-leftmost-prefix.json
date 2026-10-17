@@ -15,7 +15,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "A composite B-tree sorts by the first key, then the second within ties, and so on. Leading columns define the most direct search ranges. Design should match real filters, joins, ordering, and projection rather than blindly indexing every column."
+    "text": "A composite index is a lookup list sorted by several columns in order. For an index on (tenant_id, status, created_at), rows are grouped by tenant first, then by status within each tenant, and then by time. That order determines which queries can jump to a narrow range and which must scan much more of the index."
   },
   "concepts": [
     {
@@ -24,7 +24,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "An index on (tenant_id,status,created_at DESC) is ordered by tenant first, status within tenant, and time within equal tenant/status values. Column order is part of the data structure."
+          "text": "For an index on (tenant_id, status, created_at DESC), tenant_id is sorted first, status is sorted within each tenant, and time is sorted within each tenant/status pair. This is why column order changes what the index can find efficiently."
         },
         {
           "type": "code",
@@ -66,7 +66,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Equality predicates on leading columns often provide a narrow starting range. A range predicate can limit how much later keys narrow the scan. ORDER BY and LIMIT can be as important as selectivity."
+          "text": "Put the columns used to narrow the search first, based on the actual query. Equality filters on leading columns often narrow the search well. A range filter can limit how much later columns help; ORDER BY and LIMIT can also make one order much better than another."
         },
         {
           "type": "code",
@@ -103,7 +103,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A covering index stores needed values as keys or included payload. PostgreSQL INCLUDE columns do not affect search ordering. They may reduce heap visits but enlarge the index and increase write work."
+          "text": "A covering index stores all the values a query needs, either as searchable key columns or as included payload. In PostgreSQL, INCLUDE columns can supply output values but do not change the index's sort order. More stored values mean a larger index and more write work."
         },
         {
           "type": "code",
@@ -129,7 +129,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A composite index can avoid a Sort when its key order matches ORDER BY and preceding keys are constrained compatibly. LIMIT may make an ordered path attractive because execution can stop after enough rows."
+          "text": "If the index order matches a query's ORDER BY, PostgreSQL may return rows already sorted and avoid a separate Sort step. With LIMIT, it may stop once it has found enough rows, rather than sorting every matching row first."
         },
         {
           "type": "code",
@@ -151,7 +151,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Write down WHERE, JOIN, ORDER BY, LIMIT, and selected columns. Compare leading keys and expressions, then inspect actual rows, loops, sorts, heap fetches, and estimates."
+          "text": "To diagnose an index that isn't helping, write down the query's WHERE, JOIN, ORDER BY, LIMIT, and selected columns. Compare that shape with the index's column order, then inspect the actual plan to see how many rows and table pages it reads."
         },
         {
           "type": "code",
