@@ -19,10 +19,50 @@
           "id": "index-fundamentals",
           "title": "Database Index Fundamentals",
           "difficulty": "beginner",
-          "questionCount": 8,
-          "lessonPath": "lessons/databases/index-fundamentals.json",
           "order": 1,
-          "status": "published"
+          "status": "published",
+          "lessonPath": "database-index-fundamentals",
+          "questionCount": 8
+        },
+        {
+          "id": "index-design-performance",
+          "title": "Index Design and Performance",
+          "difficulty": "intermediate",
+          "order": 2,
+          "status": "upcoming",
+          "lessonPath": "database-index-design-performance"
+        },
+        {
+          "id": "advanced-database-internals",
+          "title": "Advanced Database Internals",
+          "difficulty": "advanced",
+          "order": 3,
+          "status": "upcoming",
+          "lessonPath": "advanced-database-internals"
+        },
+        {
+          "id": "redis-and-caching",
+          "title": "Redis and Caching Architecture",
+          "difficulty": "intermediate",
+          "order": 4,
+          "status": "upcoming",
+          "lessonPath": "redis-and-caching"
+        },
+        {
+          "id": "postgresql-vs-mongodb",
+          "title": "PostgreSQL vs. MongoDB Trade-offs",
+          "difficulty": "intermediate",
+          "order": 5,
+          "status": "upcoming",
+          "lessonPath": "postgresql-vs-mongodb"
+        },
+        {
+          "id": "scaling-and-reliability",
+          "title": "Scaling and Reliability",
+          "difficulty": "advanced",
+          "order": 6,
+          "status": "upcoming",
+          "lessonPath": "scaling-and-reliability"
         }
       ]
     },
