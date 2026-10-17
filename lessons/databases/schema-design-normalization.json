@@ -91,7 +91,7 @@
         },
         {
           "type": "callout",
-          "kind": "note",
+          "kind": "info",
           "title": "Normal forms are not a substitute for dependency analysis",
           "content": "Do not normalize by slogan. Identify functional dependencies and candidate keys, then decide which table should own each fact. A JSON column is not automatically denormalized or unnormalized; its suitability depends on the domain and access patterns."
         }
