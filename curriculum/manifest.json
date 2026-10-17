@@ -1,0 +1,122 @@
+{
+  "schemaVersion": "1.0.0",
+  "curriculumId": "interview-prep",
+  "title": "Interview Prep",
+  "description": "A structured, section-based technical interview preparation curriculum.",
+  "timezone": "Asia/Kolkata",
+  "progression": {
+    "unit": "section",
+    "missedDayBehavior": "resume-next-incomplete",
+    "ordering": "fixed"
+  },
+  "modules": [
+    {
+      "id": "databases",
+      "title": "Databases",
+      "description": "Indexes, query performance, caching, database trade-offs and scale.",
+      "order": 1,
+      "sections": [
+        {
+          "id": "index-fundamentals",
+          "title": "Database Index Fundamentals",
+          "lessonId": "database-index-fundamentals",
+          "difficulty": "beginner",
+          "order": 1,
+          "prerequisites": [],
+          "status": "published"
+        },
+        {
+          "id": "index-design-performance",
+          "title": "Index Design and Performance",
+          "lessonId": "database-index-design-performance",
+          "difficulty": "intermediate",
+          "order": 2,
+          "prerequisites": [
+            "index-fundamentals"
+          ],
+          "status": "upcoming"
+        },
+        {
+          "id": "advanced-database-internals",
+          "title": "Advanced Database Internals",
+          "lessonId": "advanced-database-internals",
+          "difficulty": "advanced",
+          "order": 3,
+          "prerequisites": [
+            "index-design-performance"
+          ],
+          "status": "upcoming"
+        },
+        {
+          "id": "redis-and-caching",
+          "title": "Redis and Caching Architecture",
+          "lessonId": "redis-and-caching",
+          "difficulty": "intermediate",
+          "order": 4,
+          "prerequisites": [
+            "index-fundamentals"
+          ],
+          "status": "upcoming"
+        },
+        {
+          "id": "postgresql-vs-mongodb",
+          "title": "PostgreSQL vs. MongoDB Trade-offs",
+          "lessonId": "postgresql-vs-mongodb",
+          "difficulty": "intermediate",
+          "order": 5,
+          "prerequisites": [
+            "index-fundamentals"
+          ],
+          "status": "upcoming"
+        },
+        {
+          "id": "scaling-and-reliability",
+          "title": "Scaling and Reliability",
+          "lessonId": "scaling-and-reliability",
+          "difficulty": "advanced",
+          "order": 6,
+          "prerequisites": [
+            "advanced-database-internals",
+            "redis-and-caching"
+          ],
+          "status": "upcoming"
+        }
+      ]
+    },
+    {
+      "id": "backend",
+      "title": "Backend Engineering",
+      "description": "Backend fundamentals and API engineering.",
+      "order": 2,
+      "sections": []
+    },
+    {
+      "id": "oop-api-design",
+      "title": "OOP and API Design",
+      "description": "Object-oriented design, design patterns and API design.",
+      "order": 3,
+      "sections": []
+    },
+    {
+      "id": "dsa",
+      "title": "Data Structures and Algorithms",
+      "description": "Problem solving and core data structures.",
+      "order": 4,
+      "sections": []
+    },
+    {
+      "id": "system-design",
+      "title": "System Design",
+      "description": "Design scalable and reliable systems.",
+      "order": 5,
+      "sections": []
+    },
+    {
+      "id": "ai-engineering",
+      "title": "AI Engineering",
+      "description": "RAG, agents, evaluation and production AI systems.",
+      "order": 6,
+      "sections": []
+    }
+  ]
+}
