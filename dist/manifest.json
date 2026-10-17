@@ -12,57 +12,111 @@
     {
       "id": "databases",
       "title": "Databases",
-      "description": "Indexes, query performance, caching, database trade-offs and scale.",
+      "description": "SQL fundamentals, schema design, indexes, query performance, caching, database trade-offs and scale.",
       "order": 1,
       "sections": [
+        {
+          "id": "relational-databases-keys-constraints",
+          "title": "Relational Databases, Primary Keys, Foreign Keys, and Constraints",
+          "difficulty": "beginner",
+          "order": 1,
+          "status": "published",
+          "lessonPath": "/lessons/databases/relational-databases-keys-constraints.json",
+          "questionCount": 5
+        },
+        {
+          "id": "sql-joins",
+          "title": "SQL Joins: INNER, LEFT, RIGHT, and FULL OUTER JOIN",
+          "difficulty": "beginner",
+          "order": 2,
+          "status": "published",
+          "lessonPath": "/lessons/databases/sql-joins.json",
+          "questionCount": 5
+        },
+        {
+          "id": "sql-aggregation-group-by-having-ctes",
+          "title": "Aggregations, GROUP BY, HAVING, Subqueries, and CTEs",
+          "difficulty": "intermediate",
+          "order": 3,
+          "status": "published",
+          "lessonPath": "/lessons/databases/sql-aggregation-group-by-having-ctes.json",
+          "questionCount": 5
+        },
+        {
+          "id": "sql-null-semantics",
+          "title": "NULL Semantics, Three-Valued Logic, and Common SQL Pitfalls",
+          "difficulty": "intermediate",
+          "order": 4,
+          "status": "published",
+          "lessonPath": "/lessons/databases/sql-null-semantics.json",
+          "questionCount": 5
+        },
+        {
+          "id": "schema-design-normalization",
+          "title": "Database Schema Design, Normalization (1NF–3NF), and Denormalization",
+          "difficulty": "intermediate",
+          "order": 5,
+          "status": "published",
+          "lessonPath": "/lessons/databases/schema-design-normalization.json",
+          "questionCount": 5
+        },
+        {
+          "id": "advanced-sql-window-functions-set-operations",
+          "title": "Advanced SQL: Window Functions, Ranking, Set Operations, and Latest-Row-per-Group Queries",
+          "difficulty": "intermediate",
+          "order": 6,
+          "status": "published",
+          "lessonPath": "/lessons/databases/advanced-sql-window-functions-set-operations.json",
+          "questionCount": 5
+        },
         {
           "id": "index-fundamentals",
           "title": "Database Index Fundamentals",
           "difficulty": "beginner",
-          "order": 1,
+          "order": 7,
           "status": "published",
-          "lessonPath": "database-index-fundamentals",
+          "lessonPath": "/lessons/databases/index-fundamentals.json",
           "questionCount": 8
         },
         {
           "id": "index-design-performance",
           "title": "Index Design and Performance",
           "difficulty": "intermediate",
-          "order": 2,
+          "order": 8,
           "status": "upcoming",
-          "lessonPath": "database-index-design-performance"
+          "lessonPath": "/lessons/databases/index-design-performance.json"
         },
         {
           "id": "advanced-database-internals",
           "title": "Advanced Database Internals",
           "difficulty": "advanced",
-          "order": 3,
+          "order": 9,
           "status": "upcoming",
-          "lessonPath": "advanced-database-internals"
+          "lessonPath": "/lessons/databases/advanced-database-internals.json"
         },
         {
           "id": "redis-and-caching",
           "title": "Redis and Caching Architecture",
           "difficulty": "intermediate",
-          "order": 4,
+          "order": 10,
           "status": "upcoming",
-          "lessonPath": "redis-and-caching"
+          "lessonPath": "/lessons/databases/redis-and-caching.json"
         },
         {
           "id": "postgresql-vs-mongodb",
           "title": "PostgreSQL vs. MongoDB Trade-offs",
           "difficulty": "intermediate",
-          "order": 5,
+          "order": 11,
           "status": "upcoming",
-          "lessonPath": "postgresql-vs-mongodb"
+          "lessonPath": "/lessons/databases/postgresql-vs-mongodb.json"
         },
         {
           "id": "scaling-and-reliability",
           "title": "Scaling and Reliability",
           "difficulty": "advanced",
-          "order": 6,
+          "order": 12,
           "status": "upcoming",
-          "lessonPath": "scaling-and-reliability"
+          "lessonPath": "/lessons/databases/scaling-and-reliability.json"
         }
       ]
     },
