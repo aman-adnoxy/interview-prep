@@ -22,7 +22,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "First decide what each table represents. A customers table stores customer facts; an orders table stores order facts. If one customer can have many orders, put customer_id on each order. If students can take many courses and each course has many students, use an enrollment table to represent each student-course relationship."
+          "text": "First decide what each table represents. A customers table stores customer facts; an orders table stores order facts. If one customer can have many orders, put customer_id on each order. If students can take many courses and each course has many students, use an enrollment table for each student-course relationship."
         },
         {
           "type": "code",
@@ -63,7 +63,7 @@
         },
         {
           "type": "paragraph",
-          "text": "When the same fact is copied into many rows, changes become risky. If a customer address is repeated across ten orders, a move requires ten updates. If only nine are changed, the database now tells two different stories. Splitting customer details into a customer row removes that update problem."
+          "text": "When the same fact is copied into many rows, changes become risky. If an address is repeated across ten orders, a move requires ten updates. If only nine are changed, the database now tells two different stories. Putting the address in one customer row removes that problem."
         }
       ]
     },
@@ -73,7 +73,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Normal forms are checks for whether a table mixes facts that depend on different things. First normal form avoids packing a list of separate values into one cell. Second normal form matters when a key has multiple columns: a non-key fact should depend on the whole key, not just one part. Third normal form catches facts that really depend on another non-key fact, such as storing a department name on every employee row when department_id already determines it."
+          "text": "Normal forms are checks for whether a table mixes facts that depend on different things. First normal form avoids packing a list into one cell. Second normal form matters when a key has multiple columns: a non-key fact should depend on the whole key, not just one part. Third normal form catches facts that depend on another non-key fact, such as storing a department name on every employee row when department_id already determines it."
         },
         {
           "type": "paragraph",
@@ -109,7 +109,7 @@
         },
         {
           "type": "paragraph",
-          "text": "A line item should store quantity and the price charged at the time of purchase. The product table stores today's catalog price, which can change later. The order's unit_price is not a mistake just because it repeats a price: it records what that customer was actually charged in that transaction."
+          "text": "A line item should store quantity and the price charged at purchase time. The product table stores today's catalog price, which may change later. The order's unit_price is not a mistake just because the number appears twice: it records what the customer was actually charged."
         }
       ]
     },
@@ -119,7 +119,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Denormalization means deliberately copying or precomputing data to make an important read faster or simpler. For example, a dashboard might store a daily sales total instead of summing millions of orders on every page load. The trade-off is that the stored total can become stale, so the system needs a clear update and repair process."
+          "text": "Denormalization means deliberately copying or precomputing data to make an important read faster or simpler. A dashboard might store a daily sales total instead of adding millions of orders on every page load. That total can become stale, so the system needs a clear update and repair process."
         },
         {
           "type": "table",
@@ -163,7 +163,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "For each important query, write down which rows it filters, which tables it joins, what one result row represents, how often the data changes, and how fast the query needs to be. Then choose constraints and indexes to support it. Don't duplicate data or add indexes just because a column appears in a query."
+          "text": "For each important query, write down what it filters, which tables it joins, what one result row represents, how often the data changes, and how fast the query needs to be. Then choose constraints and indexes to support it. Don't duplicate data just because a column appears in a query."
         },
         {
           "type": "callout",
@@ -179,7 +179,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Start with Enrollment(student_id, student_name, course_id, course_title, instructor_id, instructor_name, grade), where (student_id, course_id) identifies one enrollment. Assume student_id determines student_name, course_id determines course_title and instructor_id, and instructor_id determines instructor_name. Those dependencies tell us which facts belong together."
+          "text": "Start with Enrollment(student_id, student_name, course_id, course_title, instructor_id, instructor_name, grade), where (student_id, course_id) identifies one enrollment. student_id determines student_name; course_id determines course_title and instructor_id; instructor_id determines instructor_name. Those rules tell us which facts belong together."
         },
         {
           "type": "table",
