@@ -34,27 +34,32 @@
         },
         {
           "type": "table",
-          "title": "Key distinctions",
+          "title": "Match the index to the search",
           "columns": [
-            "Concept",
-            "Mechanism",
-            "Trade-off"
+            "Index type",
+            "Good starting point",
+            "Remember"
           ],
           "rows": [
             [
-              "Access path",
-              "Structure used to locate candidate rows",
-              "Does not guarantee planner selection."
+              "B-tree",
+              "Exact matches, ranges, and sorted results.",
+              "The everyday default for many scalar columns."
             ],
             [
-              "Physical work",
-              "Pages, tuple visibility, result rows",
-              "May dominate logical lookup cost."
+              "GIN",
+              "Finding values inside arrays or JSONB; supported text search.",
+              "Can be larger and more expensive to update."
             ],
             [
-              "Workload fit",
-              "Predicates, ordering, distribution",
-              "Requires measurement, not assumptions."
+              "GiST",
+              "Spatial, range, and other searches supported by its operator class.",
+              "Its behavior depends on the operators and data type."
+            ],
+            [
+              "BRIN",
+              "Very large tables where nearby pages tend to contain similar values, such as timestamps.",
+              "Small summary index; matching pages may need row rechecks."
             ]
           ]
         }
@@ -113,13 +118,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query is slower than expected even though an index exists.",
+          "problem": "A large event table is inserted mostly in timestamp order. Reports filter by a time range, while another endpoint searches for a value inside a JSONB payload.",
           "reasoning": [
-            "Check whether index keys and predicates align.",
-            "Compare estimated and actual row counts and inspect buffers.",
-            "Account for result size, heap access, and write/storage trade-offs."
+            "A B-tree on the timestamp is a strong candidate when reports need precise range lookups or sorted results.",
+            "A BRIN index may use much less space when nearby table pages contain nearby timestamps, but it can return extra rows that must be checked.",
+            "A GIN index may fit JSONB containment searches. Compare the query operators, index size, write cost, and actual plans before choosing."
           ],
-          "outcome": "Make a targeted change only after plan evidence supports the hypothesis."
+          "outcome": "Different queries on the same table may need different index types. Choose from the search operation and data layout, then measure."
         }
       ]
     },
