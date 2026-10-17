@@ -15,7 +15,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "A B-tree stores ordered key ranges in pages. Internal pages route searches to narrower ranges, leaves hold ordered entries, and high fan-out keeps the tree shallow. Splits preserve ordering and balanced depth as entries are added."
+    "text": "A B-tree is a sorted map built from pages. Each page points you toward a range of keys, like choosing a branch on a road sign. The tree stays balanced, so finding a key takes a small number of page visits even as the table grows. Adding data can split a full page, but it does not normally rebuild the whole index."
   },
   "concepts": [
     {
@@ -24,7 +24,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Keys within a page are ordered; separator keys divide key ranges among children. In a balanced B-tree, leaves remain at the same depth, letting each comparison eliminate unrelated ranges."
+          "text": "A B-tree keeps keys sorted inside pages. Separator keys tell the database which child page could contain a target value. All leaf pages stay at the same depth, so the search path remains balanced as the index grows."
         },
         {
           "type": "table",
@@ -60,7 +60,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Compare the target with root separators, follow the child range that can contain it, and repeat to the leaf. A missing key still follows the path to the leaf where it would be ordered."
+          "text": "To find a key, start at the root page, compare the key with the separators, and follow the child range that could contain it. Repeat until you reach a leaf page. If the key is missing, the search still ends at the leaf where it would belong."
         },
         {
           "type": "code",
@@ -97,7 +97,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Database I/O is page-oriented. Many separators fit on an internal page, creating high fan-out. Wide keys reduce entries per page and may increase index footprint or height."
+          "text": "Databases read and write pages, not one index entry at a time from disk. An internal page can hold many separators, so one page can point to many child pages. Very wide keys fit fewer entries per page and can make the index larger."
         },
         {
           "type": "code",
@@ -123,7 +123,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "When a page cannot fit a new entry, the engine may split it, redistribute entries, and update parent routing. A full parent may split too; a root split can add a level. This is not automatically a full index rebuild."
+          "text": "When a page runs out of room, the database splits it and updates the parent so searches still find the right range. If the parent is full too, it can split as well. A root split can add a level to the tree; it is not the same as rebuilding the whole index."
         },
         {
           "type": "code",
@@ -145,7 +145,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "B-tree navigation is commonly O(log n), but database latency also depends on cache misses, matching entries, heap reads, MVCC visibility, and result size."
+          "text": "A balanced B-tree usually finds a key in about log₂(n) levels rather than checking all n keys. Real query time also depends on whether pages are in memory, how many rows match, and how much table data must be fetched."
         },
         {
           "type": "code",
