@@ -16,7 +16,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "Think of a table as a book and an index as the book's index at the back. Without an index, the database may inspect rows one by one. With a useful index, it can navigate a smaller, ordered structure to find candidate rows. The index is an additional structure that must be stored and kept up to date when data changes."
+    "text": "Imagine a contacts table with a million people. Without an index, finding one email may mean checking many rows. An index is like an ordered lookup list that helps the database jump toward matching rows. It can make reads faster, but the database must keep that list updated whenever the table changes."
   },
   "concepts": [
     {
@@ -25,7 +25,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A database index is a data structure maintained alongside a table that helps the database find rows without necessarily scanning every row. An index usually stores indexed key values and references that let the engine locate matching table rows. The exact implementation depends on the database and index type."
+          "text": "An index is a separate lookup structure that helps the database find table rows. Think of the index at the back of a book: instead of reading every page, you look up the topic and jump to the right pages. The database may still need to visit the table to fetch the full row."
         },
         {
           "type": "code",
@@ -45,7 +45,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A table scan may examine a large number of rows to find a small matching subset. A suitable index can narrow the search to matching keys and row locations. The benefit depends on selectivity, table size, data distribution, the query, and the cost of fetching the matching rows."
+          "text": "Without an index, the database may check every row to find a few matches. With a suitable index, it can go straight to the relevant keys. The speed-up depends on how many rows match, how large the table is, and how much extra work is needed to fetch those rows."
         },
         {
           "type": "code",
@@ -67,7 +67,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "In PostgreSQL, B-tree is the default index type and is suitable for common equality and range comparisons, as well as ordered access patterns. Its balanced tree structure lets the engine navigate keys without checking every indexed entry. Other index types serve different workloads."
+          "text": "A B-tree is PostgreSQL's usual default index. It keeps keys in sorted, balanced pages, so the database can find a value, search a range, or read rows in a compatible order without checking every key."
         },
         {
           "type": "code",
@@ -183,7 +183,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Indexes are most useful when their columns and ordering fit the predicates, joins, and ordering used by real queries. A composite index stores keys in a defined column order; that order matters. In PostgreSQL, a B-tree index on (customer_id, created_at) is generally most directly useful for conditions beginning with customer_id, and can also support ordering or filtering patterns involving the leading column."
+          "text": "An index should fit queries the application actually runs. If a common query filters by customer_id and sorts by created_at, an index on (customer_id, created_at) may help. The order matters: an index starting with a different column may not provide the same shortcut."
         },
         {
           "type": "code",
@@ -199,7 +199,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Indexes consume disk space and add work to inserts, deletes, and updates that affect indexed values. They may also increase maintenance work. Creating an index without a real query need can slow writes and increase storage without improving the workload meaningfully."
+          "text": "Indexes take space and need maintenance. Each insert, delete, or update may also change one or more indexes. Too many indexes can make writes slower and use memory that could otherwise hold useful data."
         },
         {
           "type": "callout",
@@ -215,7 +215,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Selectivity describes how narrowly a predicate filters the rows. A predicate that matches very few rows is often more attractive for index access than one matching most rows. PostgreSQL's planner estimates costs and chooses a plan; the presence of an index does not force its use."
+          "text": "Selectivity means how many rows match a condition. Searching for one rare email is selective; searching for a status shared by half the table is not. PostgreSQL estimates the cost of each route and may skip an index if reading many scattered rows would be slower."
         },
         {
           "type": "code",
@@ -235,7 +235,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A sequential scan reads table pages and checks rows against the condition. An index scan navigates an index and fetches matching rows. An index-only scan may satisfy a query from index contents without fetching every corresponding table row, subject to the index contents and PostgreSQL visibility-map conditions."
+          "text": "A sequential scan reads table pages and checks rows. An index scan looks up matching keys and may fetch the matching table rows. An index-only scan can avoid many table visits when the index contains the needed values and PostgreSQL can confirm row visibility."
         },
         {
           "type": "code",
@@ -251,7 +251,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Start from a slow or important query, inspect its execution plan, understand its filtering and ordering, and measure before and after changes. Avoid adding indexes based only on a column name or intuition. Production decisions should consider both read latency and write/storage costs."
+          "text": "Start with a real query that is slow or important. Check its plan, identify what it filters and sorts, then test an index that fits. Compare read speed and write cost; never add an index just because a column looks important."
         },
         {
           "type": "paragraph",
