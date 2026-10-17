@@ -13,7 +13,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "A join combines row pairs that satisfy a matching condition. Think in terms of candidate pairs, the ON predicate, and then whether unmatched rows are preserved. Most join mistakes come from forgetting one of those stages or assuming a join returns one output row per entity."
+    "text": "A join makes pairs of rows that match a condition. Imagine matching customers to their orders. One customer with three orders appears three times because there are three customer-order pairs. The join type decides what happens to rows with no match; ON decides what counts as a match, and WHERE filters the result afterward."
   },
   "concepts": [
     {
@@ -22,7 +22,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "For each row on the left, SQL considers rows on the right that satisfy the join condition. INNER JOIN returns matching pairs. LEFT JOIN additionally returns each unmatched left row once, filling right-side columns with NULL. RIGHT JOIN is the mirror image. FULL OUTER JOIN preserves unmatched rows from both sides."
+          "text": "A join matches rows from two tables. INNER JOIN keeps only matching pairs. LEFT JOIN keeps every row from the left table, even when no right-side row matches. RIGHT JOIN does the same for the right table, and FULL OUTER JOIN keeps unmatched rows from both sides too."
         },
         {
           "type": "table",
@@ -109,7 +109,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Asha appears twice because she has two matching orders. The unmatched order with customer_id = 4 does not appear in this LEFT JOIN because the left side is customers. This is expected, not duplicate corruption."
+          "text": "Suppose Asha has two orders and Ravi has none. A LEFT JOIN from customers to orders shows Asha twice and Ravi once with NULL in the order columns. An order pointing to no listed customer is not shown because customers are the left-side table."
         },
         {
           "type": "paragraph",
@@ -303,7 +303,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "ON defines which row pairs count as matches. WHERE filters the joined result. With an outer join, moving a predicate from ON to WHERE can remove NULL-extended rows and change the query's meaning."
+          "text": "ON decides which order rows count as a match; WHERE filters the joined result. Put orders.status = 'paid' in WHERE and customers with no paid order disappear. Put it in ON when you want to keep every customer but attach only paid orders."
         },
         {
           "type": "code",
@@ -331,7 +331,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "If a customer has three orders and two addresses, joining both one-to-many relations can yield six rows for that customer. This is the product of matching child counts, not necessarily a database bug. Aggregating after such a join can inflate totals."
+          "text": "Suppose one customer has 3 orders and 2 addresses. Joining both child tables can produce 3 × 2 = 6 rows. Summing order totals after this join may count each order twice. Aggregate each child table first, or use EXISTS when you only need to know whether a match exists."
         },
         {
           "type": "code",
@@ -357,7 +357,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Start by stating the required output grain: one row per customer, per order, or per customer-order pair? Then identify which side must be preserved and whether you need child columns or only existence. This is often more important than memorizing join syntax."
+          "text": "Before writing a join, say what one output row should represent: one customer, one order, or one customer-order pair. Then decide which side must remain even without a match and whether you need related columns or only need to test that a row exists."
         },
         {
           "type": "table",

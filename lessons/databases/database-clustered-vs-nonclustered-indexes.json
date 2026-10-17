@@ -15,7 +15,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "An index's logical order does not automatically determine table-row storage order. PostgreSQL normally stores tuples in a heap and index entries point to tuple locations. CLUSTER rewrites a table in index order once, but later writes can erode that order."
+    "text": "Finding a row through an index often takes two steps: look up the key in the index, then fetch the row from the table. If matching rows are scattered across the table, that second step can be expensive. If they are stored close together, a range query may need fewer page reads. Different databases organize that relationship differently."
   },
   "concepts": [
     {
@@ -24,7 +24,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "PostgreSQL stores ordinary rows in heap pages. An index entry normally points to a heap tuple through a TID identifying its page and slot. The heap is not automatically sorted by every index."
+          "text": "In PostgreSQL, ordinary table rows live in heap pages. An index entry points to a row's location in that heap. The table is not automatically sorted by every index, so keys next to each other in an index may point to rows scattered across the table."
         },
         {
           "type": "code",
@@ -34,27 +34,27 @@
         },
         {
           "type": "table",
-          "title": "Key distinctions",
+          "title": "How an index relates to table rows",
           "columns": [
-            "Concept",
-            "Mechanism",
-            "Trade-off"
+            "Layout",
+            "Where the row lives",
+            "Practical effect"
           ],
           "rows": [
             [
-              "Access path",
-              "Structure used to locate candidate rows",
-              "Does not guarantee planner selection."
+              "PostgreSQL heap + index",
+              "The index points to a row location in a separate table heap.",
+              "Matching rows can be scattered across table pages."
             ],
             [
-              "Physical work",
-              "Pages, tuple visibility, result rows",
-              "May dominate logical lookup cost."
+              "Clustered-index storage",
+              "Table rows live in the clustered index's leaf pages.",
+              "Nearby key values are stored together in that index order."
             ],
             [
-              "Workload fit",
-              "Predicates, ordering, distribution",
-              "Requires measurement, not assumptions."
+              "PostgreSQL CLUSTER command",
+              "Rewrites the table once in index order.",
+              "Can improve locality for a while; later writes gradually weaken it."
             ]
           ]
         }
@@ -66,7 +66,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "In a clustered-index engine, table data is organized at the clustered key's leaf level. PostgreSQL normally uses a heap plus indexes pointing to TIDs. Terminology is database-specific."
+          "text": "Some databases store table rows in the leaf pages of a clustered index. PostgreSQL normally stores rows in a separate heap and keeps indexes that point to heap locations. So 'clustered index' means different things in different database systems; don't assume SQL Server and PostgreSQL use the same layout."
         },
         {
           "type": "code",
@@ -103,7 +103,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Nearby index keys stored in nearby heap pages can reduce pages visited. Scattered matching rows can make an index scan trigger many random heap fetches."
+          "text": "If matching rows sit near one another on disk, a range query may read fewer table pages. If they are scattered, an index scan may jump around to many pages and become slower than a sequential scan."
         },
         {
           "type": "code",
@@ -113,13 +113,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query is slower than expected even though an index exists.",
+          "problem": "A report reads the newest 1,000 orders for one tenant. The index finds the right order IDs, but the matching table rows are spread across many pages.",
           "reasoning": [
-            "Check whether index keys and predicates align.",
-            "Compare estimated and actual row counts and inspect buffers.",
-            "Account for result size, heap access, and write/storage trade-offs."
+            "An index can quickly find the matching keys, but PostgreSQL may then need to fetch many separate heap pages for the row data.",
+            "Check actual rows and buffer reads to see whether those heap visits dominate the query.",
+            "A more suitable index order or better physical locality may help, but compare the plan and write costs before changing storage."
           ],
-          "outcome": "Make a targeted change only after plan evidence supports the hypothesis."
+          "outcome": "Index lookup speed and table-row locality are different things. A good index can still lead to expensive table reads when matching rows are scattered."
         }
       ]
     },
@@ -129,7 +129,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "An index-only scan can return stored values from the index, but PostgreSQL must still establish tuple visibility. The visibility map lets it skip heap visits for all-visible pages; otherwise heap fetches can remain."
+          "text": "An index-only scan can answer a query from index values without fetching every table row. PostgreSQL still needs to know whether each row version is visible to the transaction, so it can skip the heap only when the visibility map says the page is all-visible."
         },
         {
           "type": "code",
@@ -151,7 +151,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Physical clustering can help locality-sensitive range reads, but requires a rewrite and its benefit decays. A covering index can reduce some heap access if output and visibility-map conditions permit."
+          "text": "PostgreSQL's CLUSTER command can rewrite a table in the order of an index, which may help range reads for a while. New writes gradually weaken that order, and the rewrite takes resources. An index that includes all requested columns can also reduce heap visits, but makes the index larger."
         },
         {
           "type": "code",

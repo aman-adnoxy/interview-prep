@@ -16,7 +16,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "An index is a candidate access path, not a command. PostgreSQL estimates how many rows match and the cost of reaching them. Few matches can favor an index; many matches can make index traversal plus scattered heap fetches cost more than a sequential scan. Every index also taxes writes and storage."
+    "text": "An index is an option, not an instruction. If a query needs five rows from a million, an index can save a lot of work. If it needs half the table, finding rows through an index and then jumping around the table may cost more than reading the table in order. PostgreSQL estimates those costs and chooses the path it expects to be cheapest."
   },
   "concepts": [
     {
@@ -25,7 +25,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Selectivity describes how narrowly a predicate filters; cardinality is the number of matching rows. A selective predicate matches a small fraction. An unselective predicate matches many rows."
+          "text": "Selectivity tells you how much of the table matches a condition. Searching for one rare email is highly selective; searching for a status shared by most orders is not. Cardinality is the actual or estimated number of matching rows."
         },
         {
           "type": "code",
@@ -35,27 +35,27 @@
         },
         {
           "type": "table",
-          "title": "Key distinctions",
+          "title": "Three terms for judging an index",
           "columns": [
-            "Concept",
-            "Mechanism",
-            "Trade-off"
+            "Term",
+            "Meaning",
+            "Example"
           ],
           "rows": [
             [
+              "Selectivity",
+              "How small a share of rows matches a condition.",
+              "One rare email is highly selective; a status held by 70% of orders is not."
+            ],
+            [
+              "Cardinality",
+              "How many rows match, estimated by the planner or observed in execution.",
+              "The planner expects 100 rows but the query actually returns 40,000."
+            ],
+            [
               "Access path",
-              "Structure used to locate candidate rows",
-              "Does not guarantee planner selection."
-            ],
-            [
-              "Physical work",
-              "Pages, tuple visibility, result rows",
-              "May dominate logical lookup cost."
-            ],
-            [
-              "Workload fit",
-              "Predicates, ordering, distribution",
-              "Requires measurement, not assumptions."
+              "The method used to find those rows.",
+              "An index scan can help for a few rows; a sequential scan can win for a broad result."
             ]
           ]
         }
@@ -67,7 +67,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Sequential scan is efficient for broad reads or small tables. Index scan navigates to keys but may cause random heap fetches. Bitmap heap scan groups tuple locations by page, often reducing random visits but generally losing index ordering."
+          "text": "A sequential scan reads table pages in order and checks each row. An index scan finds matching keys and then fetches their table rows, which can involve many scattered reads. A bitmap heap scan collects row locations by page to reduce random visits, but usually cannot preserve the index's ordering."
         },
         {
           "type": "code",
@@ -104,7 +104,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "The planner compares estimated costs. Sequential scan can win for small tables, broad predicates, cached pages, or index paths requiring many scattered heap fetches. That may be correct rather than a planner bug."
+          "text": "A sequential scan can be the right choice for a small table or a query that needs many rows. Following an index and then fetching most rows one by one may cost more than reading the table pages together. An index existing does not mean PostgreSQL should use it."
         },
         {
           "type": "code",
@@ -114,13 +114,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query is slower than expected even though an index exists.",
+          "problem": "A query filters orders with status = 'paid'. An index on status exists, but about 70% of rows match.",
           "reasoning": [
-            "Check whether index keys and predicates align.",
-            "Compare estimated and actual row counts and inspect buffers.",
-            "Account for result size, heap access, and write/storage trade-offs."
+            "Because most rows match, an index scan may fetch a large share of the table through many separate page visits.",
+            "A sequential scan can read table pages in order and be cheaper for this broad result.",
+            "Compare estimated and actual row counts, buffers, and execution time; also consider the extra write work caused by maintaining the index."
           ],
-          "outcome": "Make a targeted change only after plan evidence supports the hypothesis."
+          "outcome": "PostgreSQL does not have to use every index. For broad results, reading the table in order can be cheaper than following the index."
         }
       ]
     },
@@ -130,7 +130,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Every relevant insert adds index maintenance; deletes and updates can leave dead entries for vacuum to manage. Extra indexes consume disk/cache, add WAL and replication traffic, and affect backup, restore, and DDL operations."
+          "text": "Every index must be updated when relevant rows change. Indexes use disk and memory, add work to writes and WAL, and need maintenance as rows are deleted or updated. Keeping unused indexes can slow the whole workload, not just take up space."
         },
         {
           "type": "code",
@@ -152,7 +152,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Pair index counters with query logs, frequency, latency/SLO impact, write rate, index size, plans, and a representative observation window. Change one index at a time and watch reads and writes."
+          "text": "Before adding or dropping an index, look at real query frequency, latency, plans, write rate, and index size over a representative period. Change one thing at a time and check whether the improvement to reads is worth the extra write and storage cost."
         },
         {
           "type": "code",

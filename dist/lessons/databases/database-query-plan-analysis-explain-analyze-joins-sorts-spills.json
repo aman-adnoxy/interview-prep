@@ -16,7 +16,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "A query plan is a tree of operators: children produce rows consumed by parents. EXPLAIN shows estimates; EXPLAIN ANALYZE executes the query and reports actual rows, loops, and timing. Find where work occurs and estimates diverge before changing indexes or settings."
+    "text": "A query plan is the database's step-by-step recipe for answering a query. Each step reads rows or combines results from steps below it. EXPLAIN shows the planned recipe and estimates; EXPLAIN ANALYZE runs the query and reports what actually happened. Compare the estimate with reality and find where the work or surprise begins."
   },
   "concepts": [
     {
@@ -25,7 +25,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "EXPLAIN shows the chosen plan and estimates; EXPLAIN ANALYZE executes the statement and reports actual measurements. Use caution with data-modifying statements because ANALYZE executes them."
+          "text": "EXPLAIN shows the plan PostgreSQL intends to use. EXPLAIN ANALYZE actually runs the query and reports measured row counts and timing. Be careful with INSERT, UPDATE, and DELETE: ANALYZE executes them, so use a safe test or transaction when appropriate."
         },
         {
           "type": "code",
@@ -35,27 +35,27 @@
         },
         {
           "type": "table",
-          "title": "Key distinctions",
+          "title": "What the EXPLAIN options tell you",
           "columns": [
-            "Concept",
-            "Mechanism",
-            "Trade-off"
+            "Option",
+            "What it tells you",
+            "Important caution"
           ],
           "rows": [
             [
-              "Access path",
-              "Structure used to locate candidate rows",
-              "Does not guarantee planner selection."
+              "EXPLAIN",
+              "The plan PostgreSQL expects to use, including estimated row counts and costs.",
+              "Does not run the query."
             ],
             [
-              "Physical work",
-              "Pages, tuple visibility, result rows",
-              "May dominate logical lookup cost."
+              "EXPLAIN ANALYZE",
+              "Runs the query and reports actual rows and timing.",
+              "It really executes writes too; use a safe test or transaction."
             ],
             [
-              "Workload fit",
-              "Predicates, ordering, distribution",
-              "Requires measurement, not assumptions."
+              "BUFFERS",
+              "Shows buffer activity so you can see how much page access occurred.",
+              "Read it alongside row counts and plan shape, not as a standalone verdict."
             ]
           ]
         }
@@ -67,7 +67,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Large cardinality errors can cause bad join order or algorithm selection. Find the earliest node where estimates diverge. Skew, correlated predicates, stale statistics, parameter values, or missing extended statistics may explain the error."
+          "text": "The planner guesses how many rows each step will produce. If it expects 900 rows but actually sees 120,000, later choices such as join order or sorting may be poor. Find the earliest step where the estimate is far off, then investigate stale statistics, uneven data, or filters that are related to each other."
         },
         {
           "type": "code",
@@ -122,7 +122,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Nested loop often fits a small outer input plus efficient inner lookup; hash join fits equality joins with manageable build side; merge join can fit ordered inputs. Each can be bad with wrong estimates or costly sorting/spilling."
+          "text": "A nested-loop join takes each row from one side and looks for matches on the other side, so it often works well when the outer side is small and the inner lookup is cheap. A hash join builds a lookup table for one side, and a merge join walks two ordered inputs. None is always best; input size and ordering matter."
         },
         {
           "type": "code",
@@ -132,13 +132,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query is slower than expected even though an index exists.",
+          "problem": "A query joins 40 active tenants to a large orders table. The plan uses a nested loop and performs many inner lookups.",
           "reasoning": [
-            "Check whether index keys and predicates align.",
-            "Compare estimated and actual row counts and inspect buffers.",
-            "Account for result size, heap access, and write/storage trade-offs."
+            "Check actual rows and loop counts: a nested loop can be efficient for a small outer input, but expensive if the outer input is much larger than expected.",
+            "Compare estimated and actual row counts at the earliest step where they diverge; stale statistics or uneven data may explain the bad choice.",
+            "Compare buffers and total execution time before testing another join strategy or index. Do not assume a hash join is always better."
           ],
-          "outcome": "Make a targeted change only after plan evidence supports the hypothesis."
+          "outcome": "Join algorithms are tools, not rankings. The row counts and repeated work in the actual plan explain whether a chosen strategy is expensive."
         }
       ]
     },
@@ -148,7 +148,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Sort satisfies ORDER BY, merge-join ordering, DISTINCT, and related operations. An index may provide compatible order, but index access can still cost more than reading and sorting a set."
+          "text": "A Sort step arranges rows for ORDER BY or another operation that needs order. A matching index can sometimes provide that order, but using the index may still cost more than reading many rows and sorting them together."
         },
         {
           "type": "code",
@@ -170,7 +170,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Sort and hash operations have memory limits. When an operation exceeds available memory, PostgreSQL may use temporary files or multiple hash batches. work_mem applies per operation and can multiply across queries and sessions."
+          "text": "Sorts and hash joins need working memory. If they need more than is available, PostgreSQL can write temporary data to disk or process a hash join in batches. Raising work_mem affects each operation and can multiply across many simultaneous queries, so don't increase it blindly. When a sort reports an “external merge,” it means PostgreSQL used temporary disk space rather than keeping the whole sort in memory."
         },
         {
           "type": "code",
