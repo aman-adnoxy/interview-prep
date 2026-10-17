@@ -126,7 +126,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A database transaction can keep related database changes together, but it cannot make an external action such as charging a payment provider part of the same transaction. Both PostgreSQL and MongoDB support transactions. For reliable events or external actions, use patterns such as an outbox and idempotent processing."
+          "text": "A database transaction can keep related database changes together, but it cannot make an external action such as charging a payment provider part of the same transaction. Both PostgreSQL and MongoDB support transactions. A common solution is an outbox table: save the business change and a record saying 'publish this event' in the same transaction, then let a worker publish it. Make the worker idempotent, meaning safely repeatable, so a retry does not apply the same effect twice."
         },
         {
           "type": "code",
