@@ -66,6 +66,11 @@
       "path": "/lessons/databases/sql-null-semantics.json",
       "contentVersion": "2.0.0",
       "questionCount": 12
+    },
+    "advanced-database-internals": {
+      "path": "/lessons/databases/advanced-database-internals.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 12
     }
   }
 }
