@@ -179,8 +179,8 @@
           "order": 17,
           "status": "published",
           "lessonPath": "/lessons/databases/scaling-and-reliability.json",
-          "lessonId": "scaling-and-reliability",
-          "questionCount": 12
+          "questionCount": 12,
+          "lessonId": "scaling-and-reliability"
         }
       ]
     },
