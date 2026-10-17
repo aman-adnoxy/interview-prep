@@ -17,3 +17,14 @@ test('published curriculum sections must resolve to an existing lesson', () => {
   const curriculum = JSON.parse(fs.readFileSync(path.join(root, 'curriculum/manifest.json'), 'utf8'));
   assert.throws(() => validateCurriculum(curriculum, new Map()), /published lesson missing/);
 });
+
+test('Module 1 SQL lessons validate against the canonical lesson schema', () => {
+  const files = ['relational-databases-keys-constraints.json','sql-joins.json','sql-aggregation-group-by-having-ctes.json','sql-null-semantics.json','schema-design-normalization.json','advanced-sql-window-functions-set-operations.json'];
+  const loaded = files.map(file => JSON.parse(fs.readFileSync(path.join(root, 'lessons/databases', file), 'utf8')));
+  for (const item of loaded) {
+    assert.equal(validateLesson(item, item.id), true);
+    assert.equal(item.questions.length, 5);
+    assert.equal(item.interviewScenarios.length, 1);
+  }
+  assert.ok(loaded.find(item => item.sectionId === 'advanced-sql-window-functions-set-operations').concepts.some(concept => concept.id === 'module-cumulative-challenge'));
+});
