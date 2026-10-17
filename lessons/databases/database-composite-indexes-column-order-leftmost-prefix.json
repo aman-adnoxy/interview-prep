@@ -196,27 +196,27 @@
     {
       "id": "database-composite-indexes-column-order-leftmost-prefix-q1",
       "type": "single_select",
-      "prompt": "Which query best matches (tenant_id, created_at DESC)?",
+      "prompt": "An index exists on (tenant_id, created_at DESC). A tenant feed runs `WHERE tenant_id = 7 AND created_at >= DATE '2026-10-01' ORDER BY created_at DESC LIMIT 20`. Why is this index a strong candidate?",
       "options": [
         {
           "id": "a",
-          "text": "WHERE tenant_id = 7 ORDER BY created_at DESC LIMIT 20"
+          "text": "The equality on the leading key narrows the tenant, and the next key can support the time range and order."
         },
         {
           "id": "b",
-          "text": "WHERE created_at = now() without tenant_id"
+          "text": "The index is useful only if tenant_id is the most selective column in every tenant's data."
         },
         {
           "id": "c",
-          "text": "WHERE status = 'open'"
+          "text": "The index guarantees an index-only scan even when the query selects columns not stored in it."
         },
         {
           "id": "d",
-          "text": "WHERE lower(email) = 'x'"
+          "text": "The index makes created_at globally ordered across all tenants, so tenant_id is irrelevant."
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Fixing tenant_id allows ordered retrieval for that tenant."
+      "explanation": "The key order matches the equality filter followed by the range/order requirement. Whether the final plan uses it still depends on costs, statistics, and selected columns."
     },
     {
       "id": "database-composite-indexes-column-order-leftmost-prefix-q2",
@@ -371,27 +371,27 @@
     {
       "id": "database-composite-indexes-column-order-leftmost-prefix-q8",
       "type": "single_select",
-      "prompt": "How investigate an unused composite index?",
+      "prompt": "A query filters by `created_at >= now() - interval '1 day'` and sorts by `created_at DESC`. An existing index is `(tenant_id, created_at DESC)`, and EXPLAIN shows a sequential scan. What is the most defensible diagnosis?",
       "options": [
         {
           "id": "a",
-          "text": "Inspect actual plan, predicates, key order, estimates, and buffers"
+          "text": "The query lacks a constraint on the leading tenant_id key, so the index may not provide a narrow global range; compare a created_at-leading index against the workload."
         },
         {
           "id": "b",
-          "text": "Index every column"
+          "text": "PostgreSQL never uses composite indexes when a query has ORDER BY."
         },
         {
           "id": "c",
-          "text": "Disable the planner"
+          "text": "The index is corrupt because all indexes must be used whenever a column appears in the predicate."
         },
         {
           "id": "d",
-          "text": "Assume index corruption"
+          "text": "Add created_at as an INCLUDE column to make it the first ordering key."
         }
       ],
       "correctOptionId": "a",
-      "explanation": "The index must fit the query and planner estimates."
+      "explanation": "The existing key order is tenant-first. A created_at-leading index may fit this query better, but validate selectivity, plans, and write/storage costs before adding it."
     },
     {
       "id": "database-composite-indexes-column-order-leftmost-prefix-q9",

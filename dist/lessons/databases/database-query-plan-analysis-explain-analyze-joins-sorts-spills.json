@@ -95,6 +95,24 @@
               "description": "Use actual rows and buffers to compare prediction with observed work."
             }
           ]
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Worked EXPLAIN ANALYZE excerpt",
+          "source": "Sort  (cost=... rows=900) (actual time=... rows=120000 loops=1)\\n  Sort Key: total_amount DESC\\n  Sort Method: external merge  Disk: 24576kB\\n  Buffers: shared hit=..., read=..., temp read=..., written=...\\n  ->  Seq Scan on orders  (cost=... rows=900) (actual time=... rows=120000 loops=1)\\n        Filter: (tenant_id = 7)\\n        Rows Removed by Filter: ...\\nPlanning Time: ...\\nExecution Time: ..."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A report sorts all orders for one tenant. The plan estimates 900 qualifying rows but observes 120,000, and the sort uses an external merge with temporary I/O.",
+          "reasoning": [
+            "Compare estimated and actual rows at the scan and sort. The estimate is off by over two orders of magnitude.",
+            "Inspect the tenant_id distribution, predicate, and statistics; run ANALYZE when evidence suggests stale or insufficient statistics, and consider extended statistics only when they fit the correlation involved.",
+            "Use the sort method and temporary-buffer activity as evidence that the sort exceeded in-memory capacity for this execution.",
+            "Check total buffers, execution time, and whether a suitable index could reduce rows or provide useful ordering. Do not assume an index is better without comparing plans.",
+            "If considering work_mem, scope and test the change because memory can multiply across operations and concurrent sessions."
+          ],
+          "outcome": "Investigate the estimate error first, then compare representative plans after any statistics or index change. Treat the spill as a measured symptom, not proof that one global memory setting is the right fix."
         }
       ]
     },
@@ -224,27 +242,27 @@
     {
       "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q2",
       "type": "single_select",
-      "prompt": "Why does 10 estimated rows versus 100,000 actual rows matter?",
+      "prompt": "A plan estimates 900 rows from `orders` but actually emits 120,000. The next node builds a hash table and spills to disk. Which diagnosis should you test first?",
       "options": [
         {
           "id": "a",
-          "text": "Cardinality errors can lead to bad join and memory choices"
+          "text": "The cardinality estimate may be wrong enough to produce a poor join or memory decision; inspect data distribution and statistics."
         },
         {
           "id": "b",
-          "text": "It guarantees syntax error"
+          "text": "The spill proves the hash algorithm is always slower than a nested loop."
         },
         {
           "id": "c",
-          "text": "It means buffers are unavailable"
+          "text": "The estimate is only a display detail and cannot affect the chosen plan."
         },
         {
           "id": "d",
-          "text": "It proves index corruption"
+          "text": "The only valid fix is to increase work_mem globally for every session."
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Estimates influence downstream plan decisions."
+      "explanation": "Large estimate errors can affect join strategy and expected memory use. Inspect predicates, statistics, and actual rows first; tune memory only with evidence and concurrency in mind."
     },
     {
       "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q3",
@@ -374,27 +392,27 @@
     {
       "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q8",
       "type": "single_select",
-      "prompt": "Best first response to a slow query?",
+      "prompt": "A query that used to finish in 2 seconds now takes 40 seconds. The actual plan shows 100,000 rows where 200 were estimated, repeated inner index lookups, and temporary I/O from a sort. What should you do first?",
       "options": [
         {
           "id": "a",
-          "text": "Capture a representative actual plan with buffers and locate the work"
+          "text": "Compare estimates with actuals, inspect the predicate/data distribution and loops, then identify which node accounts for buffers and temp I/O."
         },
         {
           "id": "b",
-          "text": "Add indexes to every filtered column"
+          "text": "Create indexes on every column mentioned in the query before looking at the plan."
         },
         {
           "id": "c",
-          "text": "Disable hash joins globally"
+          "text": "Set work_mem to a very large value globally and assume the estimate error no longer matters."
         },
         {
           "id": "d",
-          "text": "Change database engines"
+          "text": "Treat the largest cost number as elapsed milliseconds and optimize only that node."
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Diagnose before changing plan or configuration."
+      "explanation": "The plan gives several clues: cardinality error, repeated inner work, and sort I/O. Validate the root cause and workload before changing indexes or memory settings."
     },
     {
       "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q9",

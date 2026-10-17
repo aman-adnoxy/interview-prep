@@ -709,9 +709,9 @@
     {
       "id": "q12",
       "type": "true_false",
-      "prompt": "If a foreign key is enforced, an INNER JOIN between child and parent tables is guaranteed to return exactly one output row per child row.",
+      "prompt": "If child.parent_id is a nullable, enforced foreign key to parent.id, an INNER JOIN from child to parent returns one row for every child row.",
       "correctAnswer": false,
-      "explanation": "A foreign key guarantees a valid reference, not uniqueness on the child side of arbitrary joins. Joining additional one-to-many relations can still multiply rows."
+      "explanation": "A foreign key permits NULL unless the column is also NOT NULL. A child row with parent_id = NULL has no matching parent row and is excluded by the INNER JOIN. The foreign key also does not prevent multiple child rows from referencing the same parent."
     }
   ],
   "interviewScenarios": [
