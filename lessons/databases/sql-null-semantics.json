@@ -13,7 +13,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "NULL means the value is missing, unknown, or inapplicable under the data model; it is not an ordinary value. SQL predicates can therefore evaluate to UNKNOWN as well as TRUE or FALSE. WHERE keeps only rows for which the predicate is TRUE."
+    "text": "NULL means a value is missing, unknown, or not applicable. Because we do not know the value, a comparison like `delivery_date = NULL` cannot be TRUE or FALSE in the usual way: it is UNKNOWN. WHERE keeps only TRUE results, so use IS NULL to find missing values and think carefully about what missing means."
   },
   "concepts": [
     {
@@ -22,7 +22,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "For an ordinary comparison, if either operand is NULL, the result is generally UNKNOWN. NULL = NULL is not TRUE; it is UNKNOWN. SQL uses three-valued logic for predicates, and WHERE filters out both FALSE and UNKNOWN. This is why `column = NULL` does not find missing values."
+          "text": "NULL is not zero, an empty string, or another ordinary value. If you compare a value with NULL, the result is usually UNKNOWN. WHERE keeps only rows where the condition is TRUE, so `WHERE delivery_date = NULL` finds nothing; write `WHERE delivery_date IS NULL` instead."
         },
         {
           "type": "table",
@@ -113,7 +113,7 @@
         },
         {
           "type": "paragraph",
-          "text": "PostgreSQL's IS DISTINCT FROM and IS NOT DISTINCT FROM provide NULL-safe comparison semantics. `a IS NOT DISTINCT FROM b` treats two NULLs as not distinct and a NULL/non-NULL pair as distinct. These operators are useful when NULL should participate in a comparison without producing UNKNOWN."
+          "text": "Use IS NULL to find missing values. PostgreSQL also has IS DISTINCT FROM and IS NOT DISTINCT FROM, which compare values without producing UNKNOWN. The second treats two NULLs as equal for comparison, so be careful: if many rows on both sides have NULL keys, a join can match all of them to each other."
         },
         {
           "type": "code",
@@ -135,7 +135,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "If the right-hand side of NOT IN contains NULL and no equal value is found, the result can be UNKNOWN rather than TRUE. Because WHERE discards UNKNOWN, rows you expect to keep may disappear. This is especially common when a subquery selects a nullable column."
+          "text": "NOT IN can surprise you when its list or subquery contains NULL. If no equal value is found, the result may be UNKNOWN instead of TRUE, so WHERE removes the row. NOT EXISTS is often safer, but you should still decide what to do when the value from the outer row is NULL."
         },
         {
           "type": "code",
@@ -161,7 +161,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "NOT NULL is the explicit rule that a column must contain a value. A CHECK predicate that evaluates to UNKNOWN passes, so CHECK (quantity > 0) must be paired with NOT NULL if missing quantity is invalid. PostgreSQL UNIQUE constraints normally allow multiple NULLs by default; PostgreSQL also supports `NULLS NOT DISTINCT` for a unique constraint when NULLs should compare as equal for uniqueness."
+          "text": "NOT NULL says a value must be present. CHECK (quantity > 0) alone still allows NULL because the comparison is UNKNOWN, so use both rules when quantity is required and positive. By default, PostgreSQL UNIQUE also allows more than one NULL; newer versions offer NULLS NOT DISTINCT when NULLs should count as duplicates."
         },
         {
           "type": "code",
@@ -181,7 +181,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Before allowing NULL, decide what it means: unknown, not yet collected, not applicable, or intentionally absent. If those meanings lead to different business behavior, one NULL may be insufficient. A status column, separate relation, or explicit lifecycle state may model the distinction more clearly."
+          "text": "Before allowing NULL, decide what it means. Does the delivery date not exist because it is unknown, because the order has not shipped yet, or because delivery is not required? If those cases lead to different behavior, represent them separately instead of making the application guess."
         },
         {
           "type": "paragraph",
