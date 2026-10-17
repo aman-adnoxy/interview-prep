@@ -24,7 +24,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "When a transaction updates a row, PostgreSQL usually creates a new version rather than overwriting the old one immediately. A query sees the version allowed by its snapshot. This lets readers and writers work at the same time, but old versions cannot be cleaned up while an active transaction might still need them."
+          "text": "PostgreSQL uses multi-version concurrency control (MVCC): when a transaction updates a row, it usually creates a new version rather than overwriting the old one immediately. A query sees the version allowed by its snapshot. This lets readers and writers work at the same time, but old versions cannot be cleaned up while an active transaction might still need them."
         },
         {
           "type": "code",
