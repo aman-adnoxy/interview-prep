@@ -3,7 +3,7 @@
   "sectionId": "advanced-sql-window-functions-set-operations",
   "title": "Advanced SQL: Window Functions, Ranking, Set Operations, and Latest-Row-per-Group Queries",
   "difficulty": "intermediate",
-  "estimatedMinutes": 42,
+  "estimatedMinutes": 54,
   "learningObjectives": [
     "Distinguish grouped aggregation from window calculations.",
     "Use ROW_NUMBER, RANK, DENSE_RANK, LAG and running aggregates correctly.",
@@ -416,6 +416,153 @@
       ],
       "correctOptionId": "b",
       "explanation": "WHERE is evaluated before the SELECT-list window result is available. Calculate the window result in a CTE or subquery, then filter outside."
+    },
+    {
+      "id": "q6",
+      "type": "single_select",
+      "prompt": "For scores 100, 90, 90, 80, which ranking function yields ranks 1, 2, 2, 4?",
+      "options": [
+        {
+          "id": "a",
+          "text": "ROW_NUMBER"
+        },
+        {
+          "id": "b",
+          "text": "RANK"
+        },
+        {
+          "id": "c",
+          "text": "DENSE_RANK"
+        },
+        {
+          "id": "d",
+          "text": "NTILE"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "RANK assigns tied rows the same rank and leaves gaps after ties; DENSE_RANK would produce 1, 2, 2, 3."
+    },
+    {
+      "id": "q7",
+      "type": "multi_select",
+      "prompt": "Which statements about deterministic latest-row-per-group queries are correct? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "MAX(timestamp) alone identifies the complete latest row."
+        },
+        {
+          "id": "b",
+          "text": "ROW_NUMBER with a unique tie-breaker can select exactly one row per group."
+        },
+        {
+          "id": "c",
+          "text": "Tied timestamps need an explicit tie policy if output must be deterministic."
+        },
+        {
+          "id": "d",
+          "text": "Filtering a window result often requires an outer query or CTE."
+        }
+      ],
+      "correctOptionIds": [
+        "b",
+        "c",
+        "d"
+      ],
+      "explanation": "MAX(timestamp) gives a value, not a unique row. A stable tie-breaker and an outer filtering layer make the result deterministic."
+    },
+    {
+      "id": "q8",
+      "type": "true_false",
+      "prompt": "UNION ALL preserves duplicate result rows, whereas UNION removes duplicate complete rows.",
+      "correctAnswer": true,
+      "explanation": "UNION performs duplicate elimination across the entire selected row; UNION ALL retains duplicates."
+    },
+    {
+      "id": "q9",
+      "type": "single_select",
+      "prompt": "You need every event for each account plus the previous event's status in time order. Which window function is designed for the prior row's value?",
+      "options": [
+        {
+          "id": "a",
+          "text": "LAG(status) OVER (PARTITION BY account_id ORDER BY occurred_at, event_id)"
+        },
+        {
+          "id": "b",
+          "text": "COUNT(status) without OVER"
+        },
+        {
+          "id": "c",
+          "text": "UNION(status)"
+        },
+        {
+          "id": "d",
+          "text": "MAX(status) grouped by account_id"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "LAG accesses a value from a preceding row within the ordered partition. Include a tie-breaker when timestamps can collide."
+    },
+    {
+      "id": "q10",
+      "type": "multi_select",
+      "prompt": "Which choices help avoid nondeterministic or misleading window results? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Add a unique tie-breaker to the window ORDER BY when one row must win."
+        },
+        {
+          "id": "b",
+          "text": "Define NULL timestamp ordering explicitly when it matters."
+        },
+        {
+          "id": "c",
+          "text": "Assume the physical storage order is stable and use it as the tie-breaker."
+        },
+        {
+          "id": "d",
+          "text": "Specify a ROWS frame when row-by-row running totals are required."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": "Deterministic order needs explicit keys, NULL handling may need specification, and a ROWS frame prevents peer-group frame behavior from surprising a row-by-row running total."
+    },
+    {
+      "id": "q11",
+      "type": "single_select",
+      "prompt": "A query calculates ROW_NUMBER() AS rn and tries to use rn in WHERE in the same SELECT. What is the usual fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Move the filter into the same-level WHERE clause"
+        },
+        {
+          "id": "b",
+          "text": "Wrap the window calculation in a CTE or derived table and filter in the outer query"
+        },
+        {
+          "id": "c",
+          "text": "Replace the window function with DISTINCT"
+        },
+        {
+          "id": "d",
+          "text": "Add GROUP BY to the same SELECT"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Window results are not available to the same-level WHERE. Compute them in a CTE or subquery, then filter in the outer query."
+    },
+    {
+      "id": "q12",
+      "type": "true_false",
+      "prompt": "A window function with PARTITION BY normally collapses each partition to one output row.",
+      "correctAnswer": false,
+      "explanation": "Window functions normally preserve each input row and add a value computed across the partition. GROUP BY is the common row-collapsing operation."
     }
   ],
   "interviewScenarios": [
@@ -441,6 +588,31 @@
         "Ignoring NULL timestamp behavior."
       ],
       "referenceAnswer": "I would rank events with ROW_NUMBER() OVER (PARTITION BY job_id ORDER BY occurred_at DESC NULLS LAST, event_id DESC), then select rn = 1 from a CTE. The unique event_id makes the selection deterministic when timestamps tie. I would confirm whether NULL timestamps should be excluded or treated as oldest, and I would index based on the actual workload after checking the plan."
+    },
+    {
+      "id": "s2",
+      "prompt": "Build a query that returns each customer's latest order, total successful payment amount across all orders, and a deterministic top-three ranking of customers by paid amount. Explain how you avoid duplicate totals and handle ties.",
+      "skillsTested": [
+        "window functions",
+        "aggregation",
+        "latest-row-per-group",
+        "tie handling",
+        "set/query composition"
+      ],
+      "strongAnswerPoints": [
+        "Aggregate successful payment amounts at the order or customer grain before joining unrelated row sets.",
+        "Use ROW_NUMBER with a stable tie-breaker to select one latest order per customer.",
+        "Rank customer totals using RANK or DENSE_RANK if ties should share rank, or ROW_NUMBER if exactly three customers are required.",
+        "Use a CTE or derived table to filter window results.",
+        "Define NULL timestamp behavior and whether refunds/partial captures count.",
+        "Validate with duplicate timestamps, multiple payment attempts, and equal customer totals."
+      ],
+      "pitfalls": [
+        "Joining raw payment attempts to raw order lines before aggregation.",
+        "Using MAX(timestamp) as if it identifies a unique full row.",
+        "Confusing top three rows with top three rank values."
+      ],
+      "referenceAnswer": "I would first aggregate successful payments to one row per order, then roll them up to one row per customer. Separately, I would rank orders per customer with ROW_NUMBER ordered by created_at DESC NULLS LAST and a unique order ID DESC, then keep rn = 1. I would join the one-row-per-customer totals to the latest-order result and apply a customer ranking function to the totals. If the requirement is exactly three customers, ROW_NUMBER with a deterministic tie-breaker is appropriate; if ties should share a rank, use RANK or DENSE_RANK and accept that more than three rows may be returned. I would state currency and refund semantics and test tie cases."
     }
   ],
   "schemaVersion": "2.0.0",

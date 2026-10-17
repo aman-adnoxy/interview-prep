@@ -5,7 +5,7 @@
     "advanced-sql-window-functions-set-operations": {
       "path": "/lessons/databases/advanced-sql-window-functions-set-operations.json",
       "contentVersion": "2.0.0",
-      "questionCount": 5
+      "questionCount": 12
     },
     "database-btree-structure-traversal-splits": {
       "path": "/lessons/databases/index-design-performance.json",
@@ -45,27 +45,27 @@
     "relational-databases-keys-constraints": {
       "path": "/lessons/databases/relational-databases-keys-constraints.json",
       "contentVersion": "2.0.0",
-      "questionCount": 5
+      "questionCount": 12
     },
     "database-schema-design-normalization": {
       "path": "/lessons/databases/schema-design-normalization.json",
       "contentVersion": "2.0.0",
-      "questionCount": 5
+      "questionCount": 12
     },
     "sql-aggregation-group-by-having-ctes": {
       "path": "/lessons/databases/sql-aggregation-group-by-having-ctes.json",
       "contentVersion": "2.0.0",
-      "questionCount": 5
+      "questionCount": 12
     },
     "sql-joins-inner-left-right-full": {
       "path": "/lessons/databases/sql-joins.json",
       "contentVersion": "2.0.0",
-      "questionCount": 5
+      "questionCount": 12
     },
     "sql-null-three-valued-logic": {
       "path": "/lessons/databases/sql-null-semantics.json",
       "contentVersion": "2.0.0",
-      "questionCount": 5
+      "questionCount": 12
     }
   }
 }

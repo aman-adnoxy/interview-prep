@@ -3,7 +3,7 @@
   "sectionId": "relational-databases-keys-constraints",
   "title": "Relational Databases, Primary Keys, Foreign Keys, and Constraints",
   "difficulty": "beginner",
-  "estimatedMinutes": 30,
+  "estimatedMinutes": 42,
   "learningObjectives": [
     "Explain relations, rows, columns, and the role of a relational schema.",
     "Choose primary and candidate keys based on identity and business rules.",
@@ -390,6 +390,153 @@
       ],
       "correctOptionId": "b",
       "explanation": "The check and insert are separate operations. A database-enforced unique constraint/index is authoritative; handle conflicts or use an atomic upsert."
+    },
+    {
+      "id": "q6",
+      "type": "single_select",
+      "prompt": "A table must enforce that each active subscription has at most one row per (account_id, plan_id). Which constraint best expresses this invariant?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A CHECK constraint that compares account_id and plan_id"
+        },
+        {
+          "id": "b",
+          "text": "A UNIQUE constraint on (account_id, plan_id)"
+        },
+        {
+          "id": "c",
+          "text": "A foreign key from account_id to plan_id"
+        },
+        {
+          "id": "d",
+          "text": "A default value for subscription_id"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Uniqueness across a combination of columns is the job of a composite UNIQUE constraint. A CHECK constraint is row-local and does not safely compare other rows.",
+      "hint": "Ask whether the rule concerns one row or a set of rows."
+    },
+    {
+      "id": "q7",
+      "type": "multi_select",
+      "prompt": "Which statements about keys and constraints are correct? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "A candidate key is a minimal set of attributes that uniquely identifies a row."
+        },
+        {
+          "id": "b",
+          "text": "A surrogate primary key removes the need to enforce business-key uniqueness."
+        },
+        {
+          "id": "c",
+          "text": "A foreign key can enforce that a child references an eligible parent key."
+        },
+        {
+          "id": "d",
+          "text": "A primary key permits multiple NULL values if the database supports NULLs."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "c"
+      ],
+      "explanation": "Candidate keys are minimal unique identifiers, and foreign keys protect references. A primary key is unique and NOT NULL; surrogate identity does not replace business uniqueness."
+    },
+    {
+      "id": "q8",
+      "type": "true_false",
+      "prompt": "A PostgreSQL CHECK (quantity > 0) constraint alone guarantees that quantity cannot be NULL.",
+      "correctAnswer": false,
+      "explanation": "A CHECK passes when its expression is TRUE or UNKNOWN. Pair CHECK with NOT NULL when NULL is forbidden."
+    },
+    {
+      "id": "q9",
+      "type": "single_select",
+      "prompt": "You need to delete a customer only if no orders reference them. Which referential action best matches that rule?",
+      "options": [
+        {
+          "id": "a",
+          "text": "ON DELETE CASCADE"
+        },
+        {
+          "id": "b",
+          "text": "ON DELETE SET NULL"
+        },
+        {
+          "id": "c",
+          "text": "ON DELETE RESTRICT or an equivalent NO ACTION rule"
+        },
+        {
+          "id": "d",
+          "text": "ON UPDATE CASCADE"
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "RESTRICT/NO ACTION prevents deleting a referenced parent while dependent rows remain. CASCADE would delete the orders, which is a different lifecycle decision."
+    },
+    {
+      "id": "q10",
+      "type": "multi_select",
+      "prompt": "A migration adds a UNIQUE constraint to a large production table. Which steps are sensible? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Find and resolve existing duplicate values before enforcement."
+        },
+        {
+          "id": "b",
+          "text": "Check database-specific locking and index-build behavior."
+        },
+        {
+          "id": "c",
+          "text": "Assume the application pre-check guarantees no duplicates during rollout."
+        },
+        {
+          "id": "d",
+          "text": "Plan how concurrent writes and constraint failures will be handled."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": "Existing duplicates can prevent the constraint from being created. Production rollout also needs an operational plan for locks, concurrent writes, and conflict handling."
+    },
+    {
+      "id": "q11",
+      "type": "single_select",
+      "prompt": "Two concurrent transactions reserve the same seat. Each checks availability before inserting a reservation. What is the strongest general protection against duplicate active reservations?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A longer transaction timeout"
+        },
+        {
+          "id": "b",
+          "text": "A database uniqueness rule that encodes the seat's reservation scope, with conflict handling"
+        },
+        {
+          "id": "c",
+          "text": "A second availability SELECT after the first SELECT"
+        },
+        {
+          "id": "d",
+          "text": "A random delay before insert"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "A database constraint is the authoritative concurrency boundary. The exact key may include event_id, seat_id, and reservation state depending on the lifecycle model."
+    },
+    {
+      "id": "q12",
+      "type": "true_false",
+      "prompt": "Wrapping a read-check-write sequence in a transaction automatically prevents every race between concurrent transactions.",
+      "correctAnswer": false,
+      "explanation": "Transactions provide atomicity for each transaction, but they do not automatically enforce all cross-transaction invariants. Constraints, locking, or suitable isolation may still be required."
     }
   ],
   "interviewScenarios": [
@@ -416,6 +563,31 @@
         "Treating every database exception as the same error."
       ],
       "referenceAnswer": "I would use a stable user ID as the primary key and enforce the email identity rule in the database. First I would define normalization and case-sensitivity semantics, then clean existing conflicting data and add the corresponding uniqueness constraint or unique index. The API may pre-check to give a friendly message, but the insert is authoritative: concurrent requests can race. I would catch the specific uniqueness conflict and return a safe domain-level response. I would also plan deployment carefully if the table is large, because building the constraint/index and resolving legacy duplicates need an operational migration plan."
+    },
+    {
+      "id": "s2",
+      "prompt": "Model a ticket-booking system where one seat can be reserved once per show, users can cancel reservations, and reservation attempts may arrive concurrently. Explain the schema invariants and write-path behavior.",
+      "skillsTested": [
+        "relational modeling",
+        "composite uniqueness",
+        "referential integrity",
+        "concurrency control",
+        "lifecycle trade-offs"
+      ],
+      "strongAnswerPoints": [
+        "Define the reservation row grain and stable primary key.",
+        "Use foreign keys to reference a show, seat, and user where those entities live in the same database.",
+        "Enforce one active reservation per show and seat using a suitable database uniqueness strategy, accounting for cancelled rows if needed.",
+        "Treat availability checks as user experience, not the concurrency guarantee.",
+        "Handle unique conflicts or serialization failures as expected domain outcomes.",
+        "Explain how cancellation and re-reservation affect the invariant and any partial unique index."
+      ],
+      "pitfalls": [
+        "Relying only on a SELECT availability check.",
+        "Using a global UNIQUE(seat_id) when seats can be booked for different shows.",
+        "Ignoring cancellation semantics or retry behavior."
+      ],
+      "referenceAnswer": "I would define one reservation row per booking attempt or current reservation, then enforce the business rule at the database boundary. If cancelled reservations remain for history, a partial unique index on (show_id, seat_id) for active reservations may express the invariant in PostgreSQL; alternatively, model current occupancy separately. The API can check availability for a friendly response, but concurrent requests still race, so the insert/update must handle a uniqueness conflict. Foreign keys protect references, and cancellation must release the active uniqueness slot without erasing audit history."
     }
   ],
   "schemaVersion": "2.0.0",

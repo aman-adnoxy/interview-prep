@@ -22,7 +22,7 @@
           "order": 1,
           "status": "published",
           "lessonPath": "/lessons/databases/relational-databases-keys-constraints.json",
-          "questionCount": 5,
+          "questionCount": 12,
           "lessonId": "relational-databases-keys-constraints"
         },
         {
@@ -32,7 +32,7 @@
           "order": 2,
           "status": "published",
           "lessonPath": "/lessons/databases/sql-joins.json",
-          "questionCount": 5,
+          "questionCount": 12,
           "lessonId": "sql-joins-inner-left-right-full"
         },
         {
@@ -42,7 +42,7 @@
           "order": 3,
           "status": "published",
           "lessonPath": "/lessons/databases/sql-aggregation-group-by-having-ctes.json",
-          "questionCount": 5,
+          "questionCount": 12,
           "lessonId": "sql-aggregation-group-by-having-ctes"
         },
         {
@@ -52,7 +52,7 @@
           "order": 4,
           "status": "published",
           "lessonPath": "/lessons/databases/sql-null-semantics.json",
-          "questionCount": 5,
+          "questionCount": 12,
           "lessonId": "sql-null-three-valued-logic"
         },
         {
@@ -62,7 +62,7 @@
           "order": 5,
           "status": "published",
           "lessonPath": "/lessons/databases/schema-design-normalization.json",
-          "questionCount": 5,
+          "questionCount": 12,
           "lessonId": "database-schema-design-normalization"
         },
         {
@@ -72,7 +72,7 @@
           "order": 6,
           "status": "published",
           "lessonPath": "/lessons/databases/advanced-sql-window-functions-set-operations.json",
-          "questionCount": 5,
+          "questionCount": 12,
           "lessonId": "advanced-sql-window-functions-set-operations"
         },
         {
