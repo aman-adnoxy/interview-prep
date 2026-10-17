@@ -109,7 +109,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Suppose Asha has two orders and Ravi has none. A LEFT JOIN from customers to orders shows Asha twice and Ravi once with NULL in the order columns. An order that points to no listed customer is not shown because customers are the preserved, left-side table."
+          "text": "Suppose Asha has two orders and Ravi has none. A LEFT JOIN from customers to orders shows Asha twice and Ravi once with NULL in the order columns. An order pointing to no listed customer is not shown because customers are the left-side table."
         },
         {
           "type": "paragraph",
@@ -303,7 +303,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "ON decides which order rows count as a match; WHERE filters the joined result. If you put `orders.status = 'paid'` in WHERE, customers with no paid order are removed. Put that condition in ON when you want to keep every customer but attach only paid orders."
+          "text": "ON decides which order rows count as a match; WHERE filters the joined result. Put orders.status = 'paid' in WHERE and customers with no paid order disappear. Put it in ON when you want to keep every customer but attach only paid orders."
         },
         {
           "type": "code",
@@ -331,7 +331,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Suppose one customer has 3 orders and 2 addresses. Joining both child tables can produce 3 × 2 = 6 rows for that customer. If you sum order totals after this join, each order total may be counted twice. Aggregate each child table first, or use EXISTS when you only need to know whether a match exists."
+          "text": "Suppose one customer has 3 orders and 2 addresses. Joining both child tables can produce 3 × 2 = 6 rows. Summing order totals after this join may count each order twice. Aggregate each child table first, or use EXISTS when you only need to know whether a match exists."
         },
         {
           "type": "code",
@@ -357,7 +357,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Before writing a join, say what one output row should represent: one customer, one order, or one customer-order pair. Then decide which side must remain even without a match and whether you need the related columns or only need to test that a row exists."
+          "text": "Before writing a join, say what one output row should represent: one customer, one order, or one customer-order pair. Then decide which side must remain even without a match and whether you need related columns or only need to test that a row exists."
         },
         {
           "type": "table",
