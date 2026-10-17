@@ -28,7 +28,7 @@
         {
           "id": "sql-joins",
           "title": "SQL Joins: INNER, LEFT, RIGHT, and FULL OUTER JOIN",
-          "lessonId": "sql-joins",
+          "lessonId": "sql-joins-inner-left-right-full",
           "difficulty": "beginner",
           "order": 2,
           "prerequisites": [
@@ -50,7 +50,7 @@
         {
           "id": "sql-null-semantics",
           "title": "NULL Semantics, Three-Valued Logic, and Common SQL Pitfalls",
-          "lessonId": "sql-null-semantics",
+          "lessonId": "sql-null-three-valued-logic",
           "difficulty": "intermediate",
           "order": 4,
           "prerequisites": [
@@ -61,7 +61,7 @@
         {
           "id": "schema-design-normalization",
           "title": "Database Schema Design, Normalization (1NF–3NF), and Denormalization",
-          "lessonId": "schema-design-normalization",
+          "lessonId": "database-schema-design-normalization",
           "difficulty": "intermediate",
           "order": 5,
           "prerequisites": [
