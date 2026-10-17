@@ -3,7 +3,7 @@
   "sectionId": "sql-null-semantics",
   "title": "NULL Semantics, Three-Valued Logic, and Common SQL Pitfalls",
   "difficulty": "intermediate",
-  "estimatedMinutes": 32,
+  "estimatedMinutes": 44,
   "learningObjectives": [
     "Explain why NULL is not equal to zero, an empty string, or another NULL.",
     "Predict TRUE, FALSE, and UNKNOWN for common SQL predicates.",
@@ -377,6 +377,152 @@
       ],
       "correctOptionId": "b",
       "explanation": "Ordinary equality with NULL evaluates to UNKNOWN, and WHERE keeps only TRUE predicates. IS NULL selects missing values."
+    },
+    {
+      "id": "q6",
+      "type": "single_select",
+      "prompt": "A query should return rows where cancelled_at has not been set. Which predicate is correct?",
+      "options": [
+        {
+          "id": "a",
+          "text": "cancelled_at = NULL"
+        },
+        {
+          "id": "b",
+          "text": "cancelled_at <> NULL"
+        },
+        {
+          "id": "c",
+          "text": "cancelled_at IS NULL"
+        },
+        {
+          "id": "d",
+          "text": "COALESCE(cancelled_at, false)"
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "NULL is tested with IS NULL or IS NOT NULL; ordinary equality comparisons with NULL yield UNKNOWN."
+    },
+    {
+      "id": "q7",
+      "type": "multi_select",
+      "prompt": "Which expressions can evaluate to UNKNOWN in SQL's three-valued logic? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "NULL = 5"
+        },
+        {
+          "id": "b",
+          "text": "NULL <> 5"
+        },
+        {
+          "id": "c",
+          "text": "TRUE AND FALSE"
+        },
+        {
+          "id": "d",
+          "text": "NULL IS NULL"
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b"
+      ],
+      "explanation": "Ordinary comparisons with NULL produce UNKNOWN. TRUE AND FALSE is FALSE, and IS NULL returns a definite boolean."
+    },
+    {
+      "id": "q8",
+      "type": "true_false",
+      "prompt": "In a WHERE clause, a predicate that evaluates to UNKNOWN keeps the row just like TRUE.",
+      "correctAnswer": false,
+      "explanation": "WHERE keeps only rows for which the predicate is TRUE; FALSE and UNKNOWN are filtered out."
+    },
+    {
+      "id": "q9",
+      "type": "single_select",
+      "prompt": "A NOT IN subquery can unexpectedly return no rows when the subquery contains a NULL. What is a robust alternative when checking for absence of a related row?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Use NOT EXISTS with a correlated condition"
+        },
+        {
+          "id": "b",
+          "text": "Replace NOT IN with <> ALL without checking NULL behavior"
+        },
+        {
+          "id": "c",
+          "text": "Compare the column to NULL using ="
+        },
+        {
+          "id": "d",
+          "text": "Add ORDER BY to the subquery"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "NOT EXISTS expresses absence without the NULL poisoning behavior of NOT IN, provided the correlation condition matches the intended relationship."
+    },
+    {
+      "id": "q10",
+      "type": "multi_select",
+      "prompt": "Which aggregate behaviors are accurate in PostgreSQL? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "COUNT(*) counts rows even if some columns are NULL."
+        },
+        {
+          "id": "b",
+          "text": "COUNT(column) ignores rows where that expression is NULL."
+        },
+        {
+          "id": "c",
+          "text": "SUM(column) returns zero for an empty input set by default."
+        },
+        {
+          "id": "d",
+          "text": "COALESCE can supply a fallback when an aggregate result is NULL."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": "COUNT(*) counts rows; COUNT(expression) skips NULL expressions. SUM over no input rows is NULL, so COALESCE may be appropriate when zero is the desired business meaning."
+    },
+    {
+      "id": "q11",
+      "type": "single_select",
+      "prompt": "A LEFT JOIN finds customers with no successful payments. Which condition correctly identifies the unmatched side if payment.id is non-null for real rows?",
+      "options": [
+        {
+          "id": "a",
+          "text": "WHERE payment.status <> 'success'"
+        },
+        {
+          "id": "b",
+          "text": "WHERE payment.id IS NULL"
+        },
+        {
+          "id": "c",
+          "text": "WHERE customer.id IS NULL"
+        },
+        {
+          "id": "d",
+          "text": "WHERE payment.id = NULL"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "A left join's unmatched right-side columns are NULL. Test a non-nullable right-side key with IS NULL; filtering status <> 'success' also has tricky NULL behavior and can miss customers."
+    },
+    {
+      "id": "q12",
+      "type": "true_false",
+      "prompt": "COALESCE(SUM(amount), 0) is always semantically correct whenever SUM returns NULL.",
+      "correctAnswer": false,
+      "explanation": "Zero may be a useful presentation default, but the query must distinguish no qualifying rows from unknown or unavailable amounts if the domain cares about that difference."
     }
   ],
   "interviewScenarios": [
@@ -401,6 +547,30 @@
         "Assuming this is an optimizer bug."
       ],
       "referenceAnswer": "I would inspect the subquery for NULL values. With NOT IN, a non-matching value compared against a set containing NULL can yield UNKNOWN, and WHERE removes it. I would usually rewrite this as NOT EXISTS with an explicit matching predicate, then decide how a nullable outer customer_id should be treated. I would add a test with both matching and NULL subquery rows to prevent regression."
+    },
+    {
+      "id": "s2",
+      "prompt": "An endpoint must return accounts with no successful payments in the last 30 days. The data can contain NULL payment status and NULL timestamps. Compare NOT IN, NOT EXISTS, and LEFT JOIN approaches, then state the intended NULL semantics.",
+      "skillsTested": [
+        "three-valued logic",
+        "anti-joins",
+        "NULL semantics",
+        "requirements clarification",
+        "correctness testing"
+      ],
+      "strongAnswerPoints": [
+        "Define whether a NULL status or timestamp should count as a successful payment; normally it cannot qualify as success.",
+        "Prefer NOT EXISTS for a correlated absence check when nullable subquery values could poison NOT IN.",
+        "Put the time window and successful-status condition inside the correlated subquery.",
+        "If using LEFT JOIN, test a non-nullable payment key for NULL and avoid optional-side WHERE predicates that change semantics.",
+        "Test accounts with no payments, only failed payments, NULL status, NULL timestamp, and a recent success."
+      ],
+      "pitfalls": [
+        "Using status <> 'success' to find accounts with no successful payment.",
+        "Using NOT IN without checking whether the subquery can return NULL.",
+        "Assuming COALESCE can resolve every ambiguous business meaning."
+      ],
+      "referenceAnswer": "I would write the absence rule as NOT EXISTS over successful payments whose timestamp falls in the last 30 days. NULL status does not satisfy status = 'success', and a NULL timestamp does not satisfy the time-window predicate, so those rows would not count as a successful payment unless the product defines another rule. NOT EXISTS avoids the classic NOT IN issue when a subquery returns NULL. A LEFT JOIN anti-join can also work if its optional-side predicates are in ON and the outer WHERE checks a non-nullable payment key for NULL. I would test all edge cases explicitly."
     }
   ],
   "schemaVersion": "2.0.0",

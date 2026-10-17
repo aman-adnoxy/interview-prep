@@ -23,8 +23,8 @@ test('Module 1 SQL lessons validate against the canonical lesson schema', () => 
   const loaded = files.map(file => JSON.parse(fs.readFileSync(path.join(root, 'lessons/databases', file), 'utf8')));
   for (const item of loaded) {
     assert.equal(validateLesson(item, item.id), true);
-    assert.equal(item.questions.length, 5);
-    assert.equal(item.interviewScenarios.length, 1);
+    assert.equal(item.questions.length, 12);
+    assert.equal(item.interviewScenarios.length, 2);
   }
   assert.ok(loaded.find(item => item.sectionId === 'advanced-sql-window-functions-set-operations').concepts.some(concept => concept.id === 'module-cumulative-challenge'));
 });

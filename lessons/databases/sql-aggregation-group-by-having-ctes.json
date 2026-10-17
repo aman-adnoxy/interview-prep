@@ -3,7 +3,7 @@
   "sectionId": "sql-aggregation-group-by-having-ctes",
   "title": "Aggregations, GROUP BY, HAVING, Subqueries, and CTEs",
   "difficulty": "intermediate",
-  "estimatedMinutes": 35,
+  "estimatedMinutes": 47,
   "learningObjectives": [
     "Explain how GROUP BY changes output grain.",
     "Use COUNT, SUM, AVG, MIN, MAX and understand NULL behavior.",
@@ -313,6 +313,153 @@
       ],
       "correctOptionId": "b",
       "explanation": "An aggregate query without GROUP BY returns one row for empty input, but SUM returns NULL. COALESCE can map it to zero when that is the intended business meaning."
+    },
+    {
+      "id": "q6",
+      "type": "single_select",
+      "prompt": "A report should return departments whose average salary exceeds 100000. Where should that aggregate condition go?",
+      "options": [
+        {
+          "id": "a",
+          "text": "WHERE AVG(salary) > 100000"
+        },
+        {
+          "id": "b",
+          "text": "HAVING AVG(salary) > 100000 after GROUP BY department_id"
+        },
+        {
+          "id": "c",
+          "text": "ON AVG(salary) > 100000 without a join"
+        },
+        {
+          "id": "d",
+          "text": "ORDER BY AVG(salary) > 100000"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "WHERE filters input rows before grouping. HAVING filters groups after aggregate values are calculated."
+    },
+    {
+      "id": "q7",
+      "type": "multi_select",
+      "prompt": "Which statements about COUNT are correct? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "COUNT(*) counts rows."
+        },
+        {
+          "id": "b",
+          "text": "COUNT(column_name) excludes rows where that expression is NULL."
+        },
+        {
+          "id": "c",
+          "text": "COUNT(DISTINCT column_name) counts distinct non-NULL values."
+        },
+        {
+          "id": "d",
+          "text": "COUNT(column_name) always equals COUNT(*)."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "COUNT(*) counts rows; COUNT(expression) counts non-NULL expression values; DISTINCT removes duplicate non-NULL values for the count."
+    },
+    {
+      "id": "q8",
+      "type": "true_false",
+      "prompt": "A CTE is always materialized and therefore always makes a query slower than an equivalent subquery.",
+      "correctAnswer": false,
+      "explanation": "CTE optimization and materialization behavior depends on the database and query shape. In modern PostgreSQL, many non-recursive CTEs can be inlined; use EXPLAIN rather than assuming."
+    },
+    {
+      "id": "q9",
+      "type": "single_select",
+      "prompt": "You need customers whose total paid amount exceeds 5000, but only successful payments count. Which order of operations is most appropriate?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Group every payment, then filter individual rows with WHERE status = 'success' outside the aggregate"
+        },
+        {
+          "id": "b",
+          "text": "Filter successful payment rows, GROUP BY customer, then HAVING SUM(amount) > 5000"
+        },
+        {
+          "id": "c",
+          "text": "Use ORDER BY SUM(amount) before GROUP BY"
+        },
+        {
+          "id": "d",
+          "text": "Use DISTINCT amount to avoid aggregation"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Filter the input set to successful payments, aggregate by customer, then use HAVING to keep groups over the threshold."
+    },
+    {
+      "id": "q10",
+      "type": "multi_select",
+      "prompt": "A query joins orders to items and payment attempts before summing order totals. Which changes can prevent inflated totals? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Aggregate payment attempts to one row per order before joining."
+        },
+        {
+          "id": "b",
+          "text": "Aggregate items to one row per order before joining if item-level columns are not needed."
+        },
+        {
+          "id": "c",
+          "text": "Add DISTINCT to every selected column without analyzing the grain."
+        },
+        {
+          "id": "d",
+          "text": "Document the intended row grain at each CTE boundary."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": "Independent one-to-many relations can multiply each order. Pre-aggregation and explicit grain protect totals; arbitrary DISTINCT can hide rather than fix the bug."
+    },
+    {
+      "id": "q11",
+      "type": "single_select",
+      "prompt": "Which is a valid reason to use a CTE in a complex analytical query?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It guarantees a faster execution plan."
+        },
+        {
+          "id": "b",
+          "text": "It makes logical stages explicit and can improve readability and reviewability."
+        },
+        {
+          "id": "c",
+          "text": "It automatically adds indexes to intermediate results."
+        },
+        {
+          "id": "d",
+          "text": "It makes NULL values behave like zero."
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "CTEs can name and separate logical stages. They do not automatically guarantee speed, indexing, or different NULL semantics."
+    },
+    {
+      "id": "q12",
+      "type": "true_false",
+      "prompt": "WHERE is evaluated after HAVING, so WHERE can filter using aggregate results such as SUM(amount).",
+      "correctAnswer": false,
+      "explanation": "WHERE filters input rows before grouping. HAVING filters groups after aggregate calculations."
     }
   ],
   "interviewScenarios": [
@@ -338,6 +485,31 @@
         "Ignoring refund or currency semantics."
       ],
       "referenceAnswer": "I would first define the metric: captured payment amounts net of refunds, if that is what the business asks. I would filter to the qualifying payment states in WHERE, group by customer_id, sum at payment grain, and use HAVING SUM(...) > 50000. If other one-to-many tables are needed, I would aggregate them separately or use EXISTS to avoid multiplying payments. I would confirm currency and refund rules before presenting the result as revenue."
+    },
+    {
+      "id": "s2",
+      "prompt": "A monthly revenue report returns inflated totals after a developer joins orders, order_items, and payment_attempts. Refactor the query conceptually and explain how you would validate the result.",
+      "skillsTested": [
+        "aggregate semantics",
+        "CTE design",
+        "grain analysis",
+        "fan-out debugging",
+        "test design"
+      ],
+      "strongAnswerPoints": [
+        "State the required output grain, such as one row per month and currency.",
+        "Decide whether revenue means order value, captured payment value, or net revenue after refunds.",
+        "Aggregate items and payment attempts separately to the needed grain before joining.",
+        "Filter qualifying rows before aggregation and use HAVING for aggregate thresholds.",
+        "Handle NULL/no-row aggregates deliberately rather than assuming zero.",
+        "Validate against hand-calculated fixtures with multiple items and multiple payment attempts per order."
+      ],
+      "pitfalls": [
+        "Assuming a CTE automatically improves performance.",
+        "Using SUM(DISTINCT amount) as a universal de-duplication strategy.",
+        "Combining currencies or refunds without defining the metric."
+      ],
+      "referenceAnswer": "First I would define revenue precisely and state the report grain, including month and currency. The raw joins multiply rows because one order can have multiple items and payment attempts. I would aggregate each source independently, for example payment attempts to one row per order and items to one row per order, then join those aggregates and group to month. Filters on raw rows belong before aggregation; thresholds on aggregate results belong in HAVING. I would test orders with multiple items, retries, partial captures, refunds, and no qualifying payments against hand-calculated expected totals. Finally I would inspect EXPLAIN ANALYZE for performance rather than assuming the CTE shape is faster."
     }
   ],
   "schemaVersion": "2.0.0",

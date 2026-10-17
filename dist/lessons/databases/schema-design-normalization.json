@@ -3,7 +3,7 @@
   "sectionId": "schema-design-normalization",
   "title": "Database Schema Design, Normalization (1NF–3NF), and Denormalization",
   "difficulty": "intermediate",
-  "estimatedMinutes": 38,
+  "estimatedMinutes": 50,
   "learningObjectives": [
     "Model entities, relationships, and cardinalities before choosing tables.",
     "Explain update, insert and delete anomalies caused by redundant facts.",
@@ -409,6 +409,153 @@
       ],
       "correctOptionId": "b",
       "explanation": "Independent one-to-many joins can produce item-count × payment-count rows per order, repeating order totals. Pre-aggregate child relations to one row per order."
+    },
+    {
+      "id": "q6",
+      "type": "single_select",
+      "prompt": "In Enrollment(student_id, course_id, student_name, course_title, grade), assume the key is (student_id, course_id), student_id determines student_name, and course_id determines course_title. Which issue violates 2NF?",
+      "options": [
+        {
+          "id": "a",
+          "text": "grade depends on the whole composite key"
+        },
+        {
+          "id": "b",
+          "text": "student_name and course_title depend on only part of the composite key"
+        },
+        {
+          "id": "c",
+          "text": "student_id is a foreign key"
+        },
+        {
+          "id": "d",
+          "text": "course_id is numeric"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Second normal form rules out partial dependency of non-prime attributes on part of a candidate key. Student and course facts belong with their own entities."
+    },
+    {
+      "id": "q7",
+      "type": "multi_select",
+      "prompt": "Which statements about normalization and denormalization are sound? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Normalization helps reduce update, insert, and delete anomalies."
+        },
+        {
+          "id": "b",
+          "text": "Every repeated-looking value is necessarily redundant."
+        },
+        {
+          "id": "c",
+          "text": "Denormalized copies require an explicit consistency and repair strategy."
+        },
+        {
+          "id": "d",
+          "text": "A historical price charged on an order line can be a different fact from today's catalog price."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "c",
+        "d"
+      ],
+      "explanation": "Normalization follows dependencies and meaning. Some repeated values represent separate historical facts; denormalized read models need clear update ownership and repair."
+    },
+    {
+      "id": "q8",
+      "type": "true_false",
+      "prompt": "Third normal form informally asks that non-key facts depend on the key, the whole key, and not on another non-key fact.",
+      "correctAnswer": true,
+      "explanation": "This is a useful interview intuition for 3NF, although formal definitions are stated in terms of functional dependencies and candidate keys."
+    },
+    {
+      "id": "q9",
+      "type": "single_select",
+      "prompt": "A system must preserve the exact amount charged on an invoice even after the product catalog price changes. Where should the charged unit price live?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only in the current products.price column"
+        },
+        {
+          "id": "b",
+          "text": "On the order line as a historical transaction fact, with a product reference"
+        },
+        {
+          "id": "c",
+          "text": "In an application cache only"
+        },
+        {
+          "id": "d",
+          "text": "In a trigger that rewrites old invoices to today's price"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The charged price is part of the historical transaction. It differs semantically from the current catalog price and should be preserved on the order line."
+    },
+    {
+      "id": "q10",
+      "type": "multi_select",
+      "prompt": "Before adding a denormalized customer-revenue summary table, what should the team decide? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Which process owns updates to the summary."
+        },
+        {
+          "id": "b",
+          "text": "The tolerated staleness and how consumers learn about it."
+        },
+        {
+          "id": "c",
+          "text": "How backfills, reconciliation, and repair happen."
+        },
+        {
+          "id": "d",
+          "text": "That summary values cannot ever diverge from source rows."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "A summary table is a second representation of derived facts. It needs update ownership, freshness expectations, backfill, reconciliation, and repair procedures."
+    },
+    {
+      "id": "q11",
+      "type": "single_select",
+      "prompt": "A table stores one row per student-course enrollment. A student can enroll in many courses, and a course can have many students. Which design best models the relationship?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Store a comma-separated list of course IDs in students."
+        },
+        {
+          "id": "b",
+          "text": "Duplicate the student's full row for every course and omit a key."
+        },
+        {
+          "id": "c",
+          "text": "Use an enrollment junction table with student_id, course_id, a uniqueness rule, and relationship attributes such as grade."
+        },
+        {
+          "id": "d",
+          "text": "Use a single nullable column that alternates between student and course IDs."
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "A junction table models the many-to-many relationship and holds facts about the relationship itself, such as grade or enrollment date."
+    },
+    {
+      "id": "q12",
+      "type": "true_false",
+      "prompt": "Normalization always means a query can never need a JOIN.",
+      "correctAnswer": false,
+      "explanation": "Normalization separates facts according to dependencies, which often means queries join related relations. The trade-off is less update anomaly risk versus query complexity and possible read cost."
     }
   ],
   "interviewScenarios": [
@@ -435,6 +582,31 @@
         "Ignoring currency, discounts or tax rules."
       ],
       "referenceAnswer": "I would model orders and order_items separately, with a product reference on each line. The product table holds current catalog price; the order line stores the unit price charged at purchase time, because that value is part of the historical transaction. That is not merely a duplicated current fact. I would constrain positive quantity and valid amounts, define how discounts, tax and currency are recorded, and use foreign keys to preserve relationships. I would only add further read-model duplication if measured query needs justify it and its consistency contract is explicit."
+    },
+    {
+      "id": "s2",
+      "prompt": "An order service needs fast customer-order history and immutable invoice totals. Propose a normalized write model and any justified read-model duplication, explaining the consistency contract.",
+      "skillsTested": [
+        "functional dependencies",
+        "normalization",
+        "transactional modeling",
+        "denormalization",
+        "consistency trade-offs"
+      ],
+      "strongAnswerPoints": [
+        "Identify row grain and entities such as customers, orders, order_items, and products.",
+        "Keep current product facts separate from historical line prices and invoice snapshots that represent transaction-time facts.",
+        "Use keys, foreign keys, and row-level constraints for durable invariants.",
+        "Only denormalize after identifying a measured read bottleneck and the required freshness target.",
+        "Define update ownership, idempotent rebuild/backfill, reconciliation, and repair for derived summaries.",
+        "Explain how transaction boundaries preserve invoice totals across order-line writes."
+      ],
+      "pitfalls": [
+        "Recomputing old invoice values from current catalog prices.",
+        "Duplicating customer or product facts without update ownership.",
+        "Treating eventual consistency as acceptable without a stated freshness contract."
+      ],
+      "referenceAnswer": "I would keep customers, orders, order_items, and products as separate entities, with each order line preserving the unit price and relevant tax/discount facts charged at purchase time. A transaction should create the order, lines, and invoice snapshot consistently. For a history dashboard, I would first measure the query and index the normalized model appropriately. If a denormalized customer-order summary is still justified, I would define its owner, freshness target, idempotent rebuild, backfill and reconciliation process, and what happens when updates fail. That preserves a clear source of truth while allowing a deliberate read optimization."
     }
   ],
   "schemaVersion": "2.0.0",

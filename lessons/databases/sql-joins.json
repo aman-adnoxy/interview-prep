@@ -3,7 +3,7 @@
   "sectionId": "sql-joins",
   "title": "SQL Joins: INNER, LEFT, RIGHT, and FULL OUTER JOIN",
   "difficulty": "beginner",
-  "estimatedMinutes": 32,
+  "estimatedMinutes": 44,
   "learningObjectives": [
     "Predict which rows survive each common join type.",
     "Explain how join predicates and NULL extension affect results.",
@@ -565,6 +565,153 @@
       ],
       "correctOptionId": "b",
       "explanation": "Two orders for customer 1 create two pairs. LEFT JOIN preserves customer 2 with NULL order columns; the order for customer 3 is not returned."
+    },
+    {
+      "id": "q6",
+      "type": "single_select",
+      "prompt": "A report must list every product and its number of paid orders, including products with zero paid orders. Which query shape best preserves the required grain?",
+      "options": [
+        {
+          "id": "a",
+          "text": "INNER JOIN paid_orders, then COUNT(*)"
+        },
+        {
+          "id": "b",
+          "text": "LEFT JOIN paid orders with the paid predicate in ON, then aggregate per product"
+        },
+        {
+          "id": "c",
+          "text": "LEFT JOIN all orders and put orders.status = 'paid' in WHERE"
+        },
+        {
+          "id": "d",
+          "text": "CROSS JOIN products and orders"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The LEFT JOIN preserves products with no paid orders, and placing the paid condition in ON limits matches without filtering away unmatched products."
+    },
+    {
+      "id": "q7",
+      "type": "multi_select",
+      "prompt": "Which situations can create more output rows than the number of parent rows? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "A parent has multiple matching child rows."
+        },
+        {
+          "id": "b",
+          "text": "Two independent one-to-many child relations are joined before aggregation."
+        },
+        {
+          "id": "c",
+          "text": "An INNER JOIN always deduplicates the left side."
+        },
+        {
+          "id": "d",
+          "text": "A many-to-many relationship has multiple matches on both sides."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": "Joins return matching row pairs. Multiple matches and independent one-to-many relationships multiply rows; joins do not automatically deduplicate."
+    },
+    {
+      "id": "q8",
+      "type": "true_false",
+      "prompt": "For a LEFT JOIN, moving a right-table filter from ON to WHERE can remove left rows that have no qualifying match.",
+      "correctAnswer": true,
+      "explanation": "The outer join creates NULL-extended rows first; a WHERE predicate on the right side may evaluate to UNKNOWN and remove those rows."
+    },
+    {
+      "id": "q9",
+      "type": "single_select",
+      "prompt": "You only need customers for whom at least one successful payment exists, and you do not need payment columns. Which approach often expresses this most directly?",
+      "options": [
+        {
+          "id": "a",
+          "text": "CROSS JOIN payments"
+        },
+        {
+          "id": "b",
+          "text": "LEFT JOIN payments and SELECT DISTINCT every column"
+        },
+        {
+          "id": "c",
+          "text": "WHERE EXISTS (SELECT 1 FROM payments ... WHERE payment.customer_id = customer.id AND status = 'success')"
+        },
+        {
+          "id": "d",
+          "text": "FULL OUTER JOIN payments"
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "EXISTS expresses a boolean existence test without producing one parent row per matching payment."
+    },
+    {
+      "id": "q10",
+      "type": "multi_select",
+      "prompt": "A query sums order totals after joining orders to order_items and payment_attempts. Which fixes are appropriate? Select all that apply.",
+      "options": [
+        {
+          "id": "a",
+          "text": "Aggregate items and attempts independently to the needed grain before joining."
+        },
+        {
+          "id": "b",
+          "text": "Define the output grain before writing the joins."
+        },
+        {
+          "id": "c",
+          "text": "Use SUM(DISTINCT order_total) as a universal fix."
+        },
+        {
+          "id": "d",
+          "text": "Use EXISTS when a relation is only needed for an existence test."
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "d"
+      ],
+      "explanation": "Pre-aggregate independent child collections and preserve the intended grain. SUM(DISTINCT value) can incorrectly collapse two different orders with equal totals."
+    },
+    {
+      "id": "q11",
+      "type": "single_select",
+      "prompt": "You need a reconciliation report containing every row from both imported customer data and CRM data, including unmatched rows from either source. Which join fits?",
+      "options": [
+        {
+          "id": "a",
+          "text": "INNER JOIN"
+        },
+        {
+          "id": "b",
+          "text": "LEFT JOIN only"
+        },
+        {
+          "id": "c",
+          "text": "RIGHT JOIN only"
+        },
+        {
+          "id": "d",
+          "text": "FULL OUTER JOIN"
+        }
+      ],
+      "correctOptionId": "d",
+      "explanation": "FULL OUTER JOIN preserves matches and unmatched rows from both inputs, making it useful for reconciliation."
+    },
+    {
+      "id": "q12",
+      "type": "true_false",
+      "prompt": "If child.parent_id is a nullable, enforced foreign key to parent.id, an INNER JOIN from child to parent returns one row for every child row.",
+      "correctAnswer": false,
+      "explanation": "A foreign key permits NULL unless the column is also NOT NULL. A child row with parent_id = NULL has no matching parent row and is excluded by the INNER JOIN. The foreign key also does not prevent multiple child rows from referencing the same parent."
     }
   ],
   "interviewScenarios": [
@@ -589,6 +736,31 @@
         "Using SUM(DISTINCT amount) and accidentally removing legitimate equal-valued orders."
       ],
       "referenceAnswer": "I would compare the query's grain before and after the address join. If each order matches multiple addresses, the order's amount is repeated once per matching address and SUM is inflated. I would inspect cardinalities and validate the metric at its intended grain, then aggregate orders before joining address counts or use EXISTS if address data is only a filter. DISTINCT is not a general fix because distinct orders can have equal amounts."
+    },
+    {
+      "id": "s2",
+      "prompt": "A customer dashboard must show each customer, paid revenue, unpaid order count, and latest successful payment. Customers may have no orders, orders may have multiple payment attempts, and totals must not be inflated. Describe a query plan and explain the row grain at each stage.",
+      "skillsTested": [
+        "join semantics",
+        "outer joins",
+        "aggregation grain",
+        "fan-out diagnosis",
+        "query decomposition"
+      ],
+      "strongAnswerPoints": [
+        "Start from customers so inactive customers are preserved.",
+        "Aggregate paid revenue or successful payments to one row per customer/order before joining unrelated one-to-many relations.",
+        "Calculate unpaid order counts at the intended customer/order grain.",
+        "Select the latest successful payment deterministically with ROW_NUMBER or a suitable equivalent.",
+        "Use LEFT JOIN for optional metrics and COALESCE only where zero is the intended meaning.",
+        "Validate results with small fixtures including no-order customers and multiple payment attempts."
+      ],
+      "pitfalls": [
+        "Joining raw orders and raw payment attempts before summing order totals.",
+        "Moving optional-side predicates into WHERE and dropping customers.",
+        "Using DISTINCT as a blanket fix for fan-out."
+      ],
+      "referenceAnswer": "I would keep customers as the driving relation and compute each metric at its natural grain in separate CTEs. Paid revenue should be aggregated from successful payment rows to one row per customer or order as the business definition requires; unpaid orders should be counted once per order; latest successful payment should use ROW_NUMBER ordered by timestamp plus a unique payment ID. Then LEFT JOIN these one-row-per-customer result sets to customers. I would test customers with no orders, multiple payment attempts, ties in timestamps, and refunded or partially captured payments, and only use COALESCE where the product semantics define absence as zero."
     }
   ],
   "schemaVersion": "2.0.0",
