@@ -92,7 +92,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A read replica may take time to receive the latest write. If a user saves a profile and immediately reads it, send that read to the primary or wait until the replica catches up. Failover also needs a safe way to promote the new primary, reconnect clients, and prevent two nodes from accepting conflicting writes."
+          "text": "A read replica may take time to receive the latest write. If a user saves a profile and immediately reads old data from that replica, the replica may not have caught up; send that read to the primary or wait until it does. When planning recovery, define the recovery point objective (RPO: how much recent data loss is acceptable) and recovery time objective (RTO: how long service may take to return). Failover also needs a safe way to promote the new primary, reconnect clients, and prevent two nodes from accepting conflicting writes."
         },
         {
           "type": "table",
@@ -158,7 +158,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Every database connection uses resources. If 20 application instances each open 50 connections, they can create 1,000 connections before workers or admin tools are counted. Set a total budget, limit queues, and use timeouts. Retries should stop after a bounded number of attempts and use backoff so an outage doesn't create even more traffic."
+          "text": "Every database connection uses resources. If 20 application instances each open 50 connections, they can create 1,000 connections before workers or admin tools are counted. Set a total budget, limit queues, and use timeouts. Retries should stop after a bounded number of attempts and use backoff so an outage doesn't create even more traffic. For latency, p99 means 99% of requests finish within that time; the slowest 1% take longer."
         },
         {
           "type": "code",
