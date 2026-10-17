@@ -16,7 +16,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "Scaling is a sequence of bottleneck-specific interventions, not a single architecture switch. Measure whether the constraint is CPU, I/O, locks, connections, query shape, or data volume, then choose the smallest change that improves the SLO without breaking consistency or operability."
+    "text": "When a database slows down, first find what it is waiting on. More CPU helps CPU pressure, a better query helps unnecessary work, and a read replica helps only reads that can tolerate its lag. Reliability also means knowing how much data could be lost, how quickly service must return, and proving those targets with recovery drills."
   },
   "concepts": [
     {
@@ -25,7 +25,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Vertical scaling adds capacity to one node. Query improvements can be cheaper than new infrastructure. Read replicas distribute eligible reads but do not accelerate a write-bound primary and may serve stale data."
+          "text": "Before adding servers, find the bottleneck. If a query does too much work, improving it may be cheaper than buying more hardware. Read replicas can serve suitable read traffic, but writes still go to the primary and a replica may be a little behind."
         },
         {
           "type": "table",
@@ -92,7 +92,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A read replica may not yet contain a recent commit. Read-after-write flows may need primary routing or a consistency-aware wait. High availability also needs leader promotion, fencing against split brain, client reconnection, and failover drills."
+          "text": "A read replica may take time to receive the latest write. If a user saves a profile and immediately reads it, send that read to the primary or wait until the replica catches up. Failover also needs a safe way to promote the new primary, reconnect clients, and prevent two nodes from accepting conflicting writes."
         },
         {
           "type": "table",
@@ -132,7 +132,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Partitioning divides a table into manageable pieces within a database system. Sharding distributes data across independent nodes and adds routing, rebalancing, cross-shard query, and transaction challenges. A shard key must balance distribution with common query filters."
+          "text": "Partitioning splits a large table into smaller pieces inside one database, often by date so old data is easier to manage and queries can skip irrelevant partitions. Sharding distributes rows across separate database nodes. Sharding adds routing and rebalancing work, so the shard key should fit both data distribution and the queries the app runs."
         },
         {
           "type": "code",
@@ -158,7 +158,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Each active connection consumes resources. Pool size is a global budget across app replicas and workers. Timeouts bound waits; backpressure and load shedding prevent unbounded queues. Retries should be bounded, use backoff/jitter, and be safe to repeat."
+          "text": "Every database connection uses resources. If 20 application instances each open 50 connections, they can create 1,000 connections before workers or admin tools are counted. Set a total budget, limit queues, and use timeouts. Retries should stop after a bounded number of attempts and use backoff so an outage doesn't create even more traffic."
         },
         {
           "type": "code",
@@ -184,7 +184,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Large schema changes can lock tables or compete with live traffic. Expand-and-contract adds backward-compatible schema, deploys compatible code, backfills in batches, switches use, and removes the old form later. Reliability requires tested recovery, not just configured backups."
+          "text": "Changing a live database schema can lock tables or conflict with old application versions. A safer approach is to add the new structure first, deploy code that works with both versions, copy data in small batches, switch over, and remove the old structure later. Backups matter, but also test how long restore and failover actually take."
         },
         {
           "type": "steps",
