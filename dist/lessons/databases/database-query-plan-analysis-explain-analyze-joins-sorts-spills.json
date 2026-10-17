@@ -1,0 +1,511 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills",
+  "topicId": "databases",
+  "sectionId": "database-query-plan-analysis-explain-analyze-joins-sorts-spills",
+  "title": "Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills",
+  "description": "Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 42,
+  "learningObjectives": [
+    "Read plan nodes and compare estimates with actual execution.",
+    "Use EXPLAIN (ANALYZE, BUFFERS) to localize work.",
+    "Compare nested-loop, hash, and merge joins by input shape.",
+    "Recognize sort/hash spills and temporary I/O.",
+    "Investigate plans using repeatable evidence."
+  ],
+  "mentalModel": {
+    "type": "paragraph",
+    "text": "A query plan is a tree of operators: children produce rows consumed by parents. EXPLAIN shows estimates; EXPLAIN ANALYZE executes the query and reports actual rows, loops, and timing. Find where work occurs and estimates diverge before changing indexes or settings."
+  },
+  "concepts": [
+    {
+      "id": "explain-fields",
+      "title": "Read EXPLAIN",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "EXPLAIN shows the chosen plan and estimates; EXPLAIN ANALYZE executes the statement and reports actual measurements. Use caution with data-modifying statements because ANALYZE executes them."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "PostgreSQL example",
+          "source": "EXPLAIN (ANALYZE, BUFFERS, VERBOSE) SELECT * FROM orders WHERE customer_id=42;"
+        },
+        {
+          "type": "table",
+          "title": "Key distinctions",
+          "columns": [
+            "Concept",
+            "Mechanism",
+            "Trade-off"
+          ],
+          "rows": [
+            [
+              "Access path",
+              "Structure used to locate candidate rows",
+              "Does not guarantee planner selection."
+            ],
+            [
+              "Physical work",
+              "Pages, tuple visibility, result rows",
+              "May dominate logical lookup cost."
+            ],
+            [
+              "Workload fit",
+              "Predicates, ordering, distribution",
+              "Requires measurement, not assumptions."
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "cardinality",
+      "title": "Estimated versus actual rows",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Large cardinality errors can cause bad join order or algorithm selection. Find the earliest node where estimates diverge. Skew, correlated predicates, stale statistics, parameter values, or missing extended statistics may explain the error."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "PostgreSQL example",
+          "source": "CREATE STATISTICS orders_tenant_status_stats (dependencies,mcv) ON tenant_id,status FROM orders; ANALYZE orders;"
+        },
+        {
+          "type": "steps",
+          "title": "Reasoning sequence",
+          "steps": [
+            {
+              "id": "identify",
+              "title": "Identify query shape",
+              "description": "Write down predicates, joins, ordering, limit, and selected columns."
+            },
+            {
+              "id": "predict",
+              "title": "Predict the mechanism",
+              "description": "Explain which pages, entries, or operators the database is likely to visit."
+            },
+            {
+              "id": "measure",
+              "title": "Validate the plan",
+              "description": "Use actual rows and buffers to compare prediction with observed work."
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "id": "joins",
+      "title": "Join algorithms",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Nested loop often fits a small outer input plus efficient inner lookup; hash join fits equality joins with manageable build side; merge join can fit ordered inputs. Each can be bad with wrong estimates or costly sorting/spilling."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "PostgreSQL example",
+          "source": "EXPLAIN (ANALYZE, BUFFERS) SELECT o.id,c.name FROM orders o JOIN customers c ON c.id=o.customer_id;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A query is slower than expected even though an index exists.",
+          "reasoning": [
+            "Check whether index keys and predicates align.",
+            "Compare estimated and actual row counts and inspect buffers.",
+            "Account for result size, heap access, and write/storage trade-offs."
+          ],
+          "outcome": "Make a targeted change only after plan evidence supports the hypothesis."
+        }
+      ]
+    },
+    {
+      "id": "sorts",
+      "title": "Sort nodes",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Sort satisfies ORDER BY, merge-join ordering, DISTINCT, and related operations. An index may provide compatible order, but index access can still cost more than reading and sorting a set."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "PostgreSQL example",
+          "source": "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM orders ORDER BY created_at DESC LIMIT 100;"
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "Does the existence of an index guarantee PostgreSQL will use it?",
+          "answer": "No.",
+          "explanation": "The planner compares estimated costs, and another access path may be cheaper."
+        }
+      ]
+    },
+    {
+      "id": "spills",
+      "title": "Memory spills",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Sort and hash operations have memory limits. When an operation exceeds available memory, PostgreSQL may use temporary files or multiple hash batches. work_mem applies per operation and can multiply across queries and sessions."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "PostgreSQL example",
+          "source": "EXPLAIN (ANALYZE, BUFFERS) SELECT customer_id,sum(total_amount) FROM orders GROUP BY customer_id ORDER BY sum(total_amount) DESC;"
+        }
+      ]
+    }
+  ],
+  "tradeoffsAndPitfalls": [
+    {
+      "type": "callout",
+      "kind": "pitfall",
+      "title": "Trade-off 1",
+      "content": "Planner costs are not milliseconds; parent timings include child work."
+    },
+    {
+      "type": "callout",
+      "kind": "pitfall",
+      "title": "Trade-off 2",
+      "content": "work_mem applies per operation and can multiply with concurrency."
+    }
+  ],
+  "revisionSheet": [
+    {
+      "type": "paragraph",
+      "text": "Use EXPLAIN (ANALYZE, BUFFERS) on representative queries."
+    },
+    {
+      "type": "paragraph",
+      "text": "Compare estimated and actual rows at the earliest divergence."
+    },
+    {
+      "type": "paragraph",
+      "text": "Nested loops multiply inner work; hash joins can batch/spill; sorts can use temp files."
+    },
+    {
+      "type": "paragraph",
+      "text": "Change one thing at a time and validate against the same workload."
+    }
+  ],
+  "questions": [
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q1",
+      "type": "single_select",
+      "prompt": "What does EXPLAIN ANALYZE add?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Executes the query and reports actual statistics"
+        },
+        {
+          "id": "b",
+          "text": "Only prints estimates"
+        },
+        {
+          "id": "c",
+          "text": "Runs every possible plan"
+        },
+        {
+          "id": "d",
+          "text": "Automatically fixes statistics"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "ANALYZE executes the statement; use caution with writes."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q2",
+      "type": "single_select",
+      "prompt": "Why does 10 estimated rows versus 100,000 actual rows matter?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Cardinality errors can lead to bad join and memory choices"
+        },
+        {
+          "id": "b",
+          "text": "It guarantees syntax error"
+        },
+        {
+          "id": "c",
+          "text": "It means buffers are unavailable"
+        },
+        {
+          "id": "d",
+          "text": "It proves index corruption"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Estimates influence downstream plan decisions."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q3",
+      "type": "single_select",
+      "prompt": "When is a nested loop often a good fit?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Small outer input and efficient inner lookup"
+        },
+        {
+          "id": "b",
+          "text": "Huge outer input repeating costly lookup millions of times"
+        },
+        {
+          "id": "c",
+          "text": "Only when both inputs are sorted"
+        },
+        {
+          "id": "d",
+          "text": "Only for non-equality joins"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Nested loops work well when repeated inner work is small."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q4",
+      "type": "single_select",
+      "prompt": "What is a hash-join risk?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Large build side or bad estimates cause batching or spill"
+        },
+        {
+          "id": "b",
+          "text": "It always sorts both inputs"
+        },
+        {
+          "id": "c",
+          "text": "It cannot join on equality"
+        },
+        {
+          "id": "d",
+          "text": "It never uses memory"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Hash joins need memory for the build side."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q5",
+      "type": "single_select",
+      "prompt": "What should you inspect for a Sort node?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Input rows, sort method, disk use, and whether useful index order exists"
+        },
+        {
+          "id": "b",
+          "text": "Only SQL text length"
+        },
+        {
+          "id": "c",
+          "text": "Whether any primary key exists"
+        },
+        {
+          "id": "d",
+          "text": "Whether all indexes are disabled"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Sort cost depends on volume, memory, and ordering alternatives."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q6",
+      "type": "single_select",
+      "prompt": "What can a high inner-node loops count mean?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The inner operation is repeated for each outer row"
+        },
+        {
+          "id": "b",
+          "text": "The query ran only once"
+        },
+        {
+          "id": "c",
+          "text": "The planner ignored all predicates"
+        },
+        {
+          "id": "d",
+          "text": "Statistics are absent"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Repeated inner work can dominate nested-loop execution."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q7",
+      "type": "single_select",
+      "prompt": "Why is globally increasing work_mem risky?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Memory use can multiply across operations and concurrent sessions"
+        },
+        {
+          "id": "b",
+          "text": "It is only a disk quota"
+        },
+        {
+          "id": "c",
+          "text": "Only one sort can run per server"
+        },
+        {
+          "id": "d",
+          "text": "It disables hash joins"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "work_mem applies per operation and can multiply."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q8",
+      "type": "single_select",
+      "prompt": "Best first response to a slow query?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Capture a representative actual plan with buffers and locate the work"
+        },
+        {
+          "id": "b",
+          "text": "Add indexes to every filtered column"
+        },
+        {
+          "id": "c",
+          "text": "Disable hash joins globally"
+        },
+        {
+          "id": "d",
+          "text": "Change database engines"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Diagnose before changing plan or configuration."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q9",
+      "type": "multi_select",
+      "prompt": "Which plan observations are useful?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Estimated versus actual rows"
+        },
+        {
+          "id": "b",
+          "text": "Loops and repeated inner work"
+        },
+        {
+          "id": "c",
+          "text": "Buffers and temporary I/O"
+        },
+        {
+          "id": "d",
+          "text": "Estimated cost read directly as milliseconds"
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Cost units are not time; rows, loops, buffers, and temp activity localize work."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q10",
+      "type": "multi_select",
+      "prompt": "Which can cause spills or temporary I/O?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Input larger than available operation memory"
+        },
+        {
+          "id": "b",
+          "text": "Bad cardinality estimates"
+        },
+        {
+          "id": "c",
+          "text": "Concurrent operations competing for resources"
+        },
+        {
+          "id": "d",
+          "text": "An unrelated primary key"
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Large inputs and memory pressure can drive spills."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q11",
+      "type": "true_false",
+      "prompt": "EXPLAIN ANALYZE executes the query.",
+      "correctAnswer": true,
+      "explanation": "It executes the statement and reports actual stats."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-q12",
+      "type": "true_false",
+      "prompt": "A Sort node always means the database is poorly indexed.",
+      "correctAnswer": false,
+      "explanation": "Sorting may be the cheapest or necessary plan."
+    }
+  ],
+  "interviewScenarios": [
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-scenario-1",
+      "prompt": "An endpoint regresses after data growth. EXPLAIN ANALYZE shows a nested loop with a large outer input and hundreds of thousands of inner loops. Investigate.",
+      "skillsTested": [
+        "Plan interpretation",
+        "Join trade-offs",
+        "Statistics"
+      ],
+      "strongAnswerPoints": [
+        "Find earliest estimate divergence.",
+        "Quantify repeated inner work with loops/buffers.",
+        "Check statistics, skew, join order, and alternate plans."
+      ],
+      "pitfalls": [
+        "Assuming an index or plan node is automatically good or bad without workload evidence.",
+        "Changing multiple variables before measuring the effect."
+      ],
+      "referenceAnswer": "I would find where estimates diverge, quantify inner work and buffers, then check statistics, skew, and whether the inner lookup is selective. Test targeted changes against the same workload and verify result correctness."
+    },
+    {
+      "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills-scenario-2",
+      "prompt": "A report's Sort node shows disk usage and temp I/O. What do you do before raising work_mem globally?",
+      "skillsTested": [
+        "Sort diagnosis",
+        "Memory/concurrency"
+      ],
+      "strongAnswerPoints": [
+        "Check sort input size and whether ordering is necessary.",
+        "See if an index or earlier filtering reduces work.",
+        "Estimate memory multiplied across operations and concurrent sessions."
+      ],
+      "pitfalls": [
+        "Assuming an index or plan node is automatically good or bad without workload evidence.",
+        "Changing multiple variables before measuring the effect."
+      ],
+      "referenceAnswer": "Inspect input rows and plan shape first. If memory is the bottleneck, estimate concurrency and test a scoped setting. A global increase can multiply memory use across sessions."
+    }
+  ]
+}

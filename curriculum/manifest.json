@@ -94,23 +94,78 @@
         },
         {
           "id": "index-design-performance",
-          "title": "Index Design and Performance",
-          "lessonId": "database-index-design-performance",
+          "title": "B-Trees: Structure, Traversal, Splits, and Balanced Search",
+          "lessonId": "database-btree-structure-traversal-splits",
           "difficulty": "intermediate",
           "order": 8,
           "prerequisites": [
             "index-fundamentals"
           ],
-          "status": "upcoming"
+          "status": "published"
+        },
+        {
+          "id": "database-clustered-vs-nonclustered-indexes",
+          "title": "Clustered vs. Non-Clustered Indexes and Heap Tables",
+          "lessonId": "database-clustered-vs-nonclustered-indexes",
+          "difficulty": "intermediate",
+          "order": 9,
+          "prerequisites": [
+            "index-design-performance"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "database-composite-indexes-column-order-leftmost-prefix",
+          "title": "Composite Indexes: Column Order, Leftmost Prefix, and Covering Indexes",
+          "lessonId": "database-composite-indexes-column-order-leftmost-prefix",
+          "difficulty": "intermediate",
+          "order": 10,
+          "prerequisites": [
+            "database-clustered-vs-nonclustered-indexes"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "database-postgresql-index-types",
+          "title": "PostgreSQL Index Types: B-tree, GIN, GiST, BRIN, Partial, and Expression Indexes",
+          "lessonId": "database-postgresql-index-types",
+          "difficulty": "intermediate",
+          "order": 11,
+          "prerequisites": [
+            "database-composite-indexes-column-order-leftmost-prefix"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills",
+          "title": "Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills",
+          "lessonId": "database-query-plan-analysis-explain-analyze-joins-sorts-spills",
+          "difficulty": "advanced",
+          "order": 12,
+          "prerequisites": [
+            "database-postgresql-index-types"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "database-index-selection-selectivity-sequential-scans-index-costs",
+          "title": "Index Selection, Selectivity, Sequential Scans, and When Indexes Hurt",
+          "lessonId": "database-index-selection-selectivity-sequential-scans-index-costs",
+          "difficulty": "intermediate",
+          "order": 13,
+          "prerequisites": [
+            "database-query-plan-analysis-explain-analyze-joins-sorts-spills"
+          ],
+          "status": "published"
         },
         {
           "id": "advanced-database-internals",
           "title": "Advanced Database Internals",
           "lessonId": "advanced-database-internals",
           "difficulty": "advanced",
-          "order": 9,
+          "order": 14,
           "prerequisites": [
-            "index-design-performance"
+            "database-index-selection-selectivity-sequential-scans-index-costs"
           ],
           "status": "upcoming"
         },
@@ -119,7 +174,7 @@
           "title": "Redis and Caching Architecture",
           "lessonId": "redis-and-caching",
           "difficulty": "intermediate",
-          "order": 10,
+          "order": 15,
           "prerequisites": [
             "index-fundamentals"
           ],
@@ -130,7 +185,7 @@
           "title": "PostgreSQL vs. MongoDB Trade-offs",
           "lessonId": "postgresql-vs-mongodb",
           "difficulty": "intermediate",
-          "order": 11,
+          "order": 16,
           "prerequisites": [
             "index-fundamentals"
           ],
@@ -141,7 +196,7 @@
           "title": "Scaling and Reliability",
           "lessonId": "scaling-and-reliability",
           "difficulty": "advanced",
-          "order": 12,
+          "order": 17,
           "prerequisites": [
             "advanced-database-internals",
             "redis-and-caching"
