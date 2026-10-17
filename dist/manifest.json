@@ -92,8 +92,8 @@
           "order": 8,
           "status": "published",
           "lessonPath": "/lessons/databases/index-design-performance.json",
-          "lessonId": "database-btree-structure-traversal-splits",
-          "questionCount": 12
+          "questionCount": 12,
+          "lessonId": "database-btree-structure-traversal-splits"
         },
         {
           "id": "database-clustered-vs-nonclustered-indexes",

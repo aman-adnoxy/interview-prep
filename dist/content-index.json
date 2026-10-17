@@ -22,11 +22,6 @@
       "contentVersion": "2.0.0",
       "questionCount": 12
     },
-    "database-index-fundamentals": {
-      "path": "/lessons/databases/index-fundamentals.json",
-      "contentVersion": "2.0.0",
-      "questionCount": 8
-    },
     "database-index-selection-selectivity-sequential-scans-index-costs": {
       "path": "/lessons/databases/database-index-selection-selectivity-sequential-scans-index-costs.json",
       "contentVersion": "2.0.0",
@@ -42,13 +37,18 @@
       "contentVersion": "2.0.0",
       "questionCount": 12
     },
-    "database-schema-design-normalization": {
-      "path": "/lessons/databases/schema-design-normalization.json",
+    "database-index-fundamentals": {
+      "path": "/lessons/databases/index-fundamentals.json",
       "contentVersion": "2.0.0",
-      "questionCount": 5
+      "questionCount": 8
     },
     "relational-databases-keys-constraints": {
       "path": "/lessons/databases/relational-databases-keys-constraints.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
+    "database-schema-design-normalization": {
+      "path": "/lessons/databases/schema-design-normalization.json",
       "contentVersion": "2.0.0",
       "questionCount": 5
     },

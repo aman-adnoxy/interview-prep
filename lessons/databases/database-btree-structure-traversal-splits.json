@@ -2,7 +2,7 @@
   "schemaVersion": "2.0.0",
   "id": "database-btree-structure-traversal-splits",
   "topicId": "databases",
-  "sectionId": "database-btree-structure-traversal-splits",
+  "sectionId": "index-design-performance",
   "title": "B-Trees: Structure, Traversal, Splits, and Balanced Search",
   "description": "B-Trees: Structure, Traversal, Splits, and Balanced Search. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
   "difficulty": "intermediate",
