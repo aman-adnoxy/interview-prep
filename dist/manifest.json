@@ -22,7 +22,8 @@
           "order": 1,
           "status": "published",
           "lessonPath": "/lessons/databases/relational-databases-keys-constraints.json",
-          "questionCount": 5
+          "questionCount": 5,
+          "lessonId": "relational-databases-keys-constraints"
         },
         {
           "id": "sql-joins",
@@ -31,7 +32,8 @@
           "order": 2,
           "status": "published",
           "lessonPath": "/lessons/databases/sql-joins.json",
-          "questionCount": 5
+          "questionCount": 5,
+          "lessonId": "sql-joins-inner-left-right-full"
         },
         {
           "id": "sql-aggregation-group-by-having-ctes",
@@ -40,7 +42,8 @@
           "order": 3,
           "status": "published",
           "lessonPath": "/lessons/databases/sql-aggregation-group-by-having-ctes.json",
-          "questionCount": 5
+          "questionCount": 5,
+          "lessonId": "sql-aggregation-group-by-having-ctes"
         },
         {
           "id": "sql-null-semantics",
@@ -49,7 +52,8 @@
           "order": 4,
           "status": "published",
           "lessonPath": "/lessons/databases/sql-null-semantics.json",
-          "questionCount": 5
+          "questionCount": 5,
+          "lessonId": "sql-null-three-valued-logic"
         },
         {
           "id": "schema-design-normalization",
@@ -58,7 +62,8 @@
           "order": 5,
           "status": "published",
           "lessonPath": "/lessons/databases/schema-design-normalization.json",
-          "questionCount": 5
+          "questionCount": 5,
+          "lessonId": "database-schema-design-normalization"
         },
         {
           "id": "advanced-sql-window-functions-set-operations",
@@ -67,7 +72,8 @@
           "order": 6,
           "status": "published",
           "lessonPath": "/lessons/databases/advanced-sql-window-functions-set-operations.json",
-          "questionCount": 5
+          "questionCount": 5,
+          "lessonId": "advanced-sql-window-functions-set-operations"
         },
         {
           "id": "index-fundamentals",
@@ -76,7 +82,8 @@
           "order": 7,
           "status": "published",
           "lessonPath": "/lessons/databases/index-fundamentals.json",
-          "questionCount": 8
+          "questionCount": 8,
+          "lessonId": "database-index-fundamentals"
         },
         {
           "id": "index-design-performance",
@@ -84,7 +91,8 @@
           "difficulty": "intermediate",
           "order": 8,
           "status": "upcoming",
-          "lessonPath": "/lessons/databases/index-design-performance.json"
+          "lessonPath": "/lessons/databases/index-design-performance.json",
+          "lessonId": "database-index-design-performance"
         },
         {
           "id": "advanced-database-internals",
@@ -92,7 +100,8 @@
           "difficulty": "advanced",
           "order": 9,
           "status": "upcoming",
-          "lessonPath": "/lessons/databases/advanced-database-internals.json"
+          "lessonPath": "/lessons/databases/advanced-database-internals.json",
+          "lessonId": "advanced-database-internals"
         },
         {
           "id": "redis-and-caching",
@@ -100,7 +109,8 @@
           "difficulty": "intermediate",
           "order": 10,
           "status": "upcoming",
-          "lessonPath": "/lessons/databases/redis-and-caching.json"
+          "lessonPath": "/lessons/databases/redis-and-caching.json",
+          "lessonId": "redis-and-caching"
         },
         {
           "id": "postgresql-vs-mongodb",
@@ -108,7 +118,8 @@
           "difficulty": "intermediate",
           "order": 11,
           "status": "upcoming",
-          "lessonPath": "/lessons/databases/postgresql-vs-mongodb.json"
+          "lessonPath": "/lessons/databases/postgresql-vs-mongodb.json",
+          "lessonId": "postgresql-vs-mongodb"
         },
         {
           "id": "scaling-and-reliability",
@@ -116,7 +127,8 @@
           "difficulty": "advanced",
           "order": 12,
           "status": "upcoming",
-          "lessonPath": "/lessons/databases/scaling-and-reliability.json"
+          "lessonPath": "/lessons/databases/scaling-and-reliability.json",
+          "lessonId": "scaling-and-reliability"
         }
       ]
     },
