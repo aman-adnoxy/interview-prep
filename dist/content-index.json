@@ -47,6 +47,11 @@
       "contentVersion": "2.0.0",
       "questionCount": 12
     },
+    "scaling-and-reliability": {
+      "path": "/lessons/databases/scaling-and-reliability.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 12
+    },
     "database-schema-design-normalization": {
       "path": "/lessons/databases/schema-design-normalization.json",
       "contentVersion": "2.0.0",
@@ -64,11 +69,6 @@
     },
     "sql-null-three-valued-logic": {
       "path": "/lessons/databases/sql-null-semantics.json",
-      "contentVersion": "2.0.0",
-      "questionCount": 12
-    },
-    "scaling-and-reliability": {
-      "path": "/lessons/databases/scaling-and-reliability.json",
       "contentVersion": "2.0.0",
       "questionCount": 12
     }
