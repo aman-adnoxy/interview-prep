@@ -2,6 +2,11 @@
   "indexVersion": "1.0.0",
   "schemaVersion": "2.0.0",
   "lessons": {
+    "advanced-sql-window-functions-set-operations": {
+      "path": "/lessons/databases/advanced-sql-window-functions-set-operations.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
     "database-index-fundamentals": {
       "path": "/lessons/databases/index-fundamentals.json",
       "contentVersion": "2.0.0",
@@ -12,8 +17,8 @@
       "contentVersion": "2.0.0",
       "questionCount": 5
     },
-    "sql-joins-inner-left-right-full": {
-      "path": "/lessons/databases/sql-joins.json",
+    "database-schema-design-normalization": {
+      "path": "/lessons/databases/schema-design-normalization.json",
       "contentVersion": "2.0.0",
       "questionCount": 5
     },
@@ -22,18 +27,13 @@
       "contentVersion": "2.0.0",
       "questionCount": 5
     },
+    "sql-joins-inner-left-right-full": {
+      "path": "/lessons/databases/sql-joins.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 5
+    },
     "sql-null-three-valued-logic": {
       "path": "/lessons/databases/sql-null-semantics.json",
-      "contentVersion": "2.0.0",
-      "questionCount": 5
-    },
-    "database-schema-design-normalization": {
-      "path": "/lessons/databases/schema-design-normalization.json",
-      "contentVersion": "2.0.0",
-      "questionCount": 5
-    },
-    "advanced-sql-window-functions-set-operations": {
-      "path": "/lessons/databases/advanced-sql-window-functions-set-operations.json",
       "contentVersion": "2.0.0",
       "questionCount": 5
     }
