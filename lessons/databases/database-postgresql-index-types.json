@@ -15,7 +15,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "An index is useful only when its operator class supports query operators. B-tree is the general default for equality, ranges, and ordering; GIN indexes component values; GiST provides generalized search structures; BRIN summarizes physical block ranges. Partial and expression indexes specialize which rows or expressions are indexed."
+    "text": "Different indexes are like different lookup tools. A B-tree is a good everyday choice for exact values, ranges, and sorting. GIN is useful when searching inside arrays or JSON documents. BRIN summarizes large runs of nearby table pages. Pick the tool that supports the question your query is asking."
   },
   "concepts": [
     {
@@ -24,7 +24,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "B-tree is the general-purpose PostgreSQL index for equality, inequalities, ranges, and compatible ordering. Hash supports equality but not ordered range traversal."
+          "text": "B-tree is the general-purpose choice for equality checks, ranges, and sorted results. Hash indexes support equality checks but not range searches or ordered output. Start with B-tree unless the query needs a different kind of search."
         },
         {
           "type": "code",
@@ -66,7 +66,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "GIN maps component keys to rows containing those keys. It can support array membership, JSONB containment, and text-search patterns when the operator class supports the operator."
+          "text": "A GIN index helps find rows that contain a particular component, such as a value inside an array or a key/value pattern inside JSONB. It stores a lookup from each component to the rows that contain it, so it is useful for supported containment and text-search queries."
         },
         {
           "type": "code",
@@ -103,7 +103,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "GiST is a generalized search-tree framework with operator-class-specific behavior. BRIN stores summaries for heap block ranges and is compact when values correlate with physical row order, but summaries are lossy and require rechecks."
+          "text": "GiST supports different kinds of searches, including some geometric and range operations. BRIN stores a small summary for groups of nearby table pages. BRIN is compact and useful when nearby pages contain similar values, such as timestamps inserted in order, but PostgreSQL may need to recheck matching rows."
         },
         {
           "type": "code",
@@ -129,7 +129,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A partial index contains only rows satisfying its predicate, useful for stable subsets such as pending jobs. PostgreSQL can use it only when it can prove the query predicate implies the index predicate."
+          "text": "A partial index includes only rows that meet a condition, such as jobs whose status is 'pending'. It can be smaller than an index on every job. PostgreSQL can use it only when it can prove that the query asks for rows covered by that condition."
         },
         {
           "type": "code",
@@ -151,7 +151,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "An expression index stores a computed value such as lower(email). The query expression must be compatible, and functions used in PostgreSQL index expressions must be immutable."
+          "text": "An expression index stores the result of a calculation, such as lower(email), instead of only the original column. It can help when queries use that same expression, but the query must match the indexed expression closely and PostgreSQL requires index functions to be immutable."
         },
         {
           "type": "code",
