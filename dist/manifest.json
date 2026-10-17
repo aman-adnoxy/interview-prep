@@ -152,8 +152,8 @@
           "order": 14,
           "status": "published",
           "lessonPath": "/lessons/databases/advanced-database-internals.json",
-          "lessonId": "advanced-database-internals",
-          "questionCount": 12
+          "questionCount": 12,
+          "lessonId": "advanced-database-internals"
         },
         {
           "id": "redis-and-caching",
