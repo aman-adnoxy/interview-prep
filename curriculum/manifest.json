@@ -189,7 +189,7 @@
           "prerequisites": [
             "index-fundamentals"
           ],
-          "status": "upcoming"
+          "status": "published"
         },
         {
           "id": "scaling-and-reliability",
