@@ -1,0 +1,530 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "advanced-database-internals",
+  "topicId": "databases",
+  "sectionId": "advanced-database-internals",
+  "title": "Advanced Database Internals",
+  "description": "Advanced Database Internals. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
+  "difficulty": "advanced",
+  "estimatedMinutes": 48,
+  "learningObjectives": [
+    "Explain MVCC snapshots and why updates create new row versions in PostgreSQL.",
+    "Diagnose vacuum pressure, dead tuples, bloat, and transaction-ID wraparound risk.",
+    "Trace how WAL, checkpoints, and crash recovery support durability.",
+    "Reason about locks, blocking, deadlocks, and transaction isolation."
+  ],
+  "mentalModel": {
+    "type": "paragraph",
+    "text": "A database is a concurrent state machine that maintains row versions, coordinates transactions, records durable changes, and reclaims obsolete storage. Difficult incidents often occur when these mechanisms interact with long transactions or unexpected workload."
+  },
+  "concepts": [
+    {
+      "id": "mvcc-visibility",
+      "title": "MVCC and row visibility",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "PostgreSQL uses multiversion concurrency control. An UPDATE generally creates a new tuple version. A statement reads according to its snapshot, allowing readers and writers to proceed without every reader blocking every writer."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Find long transactions",
+          "source": "SELECT pid, xact_start, state, query\nFROM pg_stat_activity\nWHERE xact_start IS NOT NULL\nORDER BY xact_start;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A report transaction has been open for 45 minutes while a high-write table accumulates dead tuples.",
+          "reasoning": [
+            "Check transaction age and isolation level; determine whether its snapshot prevents cleanup of versions it might still need.",
+            "Compare dead-tuple estimates, autovacuum activity, table size, and write rate.",
+            "Fix the transaction lifecycle or workload, then verify vacuum can make progress."
+          ],
+          "outcome": "MVCC improves concurrency but makes transaction duration and cleanup progress operational concerns."
+        }
+      ]
+    },
+    {
+      "id": "vacuum-bloat",
+      "title": "Vacuum, bloat, and transaction IDs",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "VACUUM makes eligible dead-tuple space reusable after no active snapshot can need it. Standard VACUUM usually does not return most space to the OS; VACUUM FULL rewrites the table and requires a stronger lock."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Inspect vacuum statistics",
+          "source": "SELECT relname, n_live_tup, n_dead_tup, last_autovacuum, autovacuum_count\nFROM pg_stat_user_tables\nORDER BY n_dead_tup DESC LIMIT 10;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "Dead tuples rise for hours and autovacuum cannot catch up.",
+          "reasoning": [
+            "Compare tuple generation with vacuum throughput and inspect long transactions, replication slots, and vacuum logs.",
+            "Check thresholds, cost limits, table-specific settings, and resource contention.",
+            "Address the blocker or throughput gap before planning a disruptive rewrite."
+          ],
+          "outcome": "Bloat is often a symptom of cleanup falling behind or being blocked. Diagnose why cleanup cannot keep pace."
+        }
+      ]
+    },
+    {
+      "id": "wal-checkpoints",
+      "title": "WAL, checkpoints, and recovery",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Write-ahead logging records changes before modified data pages must be flushed. After a crash, PostgreSQL replays durable WAL. Checkpoints bound recovery work, but aggressive checkpoints can create I/O spikes."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Inspect checkpoint signals",
+          "source": "SELECT checkpoints_timed, checkpoints_req, checkpoint_write_time, checkpoint_sync_time, buffers_checkpoint, buffers_backend\nFROM pg_stat_bgwriter;"
+        },
+        {
+          "type": "table",
+          "title": "Interpret signals",
+          "columns": [
+            "Observation",
+            "Possible meaning",
+            "Next check"
+          ],
+          "rows": [
+            [
+              "Many requested checkpoints",
+              "WAL volume or settings may force checkpoints",
+              "WAL generation and checkpoint logs"
+            ],
+            [
+              "High checkpoint write time",
+              "Dirty-page writes are expensive",
+              "Storage latency"
+            ],
+            [
+              "High backend writes",
+              "Foreground sessions write dirty buffers",
+              "Background-writer and checkpoint behavior"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "locks-deadlocks",
+      "title": "Locks, blocking, and deadlocks",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A blocked query waits for a resource held by another transaction. A deadlock is a cycle in the wait-for graph; PostgreSQL aborts one participant so the others can progress."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Find blocked sessions",
+          "source": "SELECT blocked.pid AS blocked_pid, blocker.pid AS blocker_pid, blocked.query AS blocked_query, blocker.query AS blocker_query\nFROM pg_stat_activity blocked\nJOIN pg_stat_activity blocker ON blocker.pid = ANY(pg_blocking_pids(blocked.pid));"
+        },
+        {
+          "type": "worked_example",
+          "problem": "Two workers update the same pair of accounts in opposite order.",
+          "reasoning": [
+            "Identify the cycle: one worker holds X and waits for Y while the other holds Y and waits for X.",
+            "Acquire rows in a consistent order, such as ascending account ID.",
+            "Retry the complete transaction safely when a deadlock victim is aborted."
+          ],
+          "outcome": "Consistent lock ordering reduces deadlocks; short transactions and safe retries improve resilience."
+        }
+      ]
+    },
+    {
+      "id": "isolation-anomalies",
+      "title": "Isolation levels and invariants",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "READ COMMITTED takes a new snapshot for each statement; REPEATABLE READ keeps a transaction-level snapshot; SERIALIZABLE can abort transactions that cannot be serialized safely. Use constraints and atomic conditional statements where possible."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Atomic conditional update",
+          "source": "UPDATE inventory SET quantity = quantity - 1\nWHERE sku = 'A-17' AND quantity > 0\nRETURNING quantity;"
+        },
+        {
+          "type": "table",
+          "title": "Isolation choice",
+          "columns": [
+            "Need",
+            "Candidate",
+            "Application concern"
+          ],
+          "rows": [
+            [
+              "Fresh committed view per statement",
+              "READ COMMITTED",
+              "Multi-statement invariants need constraints or locks"
+            ],
+            [
+              "Stable transaction snapshot",
+              "REPEATABLE READ",
+              "Know the database's anomaly semantics"
+            ],
+            [
+              "Serializable execution",
+              "SERIALIZABLE",
+              "Retry serialization failures"
+            ]
+          ]
+        }
+      ]
+    }
+  ],
+  "tradeoffsAndPitfalls": [
+    {
+      "type": "callout",
+      "kind": "pitfall",
+      "title": "Avoid symptom-only fixes",
+      "content": "Identify the mechanism and validate it with workload evidence before changing database settings."
+    },
+    {
+      "type": "callout",
+      "kind": "tip",
+      "title": "Answer like an engineer",
+      "content": "State the invariant, explain the failure mode, propose a measurable intervention, and describe a safety or rollback check."
+    }
+  ],
+  "revisionSheet": [
+    {
+      "type": "paragraph",
+      "text": "MVCC snapshots determine visibility; long transactions can delay cleanup."
+    },
+    {
+      "type": "paragraph",
+      "text": "Standard VACUUM makes space reusable; VACUUM FULL rewrites and locks more strongly."
+    },
+    {
+      "type": "paragraph",
+      "text": "WAL supports crash recovery; checkpoint behavior influences write I/O."
+    },
+    {
+      "type": "paragraph",
+      "text": "Use lock graphs, consistent lock order, constraints, and safe transaction retries."
+    }
+  ],
+  "questions": [
+    {
+      "id": "advanced-database-internals-q1",
+      "type": "single_select",
+      "prompt": "Two transactions read a row while one updates it. What lets the reader retain a consistent view?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Snapshot and tuple-visibility rules"
+        },
+        {
+          "id": "b",
+          "text": "A global pause on all writes"
+        },
+        {
+          "id": "c",
+          "text": "Immediate overwrite of every old version"
+        },
+        {
+          "id": "d",
+          "text": "An exclusive table lock for every SELECT"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "MVCC snapshots determine which tuple versions are visible."
+    },
+    {
+      "id": "advanced-database-internals-q2",
+      "type": "single_select",
+      "prompt": "Dead tuples rise while a transaction remains open for 50 minutes. What should you investigate first?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Whether the long transaction or another retained snapshot blocks cleanup"
+        },
+        {
+          "id": "b",
+          "text": "Run VACUUM FULL on every table immediately"
+        },
+        {
+          "id": "c",
+          "text": "Increase shared_buffers without checking activity"
+        },
+        {
+          "id": "d",
+          "text": "Drop all indexes"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Long-lived snapshots can prevent removal of row versions still potentially visible."
+    },
+    {
+      "id": "advanced-database-internals-q3",
+      "type": "single_select",
+      "prompt": "What does standard VACUUM usually do with dead-tuple space?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Makes eligible space reusable within the relation"
+        },
+        {
+          "id": "b",
+          "text": "Always returns all free space to the OS"
+        },
+        {
+          "id": "c",
+          "text": "Rewrites the whole table under an exclusive lock"
+        },
+        {
+          "id": "d",
+          "text": "Deletes WAL needed by replicas"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Standard VACUUM generally makes space reusable; VACUUM FULL rewrites the table."
+    },
+    {
+      "id": "advanced-database-internals-q4",
+      "type": "single_select",
+      "prompt": "Why record WAL before relying on modified data pages being persisted?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Crash recovery can replay durable changes"
+        },
+        {
+          "id": "b",
+          "text": "WAL eliminates checkpoints"
+        },
+        {
+          "id": "c",
+          "text": "WAL makes every query faster"
+        },
+        {
+          "id": "d",
+          "text": "WAL replaces indexes"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "WAL supports recovery by recording changes before affected data pages must be flushed."
+    },
+    {
+      "id": "advanced-database-internals-q5",
+      "type": "single_select",
+      "prompt": "A lock blocker is idle in transaction. What is the main concern?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It may retain locks or an old snapshot while doing no useful work"
+        },
+        {
+          "id": "b",
+          "text": "The database has no lock manager"
+        },
+        {
+          "id": "c",
+          "text": "The blocked query must lack an index"
+        },
+        {
+          "id": "d",
+          "text": "The server has automatically rolled back the blocker"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "An idle open transaction can retain locks and snapshots; inspect impact before terminating it."
+    },
+    {
+      "id": "advanced-database-internals-q6",
+      "type": "single_select",
+      "prompt": "Two transfer code paths update accounts in opposite order and deadlock. What design change helps most?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Acquire rows in consistent order and retry safe deadlock victims"
+        },
+        {
+          "id": "b",
+          "text": "Disable deadlock detection"
+        },
+        {
+          "id": "c",
+          "text": "Use SERIALIZABLE without retries"
+        },
+        {
+          "id": "d",
+          "text": "Add an index and assume the cycle disappears"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Consistent lock ordering breaks this common cycle; retry handling is still needed."
+    },
+    {
+      "id": "advanced-database-internals-q7",
+      "type": "single_select",
+      "prompt": "In PostgreSQL READ COMMITTED, how do snapshots normally behave?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Each statement sees a new snapshot"
+        },
+        {
+          "id": "b",
+          "text": "All statements share one transaction-wide snapshot"
+        },
+        {
+          "id": "c",
+          "text": "Reads see other transactions' uncommitted writes"
+        },
+        {
+          "id": "d",
+          "text": "All serialization anomalies are prevented"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "READ COMMITTED uses a new snapshot for each statement."
+    },
+    {
+      "id": "advanced-database-internals-q8",
+      "type": "single_select",
+      "prompt": "An application uses SERIALIZABLE to protect a critical invariant. What must it plan for?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Serialization failures and safe transaction retries"
+        },
+        {
+          "id": "b",
+          "text": "A guarantee that no transaction will abort"
+        },
+        {
+          "id": "c",
+          "text": "Lock-free execution for all statements"
+        },
+        {
+          "id": "d",
+          "text": "Removal of all constraints"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Serializable semantics may require aborting transactions that cannot be serialized safely."
+    },
+    {
+      "id": "advanced-database-internals-q9",
+      "type": "multi_select",
+      "prompt": "Which conditions can delay cleanup of old tuple versions?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Long-running transaction with old snapshot"
+        },
+        {
+          "id": "b",
+          "text": "Replication slot retaining required history/WAL"
+        },
+        {
+          "id": "c",
+          "text": "Standby feedback holding back cleanup"
+        },
+        {
+          "id": "d",
+          "text": "A finished SELECT whose snapshot has been released"
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Long snapshots and replication-related retention can delay cleanup; completed statements no longer retain their snapshot."
+    },
+    {
+      "id": "advanced-database-internals-q10",
+      "type": "multi_select",
+      "prompt": "Which signals help diagnose checkpoint-related write spikes?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Requested versus timed checkpoints"
+        },
+        {
+          "id": "b",
+          "text": "Checkpoint write/sync time and dirty buffers"
+        },
+        {
+          "id": "c",
+          "text": "WAL generation and storage latency"
+        },
+        {
+          "id": "d",
+          "text": "Number of SQL keywords in the query"
+        }
+      ],
+      "correctOptionIds": [
+        "a",
+        "b",
+        "c"
+      ],
+      "explanation": "Checkpoint counts, timing, WAL volume, and storage behavior help identify pressure."
+    },
+    {
+      "id": "advanced-database-internals-q11",
+      "type": "true_false",
+      "prompt": "Standard VACUUM always returns all reclaimable table space to the operating system.",
+      "correctAnswer": false,
+      "explanation": "Standard VACUUM normally makes space reusable within the relation."
+    },
+    {
+      "id": "advanced-database-internals-q12",
+      "type": "true_false",
+      "prompt": "A deadlock victim's transaction is aborted, so application code must not assume its writes committed.",
+      "correctAnswer": true,
+      "explanation": "PostgreSQL aborts one participant in a deadlock cycle."
+    }
+  ],
+  "interviewScenarios": [
+    {
+      "id": "advanced-database-internals-scenario-1",
+      "prompt": "A high-write table is growing rapidly, autovacuum runs constantly, and a long report transaction is open.",
+      "skillsTested": [
+        "MVCC",
+        "Vacuum",
+        "Operational diagnosis"
+      ],
+      "strongAnswerPoints": [
+        "Check transaction age and retained snapshots.",
+        "Inspect replication slots, vacuum progress, and write rate.",
+        "Resolve the blocker before considering a disruptive rewrite."
+      ],
+      "pitfalls": [
+        "Treating VACUUM FULL as the default fix",
+        "Changing several variables before measuring the effect."
+      ],
+      "referenceAnswer": "I would determine why old versions cannot be removed, starting with long transactions and replication retention. Then I would compare dead-tuple generation with vacuum throughput, resolve the blocker, and verify cleanup catches up before considering a rewrite."
+    },
+    {
+      "id": "advanced-database-internals-scenario-2",
+      "prompt": "A service sees latency spikes and deadlocks during account transfers. What changes would you make?",
+      "skillsTested": [
+        "Lock analysis",
+        "Transaction design",
+        "Reliability"
+      ],
+      "strongAnswerPoints": [
+        "Use blocking/deadlock logs to identify the cycle.",
+        "Standardize lock order and use atomic updates.",
+        "Add bounded retry for safe transaction aborts."
+      ],
+      "pitfalls": [
+        "Retrying only part of an aborted transaction",
+        "Changing several variables before measuring the effect."
+      ],
+      "referenceAnswer": "I would identify the wait cycle, standardize lock ordering, keep transactions short, and retry the whole transaction on a known abort. I would add concurrency tests to verify balances remain correct."
+    }
+  ]
+}
