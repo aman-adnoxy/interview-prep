@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+# Avoid redundant deployments if multiple successful content pushes happen close together.
+concurrency:
+  group: content-publish-production-deploy
+  cancel-in-progress: true
+
 jobs:
   deploy-app:
     # Deploy only after a successful push to the content repository's main branch.
@@ -25,4 +30,4 @@ jobs:
             echo "::error::Missing repository secret VERCEL_DEPLOY_HOOK_URL. Create a Vercel production deploy hook for interview-prep-app and save its URL as this secret in the interview-prep repository."
             exit 1
           fi
-          curl --fail --silent --show-error --request POST "${VERCEL_DEPLOY_HOOK_URL}"
+          curl --fail --silent --show-error --retry 3 --retry-delay 2 --request POST "${VERCEL_DEPLOY_HOOK_URL}"
