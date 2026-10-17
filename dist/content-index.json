@@ -66,6 +66,11 @@
       "path": "/lessons/databases/sql-null-semantics.json",
       "contentVersion": "2.0.0",
       "questionCount": 12
+    },
+    "scaling-and-reliability": {
+      "path": "/lessons/databases/scaling-and-reliability.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 12
     }
   }
 }
