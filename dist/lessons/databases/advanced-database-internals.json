@@ -15,7 +15,7 @@
   ],
   "mentalModel": {
     "type": "paragraph",
-    "text": "A database is a concurrent state machine that maintains row versions, coordinates transactions, records durable changes, and reclaims obsolete storage. Difficult incidents often occur when these mechanisms interact with long transactions or unexpected workload."
+    "text": "A database has to let many people read and change data at once, recover after a crash, and clean up old data safely. PostgreSQL tracks row versions, records changes for recovery, and uses locks to coordinate conflicting work. Many production problems happen when a long transaction or busy workload stops these systems from keeping up."
   },
   "concepts": [
     {
@@ -24,7 +24,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "PostgreSQL uses multiversion concurrency control. An UPDATE generally creates a new tuple version. A statement reads according to its snapshot, allowing readers and writers to proceed without every reader blocking every writer."
+          "text": "When a transaction updates a row, PostgreSQL usually creates a new version rather than overwriting the old one immediately. A query sees the version allowed by its snapshot. This lets readers and writers work at the same time, but old versions cannot be cleaned up while an active transaction might still need them."
         },
         {
           "type": "code",
@@ -50,7 +50,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "VACUUM makes eligible dead-tuple space reusable after no active snapshot can need it. Standard VACUUM usually does not return most space to the OS; VACUUM FULL rewrites the table and requires a stronger lock."
+          "text": "Updates and deletes can leave old row versions behind. VACUUM cleans up versions that no active transaction needs and makes their space reusable. Regular VACUUM usually does not shrink the file on disk; VACUUM FULL rewrites the table and needs a stronger lock, so it is a more disruptive fix."
         },
         {
           "type": "code",
@@ -76,7 +76,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "Write-ahead logging records changes before modified data pages must be flushed. After a crash, PostgreSQL replays durable WAL. Checkpoints bound recovery work, but aggressive checkpoints can create I/O spikes."
+          "text": "Before PostgreSQL relies on a changed data page being written to disk, it records the change in the write-ahead log (WAL). After a crash, it can replay the saved log to recover changes. Checkpoints limit how much log must be replayed, but heavy checkpoints can cause bursts of disk activity."
         },
         {
           "type": "code",
@@ -118,7 +118,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A blocked query waits for a resource held by another transaction. A deadlock is a cycle in the wait-for graph; PostgreSQL aborts one participant so the others can progress."
+          "text": "A query is blocked when it needs something another transaction holds. A deadlock happens when transactions wait on each other in a cycle: A holds one row and waits for another, while B holds the second and waits for the first. PostgreSQL aborts one transaction so the other can continue."
         },
         {
           "type": "code",
@@ -144,7 +144,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "READ COMMITTED takes a new snapshot for each statement; REPEATABLE READ keeps a transaction-level snapshot; SERIALIZABLE can abort transactions that cannot be serialized safely. Use constraints and atomic conditional statements where possible."
+          "text": "Isolation levels control what a transaction can see while others change data. READ COMMITTED gets a fresh view for each statement; REPEATABLE READ keeps a stable view for the transaction; SERIALIZABLE can reject a transaction if its result would not fit a safe serial order. The application must handle those retries."
         },
         {
           "type": "code",
