@@ -12,7 +12,8 @@
     "Describe the basic idea behind a B-tree index.",
     "Recognize query patterns that can benefit from an index.",
     "Explain the read-performance, storage, and write-performance trade-offs of indexes.",
-    "Use a PostgreSQL EXPLAIN plan at a basic level to investigate query access."
+    "Use a PostgreSQL EXPLAIN plan at a basic level to investigate query access.",
+    "Explain where PostgreSQL stores index data, how caching works, and what indexes cost in disk and memory."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -452,6 +453,35 @@
           "kind": "pitfall",
           "title": "Read EXPLAIN ANALYZE carefully",
           "content": "EXPLAIN ANALYZE executes the statement. For a slow SELECT, it performs the read; for an INSERT, UPDATE, or DELETE, it can change data. Test write statements in a safe transaction or test environment, and remember that timing from a small or warm-cache test may not represent production."
+        }
+      ]
+    },
+    {
+      "id": "where-indexes-live",
+      "title": "Where indexes live: disk space and memory",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "An index is a persistent database structure, not just a setting and not something that exists only in RAM. In PostgreSQL, table rows and index entries are stored in database files on persistent storage. The index has its own pages and consumes disk space in addition to the table."
+        },
+        {
+          "type": "paragraph",
+          "text": "When PostgreSQL reads a table or index page, it can keep that page in shared_buffers. The operating system may also cache file pages in memory. A later lookup may reuse a cached page instead of waiting for storage. So an index consumes disk space whether or not it is cached, and its frequently used pages may also consume memory."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "-- Approximate on-disk size of one index\nSELECT pg_size_pretty(pg_relation_size('idx_users_email')) AS index_size;\n\n-- Table size including its indexes and other auxiliary storage\nSELECT pg_size_pretty(pg_total_relation_size('users')) AS total_size;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A users table is 2 GB, and its email index is 400 MB. The application repeatedly looks up users by email.",
+          "reasoning": [
+            "The table and index both occupy persistent storage; the index adds 400 MB rather than replacing the table.",
+            "Frequently used index pages may stay in memory, making later lookups faster than cold reads.",
+            "If the index is much larger than available cache, lookups may require more storage reads. Other workloads also compete for memory."
+          ],
+          "outcome": "Think of an index as an extra on-disk data structure whose hot pages may be cached. More indexes improve some reads but increase storage, memory pressure, and write work."
         }
       ]
     }
