@@ -102,6 +102,7 @@
           "type": "table",
           "title": "Phase",
           "columns": [
+            "Phase",
             "Change"
           ],
           "rows": [
