@@ -208,7 +208,7 @@
           "type": "callout",
           "kind": "pitfall",
           "title": "Higher isolation can mean retries",
-          "text": "SERIALIZABLE does not silently make every transaction succeed. PostgreSQL can abort a transaction with a serialization failure when concurrent changes cannot safely be ordered. The application should retry the entire transaction, not just the last statement, and the operation should be designed so retrying is safe."
+          "content": "SERIALIZABLE does not silently make every transaction succeed. PostgreSQL can abort a transaction with a serialization failure when concurrent changes cannot safely be ordered. The application should retry the entire transaction, not just the last statement, and the operation should be designed so retrying is safe."
         }
       ]
     }
