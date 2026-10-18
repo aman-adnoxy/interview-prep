@@ -146,10 +146,6 @@
             "Actual capacity depends on page size, key width, page overhead, and how full the pages are."
           ],
           "outcome": "Indexes stay shallow because pages hold many keys and pointers; wider keys can reduce fan-out and increase tree height."
-        },
-        {
-          "type": "paragraph",
-          "text": "For intuition, imagine each internal page can point to about 200 child pages. Two internal levels could route a search among roughly 200 × 200 leaf-page ranges. This is only an illustration: PostgreSQL page capacity depends on key width, page overhead, fill level, and the actual index structure."
         }
       ]
     },
