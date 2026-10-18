@@ -193,14 +193,14 @@
         },
         {
           "id": "redis-and-caching",
-          "title": "Redis and Caching Architecture",
+          "title": "Redis and Caching Architecture: TTLs, Invalidation, and Stampedes",
           "lessonId": "redis-and-caching",
           "difficulty": "intermediate",
           "order": 17,
           "prerequisites": [
             "index-fundamentals"
           ],
-          "status": "upcoming"
+          "status": "published"
         },
         {
           "id": "postgresql-vs-mongodb",
