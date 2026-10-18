@@ -204,6 +204,16 @@
           "lessonPath": "/lessons/databases/scaling-and-reliability.json",
           "questionCount": 12,
           "lessonId": "scaling-and-reliability"
+        },
+        {
+          "id": "database-production-operations",
+          "title": "Database Production Operations: Backups, Migrations, and Monitoring",
+          "difficulty": "advanced",
+          "order": 20,
+          "status": "published",
+          "lessonPath": "/lessons/databases/database-production-operations.json",
+          "questionCount": 8,
+          "lessonId": "database-production-operations"
         }
       ]
     },
