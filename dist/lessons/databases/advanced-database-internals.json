@@ -6,12 +6,13 @@
   "title": "Advanced Database Internals",
   "description": "Advanced Database Internals. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
   "difficulty": "advanced",
-  "estimatedMinutes": 48,
+  "estimatedMinutes": 53,
   "learningObjectives": [
     "Explain MVCC snapshots and why updates create new row versions in PostgreSQL.",
     "Diagnose vacuum pressure, dead tuples, bloat, and transaction-ID wraparound risk.",
     "Trace how WAL, checkpoints, and crash recovery support durability.",
-    "Reason about locks, blocking, deadlocks, and transaction isolation."
+    "Reason about locks, blocking, deadlocks, and transaction isolation.",
+    "Explain advanced database internals using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -209,6 +210,140 @@
           "kind": "pitfall",
           "title": "Higher isolation can mean retries",
           "content": "SERIALIZABLE does not silently make every transaction succeed. PostgreSQL can abort a transaction with a serialization failure when concurrent changes cannot safely be ordered. The application should retry the entire transaction, not just the last statement, and the operation should be designed so retrying is safe."
+        }
+      ]
+    },
+    {
+      "id": "physical-work-memory-disk-wal",
+      "title": "Where database work happens: memory, data files, and WAL",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "PostgreSQL stores table and index pages in persistent database files, and caches frequently used pages in shared_buffers; the operating system may cache them too. Updates create row versions under MVCC and generate write-ahead log (WAL) records. WAL lets PostgreSQL recover committed work after a crash."
+        },
+        {
+          "type": "steps",
+          "title": "What happens when a transaction updates a row?",
+          "steps": [
+            {
+              "id": "buffer",
+              "title": "Find and modify the page in memory",
+              "description": "PostgreSQL reads the heap page into shared_buffers if needed, creates a new row version, and marks the page dirty."
+            },
+            {
+              "id": "wal",
+              "title": "Generate WAL records",
+              "description": "The change is recorded in WAL, which is written ahead of corresponding data-page changes."
+            },
+            {
+              "id": "commit",
+              "title": "Make the commit durable",
+              "description": "With the usual synchronous_commit setting, PostgreSQL waits for the commit record to be flushed to durable storage. The changed table page need not be written immediately."
+            },
+            {
+              "id": "checkpoint",
+              "title": "Write dirty data pages later",
+              "description": "Background writing and checkpoints flush modified data pages. Recovery replays WAL if a crash happens first."
+            }
+          ]
+        },
+        {
+          "type": "table",
+          "columns": [
+            "Resource",
+            "Where it lives",
+            "Why it matters"
+          ],
+          "rows": [
+            [
+              "Heap and index pages",
+              "Persistent database files; hot copies may be cached in RAM",
+              "They consume disk space even when not cached."
+            ],
+            [
+              "shared_buffers",
+              "PostgreSQL-managed RAM",
+              "A cache hit avoids loading the page into PostgreSQL from lower storage layers."
+            ],
+            [
+              "Operating-system page cache",
+              "RAM managed by the OS",
+              "A PostgreSQL buffer miss may still be served from OS cache."
+            ],
+            [
+              "WAL",
+              "Separate persistent log files",
+              "Commit durability and crash recovery depend on WAL; synchronous replication may add network and replica wait."
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "kind": "note",
+          "title": "Commit latency is not page-write latency",
+          "content": "A commit may wait for WAL flush, locks, or synchronous replicas. Dirty heap and index pages can be written later. Exact latency depends on storage, configuration, batching, and load."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Advanced Database Internals. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. PostgreSQL uses multi-version concurrency control (MVCC): when a transaction updates a row, it usually creates a new version rather than overwriting the old one immediately. A query sees the version allowed by its snapshot. This lets readers and writers work at the same time, but old versions cannot be cleaned up while an active transaction might still need them."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — A database has to let many people read and change data at once, recover after a crash, and clean up old data safely. PostgreSQL tracks row versions, records changes for recovery, and uses locks to coordinate conflicting work. Many production problems happen when a long transaction or busy workload stops these systems from keeping up. Make assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "MVCC and row visibility",
+              "description": "PostgreSQL uses multi-version concurrency control (MVCC): when a transaction updates a row, it usually creates a new version rather than overwriting the old one immediately. A query sees the version allowed by its snapshot. This lets readers and writers work at the same time, but old versions cannot be cleaned up while an active transaction might still need them."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Vacuum, bloat, and transaction IDs",
+              "description": "Updates and deletes can leave old row versions behind. VACUUM cleans up versions that no active transaction needs and makes their space reusable. Regular VACUUM usually does not shrink the file on disk; VACUUM FULL rewrites the table and needs a stronger lock, so it is a more disruptive fix."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "WAL, checkpoints, and recovery",
+              "description": "Before PostgreSQL relies on a changed data page being written to disk, it records the change in the write-ahead log (WAL). After a crash, it can replay the saved log to recover changes. Checkpoints limit how much log must be replayed, but heavy checkpoints can cause bursts of disk activity."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Locks, blocking, and deadlocks",
+              "description": "A query is blocked when it needs something another transaction holds. A deadlock happens when transactions wait on each other in a cycle: A holds one row and waits for another, while B holds the second and waits for the first. PostgreSQL aborts one transaction so the other can continue."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply Advanced Database Internals to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "Identify the mechanism and validate it with workload evidence before changing database settings.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, resource cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Identify the mechanism and validate it with workload evidence before changing database settings."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — Two transactions read a row while one updates it. What lets the reader retain a consistent view?",
+          "answer": "MVCC snapshots determine which tuple versions are visible.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
     }
