@@ -12,8 +12,7 @@
     "Explain fan-out and page-oriented storage.",
     "Describe page splits and their maintenance effects.",
     "Separate index navigation from end-to-end query latency.",
-    "Trace a B-tree lookup from root to leaf and explain cache hits, storage reads, heap fetches, and latency variability.",
-    "Explain b-trees: structure, traversal, splits, and balanced search using the six-layer interview framework."
+    "Trace a B-tree lookup from root to leaf and explain cache hits, storage reads, heap fetches, and latency variability."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -93,19 +92,19 @@
           "title": "Reasoning sequence",
           "steps": [
             {
-              "id": "identify",
-              "title": "Identify query shape",
-              "description": "Write down predicates, joins, ordering, limit, and selected columns."
+              "id": "root",
+              "title": "Compare separators at the root",
+              "description": "Compare the target key with separator keys and follow the child range that could contain it."
             },
             {
-              "id": "predict",
-              "title": "Predict the mechanism",
-              "description": "Explain which pages, entries, or operators the database is likely to visit."
+              "id": "internal",
+              "title": "Follow one child at each level",
+              "description": "Repeat the comparison in each internal page. The lookup follows one root-to-leaf path rather than scanning every key."
             },
             {
-              "id": "measure",
-              "title": "Validate the plan",
-              "description": "Use actual rows and buffers to compare prediction with observed work."
+              "id": "leaf",
+              "title": "Find the key in the leaf",
+              "description": "Search the selected leaf page for the key or its insertion position. A normal index scan may then fetch the matching heap row if the query needs columns not available from the index."
             }
           ]
         },
@@ -201,7 +200,7 @@
         },
         {
           "type": "paragraph",
-          "text": "A balanced B-tree usually finds a key in about log₂(n) levels rather than checking all n keys. Real query time also depends on whether pages are in memory, how many rows match, and how much table data must be fetched."
+          "text": "A B-tree lookup follows a number of page levels that grows roughly as O(log_f N), where f is the tree's fan-out. Because a page can point to many child pages, the height is usually only a few levels even for a large index."
         },
         {
           "type": "code",
@@ -352,13 +351,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "4. Trade-offs and scale — Apply B-Trees: Structure, Traversal, Splits, and Balanced Search to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "problem": "A million-key B-tree lookup visits a few index pages and then may fetch a heap page. Some pages are cached while another requires storage I/O.",
           "reasoning": [
-            "Navigation is not the whole query: fetching rows or returning a large result remains expensive.",
-            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
-            "Compare correctness, performance, storage or compute cost, operational complexity, and failure behavior."
+            "Tree height is O(log_f N), where f is fan-out—not log₂(N) page visits. High fan-out means a million-key index usually needs only a few levels.",
+            "A cache hit avoids storage I/O but still costs CPU; a cold random read can dominate a small lookup.",
+            "If thousands of rows match, heap fetches and result processing can cost far more than navigating the tree."
           ],
-          "outcome": "Choose based on the actual workload and invariants, then validate with representative measurements and edge cases."
+          "outcome": "Explain index navigation, cache state, heap access, and result size separately; measure actual latency instead of promising a fixed lookup time."
         },
         {
           "type": "callout",
