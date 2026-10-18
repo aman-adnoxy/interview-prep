@@ -325,7 +325,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — 4. Trade-offs and scale — Apply Advanced Database Internals to a realistic workload. What changes as data volume, concurrency, or failure rate grows? Identify the mechanism and validate it with workload evidence before changing database settings. Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds. Compare correctness, performance, resource cost, operational complexity, and failure behavior. Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+          "text": "4. Trade-offs and scale — Apply Advanced Database Internals to a realistic workload. What changes as data volume, concurrency, or failure rate grows? Identify the mechanism and validate it with workload evidence before changing database settings. Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds. Compare correctness, performance, resource cost, operational complexity, and failure behavior. Choose based on the workload and invariants, then validate with representative measurements and edge cases."
         },
         {
           "type": "callout",
