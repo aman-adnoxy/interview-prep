@@ -317,7 +317,7 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A lookup should not scan every key in a large table. A B-tree keeps keys sorted across pages and balanced levels, but the index lookup is only one part of the query's cost."
+          "text": "1. Problem and motivation — A lookup should not scan every key in a large table. A B-tree keeps keys sorted across pages and balanced levels, but index navigation is only one part of query cost."
         },
         {
           "type": "paragraph",
@@ -354,10 +354,10 @@
           "problem": "An index contains about one million email keys. Trace a lookup for one email, assuming a root page, two lower index pages, and one heap page are needed.",
           "reasoning": [
             "Compare the key with separators at the root and follow the child range that can contain it; repeat until reaching the leaf page.",
-            "The height is roughly O(log_f N), where f is fan-out. Because a page points to many children, the tree needs only a few levels at this scale; log₂(N) is not the number of page reads.",
-            "Cached pages avoid storage reads but still require CPU. A cold page read or thousands of heap fetches can dominate the end-to-end query time."
+            "Height is roughly O(log_f N), where f is fan-out. Because a page points to many children, the tree needs only a few levels; log₂(N) is not the number of page reads.",
+            "Cached pages avoid storage reads but still require CPU. A cold page read or thousands of heap fetches can dominate end-to-end time."
           ],
-          "outcome": "Explain index navigation, cache state, heap access, and result size separately. Use EXPLAIN (ANALYZE, BUFFERS) to measure the actual path rather than promising a fixed latency."
+          "outcome": "Explain index navigation, cache state, heap access, and result size separately. Use EXPLAIN (ANALYZE, BUFFERS) to measure the actual path."
         },
         {
           "type": "callout",
