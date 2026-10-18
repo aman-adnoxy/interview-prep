@@ -41,6 +41,10 @@
             "Fix the transaction lifecycle or workload, then verify vacuum can make progress."
           ],
           "outcome": "MVCC improves concurrency but makes transaction duration and cleanup progress operational concerns."
+        },
+        {
+          "type": "paragraph",
+          "text": "Think of a row as having versions over time. If a transaction changes an account balance from 100 to 70, a concurrent query that began with an older snapshot may still read the version showing 100, while a later query can see 70 after the update commits. PostgreSQL decides which version is visible from the transaction's snapshot; readers do not simply read whichever bytes were written most recently."
         }
       ]
     },
@@ -67,6 +71,10 @@
             "Address the blocker or throughput gap before planning a disruptive rewrite."
           ],
           "outcome": "Bloat is often a symptom of cleanup falling behind or being blocked. Diagnose why cleanup cannot keep pace."
+        },
+        {
+          "type": "paragraph",
+          "text": "For example, repeatedly updating a row does not mean PostgreSQL can immediately erase every older version. A transaction that started earlier may still need to see one of those versions. VACUUM can reclaim versions only when they are no longer visible to any relevant snapshot. A long-running transaction can therefore hold up cleanup even if it is mostly idle."
         }
       ]
     },
@@ -109,6 +117,16 @@
               "Background-writer and checkpoint behavior"
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "The database restarts after a power loss. Why can committed changes be recovered even if some modified table pages had not yet been written to their final data files?",
+          "reasoning": [
+            "PostgreSQL records the changes in WAL before relying on the corresponding data-page writes; this is the write-ahead rule.",
+            "After restart, recovery replays the required WAL records to bring data pages forward to a consistent state.",
+            "A checkpoint records a recovery point and reduces how far back recovery needs to replay, but checkpoints do not replace WAL."
+          ],
+          "outcome": "WAL is the recovery record; checkpoints help bound recovery work. They solve related but different problems."
         }
       ]
     },
@@ -135,6 +153,10 @@
             "Retry the complete transaction safely when a deadlock victim is aborted."
           ],
           "outcome": "Consistent lock ordering reduces deadlocks; short transactions and safe retries improve resilience."
+        },
+        {
+          "type": "paragraph",
+          "text": "A lock wait and a deadlock are not the same. If transaction B waits for A and A eventually commits, B can continue: that is blocking. If A waits for B while B waits for A, neither can progress without intervention: that cycle is a deadlock, so PostgreSQL aborts one transaction."
         }
       ]
     },
@@ -177,6 +199,16 @@
               "Retry serialization failures"
             ]
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Consider two shoppers trying to buy the last item. Both read quantity = 1. If each application calculates `1 - 1` and later writes 0 without coordinating, both requests may believe they bought the item. A conditional update such as `UPDATE ... WHERE quantity > 0 RETURNING ...` lets PostgreSQL decide which request successfully changes the remaining quantity. If the business rule spans several rows or statements, it may need a stronger transaction design, locks, or SERIALIZABLE isolation."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Higher isolation can mean retries",
+          "text": "SERIALIZABLE does not silently make every transaction succeed. PostgreSQL can abort a transaction with a serialization failure when concurrent changes cannot safely be ordered. The application should retry the entire transaction, not just the last statement, and the operation should be designed so retrying is safe."
         }
       ]
     }
