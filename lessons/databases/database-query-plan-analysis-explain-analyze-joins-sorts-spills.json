@@ -136,13 +136,13 @@
         },
         {
           "type": "worked_example",
-          "text": "A plan estimates 900 rows from a tenant filter but actually returns 120,000.",
           "reasoning": [
             "Find the earliest node with a large estimated-versus-actual row gap; here it is the scan's filter.",
             "Check whether statistics are stale and whether tenant sizes are highly uneven. Run `ANALYZE` if statistics need refreshing; consider extended statistics when correlated columns cause estimation errors.",
             "Then re-read the plan. Correcting the estimate may change join order, access path, or sort strategy without forcing a plan node manually."
           ],
-          "outcome": "A downstream sort or join may be slow because an earlier row-count estimate was wrong. Diagnose the earliest divergence first."
+          "outcome": "A downstream sort or join may be slow because an earlier row-count estimate was wrong. Diagnose the earliest divergence first.",
+          "problem": "A plan estimates 900 rows from a tenant filter but actually returns 120,000."
         }
       ]
     },
