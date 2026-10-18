@@ -169,8 +169,9 @@
           "title": "PostgreSQL vs. MongoDB Trade-offs",
           "difficulty": "intermediate",
           "order": 16,
-          "status": "upcoming",
+          "status": "published",
           "lessonPath": "/lessons/databases/postgresql-vs-mongodb.json",
+          "questionCount": 12,
           "lessonId": "postgresql-vs-mongodb"
         },
         {

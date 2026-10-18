@@ -47,6 +47,11 @@
       "contentVersion": "2.0.0",
       "questionCount": 8
     },
+    "postgresql-vs-mongodb": {
+      "path": "/lessons/databases/postgresql-vs-mongodb.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 12
+    },
     "relational-databases-keys-constraints": {
       "path": "/lessons/databases/relational-databases-keys-constraints.json",
       "contentVersion": "2.0.0",
