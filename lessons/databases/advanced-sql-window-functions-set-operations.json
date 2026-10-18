@@ -22,6 +22,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "GROUP BY reduces many input rows to one row per group. A window function calculates across related rows while keeping each input row in the output."
+        },
+        {
+          "type": "paragraph",
           "text": "A window function calculates something across related rows without collapsing them into one row. You can show every order and also show that customer's running total. PARTITION BY says where the calculation restarts; ORDER BY says the sequence to use. Add a unique tie-breaker when timestamps can match."
         },
         {
@@ -33,6 +37,16 @@
         {
           "type": "paragraph",
           "text": "The final id tie-breaker makes row ordering deterministic when created_at values tie. Without a unique ordering key, row_number assignments among ties may vary."
+        },
+        {
+          "type": "worked_example",
+          "problem": "You need to show every order and the customer's total spend beside each order.",
+          "reasoning": [
+            "GROUP BY customer_id alone would collapse the customer's orders into one row.",
+            "SUM(total) OVER (PARTITION BY customer_id) calculates the customer's total and repeats it beside each order.",
+            "Use ORDER BY inside the window only when you want an ordered calculation such as a running total."
+          ],
+          "outcome": "Use a window function when the report needs row-level detail and group-level context together."
         }
       ]
     },
@@ -40,6 +54,10 @@
       "id": "ranking",
       "title": "ROW_NUMBER, RANK, and DENSE_RANK",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "ROW_NUMBER, RANK, and DENSE_RANK differ in what happens when rows tie."
+        },
         {
           "type": "table",
           "columns": [
@@ -119,6 +137,16 @@
         {
           "type": "paragraph",
           "text": "With ORDER BY score DESC, the default frame for an aggregate window includes the current row and its peers. When ordering values tie, a running SUM can advance by peer groups rather than one physical row at a time. For row-by-row accumulation, add a stable tie-breaker and specify ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Three sellers have scores 100, 100, and 90.",
+          "reasoning": [
+            "ROW_NUMBER assigns three distinct positions; add a tie-breaker if exact ordering must be stable.",
+            "RANK gives the two top sellers rank 1 and the next seller rank 3.",
+            "DENSE_RANK gives the top sellers rank 1 and the next seller rank 2."
+          ],
+          "outcome": "Choose ROW_NUMBER for unique positions, RANK for competition-style ranks with gaps, and DENSE_RANK for ranks without gaps."
         }
       ]
     },
@@ -126,6 +154,10 @@
       "id": "latest-row",
       "title": "Latest row per group",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "MAX(timestamp) finds the latest time, but it does not by itself identify one complete row."
+        },
         {
           "type": "code",
           "language": "sql",
@@ -145,6 +177,16 @@
         {
           "type": "paragraph",
           "text": "DISTINCT ON is PostgreSQL-specific. The leading ORDER BY expressions must match the DISTINCT ON expressions, and subsequent ordering expressions choose which row wins within each group."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Two orders for a customer have the same created_at timestamp, and you need exactly one latest order.",
+          "reasoning": [
+            "Joining the maximum timestamp back to orders can return both tied orders.",
+            "Use ROW_NUMBER partitioned by customer and ordered by created_at DESC, id DESC.",
+            "Filter to row_number = 1; the unique id breaks timestamp ties deterministically."
+          ],
+          "outcome": "Specify tie behavior. A timestamp alone is not always enough to identify one row."
         }
       ]
     },
@@ -152,6 +194,10 @@
       "id": "lag-running",
       "title": "LAG, LEAD, and running aggregates",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "LAG and LEAD compare a row with a previous or next row in a defined order."
+        },
         {
           "type": "code",
           "language": "sql",
@@ -167,6 +213,16 @@
           "language": "sql",
           "title": "Running total with a row-by-row frame",
           "source": "SELECT customer_id, created_at, id, total_amount,\n       SUM(total_amount) OVER (\n         PARTITION BY customer_id\n         ORDER BY created_at, id\n         ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW\n       ) AS running_total\nFROM orders;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A monthly report needs this month's revenue and the change from the previous month.",
+          "reasoning": [
+            "Aggregate revenue to one row per month first.",
+            "Use LAG(revenue) OVER (ORDER BY month) to bring in the prior month's revenue.",
+            "Subtract the prior value and decide how the first month, which has no previous row, should be displayed."
+          ],
+          "outcome": "The order inside the window defines what previous means; make sure the input grain is correct."
         }
       ]
     },
@@ -174,6 +230,10 @@
       "id": "set-operations",
       "title": "UNION, UNION ALL, INTERSECT, and EXCEPT",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Set operations combine compatible query results. The key choice is whether duplicates should be removed."
+        },
         {
           "type": "paragraph",
           "text": "Set operations combine the results of two queries. UNION removes duplicate rows; UNION ALL keeps them and is usually cheaper. INTERSECT keeps rows found in both results; EXCEPT keeps rows from the first result that are absent from the second. Add ORDER BY if you need a guaranteed output order."
@@ -189,6 +249,16 @@
           "kind": "pitfall",
           "title": "UNION deduplicates entire rows",
           "content": "UNION does not deduplicate by a chosen business key unless the selected result columns make that the same rule. If source differs, otherwise identical emails remain distinct rows."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Combine current subscribers with subscribers from an archived system.",
+          "reasoning": [
+            "UNION ALL appends both result sets and keeps duplicate rows.",
+            "UNION removes duplicate result rows, which requires extra work to compare them.",
+            "Use UNION only if duplicate removal is part of the desired result."
+          ],
+          "outcome": "Prefer UNION ALL when duplicates are valid or impossible by design; use UNION when the result must be deduplicated."
         }
       ]
     },
@@ -196,6 +266,10 @@
       "id": "filtering-window-results",
       "title": "Filtering and correctness details",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A window result is calculated after WHERE at the same query level, so filtering on that result needs another query layer."
+        },
         {
           "type": "paragraph",
           "text": "You usually cannot filter on a window-function result in WHERE at the same query level because WHERE runs earlier. Put the window query in a CTE or subquery, then filter its result. Also decide how NULL or tied timestamps should be handled."
@@ -209,6 +283,16 @@
         {
           "type": "paragraph",
           "text": "For production queries, define the tie policy, the treatment of NULL timestamps, and whether exactly one row or all ties should be returned. Use an index that matches the filter/order pattern only after checking the actual plan and workload."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Return the three highest-paid employees in each department.",
+          "reasoning": [
+            "Calculate ROW_NUMBER() OVER (PARTITION BY department_id ORDER BY salary DESC, employee_id) in a CTE.",
+            "Filter the CTE in the outer query where row_number <= 3.",
+            "The employee_id tie-breaker makes the result repeatable when salaries match."
+          ],
+          "outcome": "Calculate the window value first, then filter it in the outer query. Keep tie policy explicit."
         }
       ]
     },
@@ -216,6 +300,10 @@
       "id": "module-cumulative-challenge",
       "title": "Cumulative challenge: revenue and latest order",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "When combining totals from different one-to-many tables, aggregate each source to the intended grain before joining them."
+        },
         {
           "type": "paragraph",
           "text": "For a report with customer totals and latest order, calculate payments and orders at their own levels before joining them. Otherwise, several payment attempts can repeat an order row and inflate the total. Be clear whether revenue means successful captures, net of refunds, or something else."
@@ -235,6 +323,16 @@
         {
           "type": "paragraph",
           "text": "This query sums successful payment amounts, not order totals. Refunds, partial captures, currency conversion, or reversals require explicit business semantics."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A report needs successful payment totals and the latest order for each customer.",
+          "reasoning": [
+            "Aggregate successful payments to one row per customer before joining.",
+            "Find the latest order with ROW_NUMBER or DISTINCT ON and a deterministic tie-breaker.",
+            "Joining raw payments to raw orders first could multiply rows and inflate payment totals."
+          ],
+          "outcome": "Make each input one row per customer before combining them, and confirm totals match the business definition."
         }
       ]
     }
