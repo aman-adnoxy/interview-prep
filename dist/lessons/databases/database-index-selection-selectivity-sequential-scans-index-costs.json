@@ -126,13 +126,13 @@
         },
         {
           "type": "worked_example",
-          "text": "A report returns 35% of orders matching a status and sorts them by total amount.",
           "reasoning": [
             "A plain index scan may visit many scattered heap pages to fetch the matching rows.",
             "A bitmap heap scan can group matching row locations by page, reducing repeated random visits, but it still may need a separate sort.",
             "A sequential scan may be cheaper if much of the table is needed. If the query returns only a few rows, a selective index path may win instead."
           ],
-          "outcome": "The planner compares the work to find rows, fetch their columns, and produce the requested order. Matching a predicate is only one part of query cost."
+          "outcome": "The planner compares the work to find rows, fetch their columns, and produce the requested order. Matching a predicate is only one part of query cost.",
+          "problem": "A report returns 35% of orders matching a status and sorts them by total amount."
         }
       ]
     },
