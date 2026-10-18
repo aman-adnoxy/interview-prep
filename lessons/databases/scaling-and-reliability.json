@@ -83,6 +83,16 @@
               "description": "Use representative data and read/write mix."
             }
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "API p95 latency rises from 120 ms to 1.5 seconds during a traffic spike.",
+          "reasoning": [
+            "Break latency into pool wait, query execution, lock wait, and network/application time; do not assume the database needs a bigger machine.",
+            "Compare throughput and saturation: CPU, I/O, active sessions, pool queue, slow queries, and lock waits.",
+            "If pool wait dominates, adding database CPU may not help. If one query scans too many rows, fix the query or index before adding replicas."
+          ],
+          "outcome": "Scale the measured bottleneck. The same high latency symptom can come from different causes and needs a different intervention."
         }
       ]
     },
@@ -123,6 +133,20 @@
         {
           "type": "paragraph",
           "text": "A replica is not automatically a backup. Replication can copy accidental deletes or corruption; backups and restore drills protect against different failures."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A user changes their email and immediately opens the profile page, but the old email appears.",
+          "reasoning": [
+            "The write commits on the primary, but replication to the read replica has not caught up.",
+            "Route this read to the primary or use a mechanism that waits until the replica has replayed the required write.",
+            "Define how long the application may wait and what it does if the replica cannot catch up."
+          ],
+          "outcome": "Replicas can improve read capacity, but read-after-write behavior must be designed explicitly. Do not assume a successful primary write is instantly visible everywhere."
+        },
+        {
+          "type": "paragraph",
+          "text": "Failover also has a data-loss question: asynchronous replication may not have shipped or replayed the newest committed writes when the primary fails. The promoted replica can therefore be missing recent changes. RPO describes the loss you are prepared to tolerate; it is not a promise that no data will be lost."
         }
       ]
     },
@@ -149,6 +173,16 @@
             "Do not confuse partitioning inside a database with distributing writes across multiple nodes."
           ],
           "outcome": "Partitioning can improve lifecycle management and pruning; sharding is a separate distribution decision."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A support team queries events from the last seven days, while events older than a year can be removed.",
+          "reasoning": [
+            "Monthly range partitions on `created_at` can let PostgreSQL skip old partitions when the query has a matching time range.",
+            "Dropping an expired partition can be easier than deleting millions of rows one by one, but partitioning adds DDL, index, and planning considerations.",
+            "If writes are still bottlenecked on one primary, partitioning alone does not distribute writes across servers; sharding is a separate architecture with routing and rebalancing costs."
+          ],
+          "outcome": "Partition by a key that supports pruning or lifecycle management. Shard only when measured limits justify distributing ownership across nodes."
         }
       ]
     },
@@ -175,6 +209,20 @@
             "Measure pool wait and saturation before changing max_connections."
           ],
           "outcome": "Pool sizing is a global capacity problem; bound concurrency at both application and database boundaries."
+        },
+        {
+          "type": "paragraph",
+          "text": "Retries can amplify an outage. If a database request fails and every application instance retries immediately, the retry traffic arrives on top of new user traffic. Use bounded attempts, exponential backoff with jitter, request deadlines, and idempotency for operations that may be repeated. When the queue is full, reject or shed work rather than allowing unlimited requests to wait."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A slow database causes 1,000 requests to time out, and each request retries three times immediately.",
+          "reasoning": [
+            "The original 1,000 requests can become up to 4,000 attempts, increasing connection and CPU pressure while the database is already struggling.",
+            "Backoff with jitter spreads retries; a request deadline prevents work continuing after the caller has given up.",
+            "Bound concurrency and queue length, and retry only operations that are safe to repeat."
+          ],
+          "outcome": "Retries help transient failures only when they are bounded and coordinated with backpressure."
         }
       ]
     },
@@ -216,6 +264,16 @@
               "description": "Remove old schema after rollback windows close."
             }
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Rename `users.full_name` to `display_name` while old and new application versions may run at the same time.",
+          "reasoning": [
+            "Add `display_name` without removing `full_name`, then deploy code that can read both and writes the new field safely.",
+            "Backfill existing rows in bounded batches and compare counts or values to confirm parity.",
+            "Switch reads only after the new field is populated; remove the old field in a later release after rollback is no longer needed."
+          ],
+          "outcome": "Expand-and-contract keeps each deployment compatible with the schema during rollout. A migration is not safe merely because the DDL succeeds."
         }
       ]
     }
