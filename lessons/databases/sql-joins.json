@@ -127,11 +127,22 @@
         },
         {
           "type": "paragraph",
-          "text": "Suppose Asha has two orders and Ravi has none. A LEFT JOIN from customers to orders shows Asha twice and Ravi once with NULL in the order columns. An order pointing to no listed customer is not shown because customers are the left-side table."
+          "text": "In the sample data, Asha has two orders; Ben and Chen have none. The order with customer_id = 4 has no matching customer. A LEFT JOIN starting from customers keeps Ben and Chen with NULL order columns, but it does not show that orphan order. A RIGHT JOIN or FULL OUTER JOIN can show the orphan because those joins preserve rows from the orders side too."
         },
         {
           "type": "paragraph",
           "text": "Worked join matrix: these are raw staging tables without an enforced foreign key, so the order with customer_id = 4 is an intentional orphan representing an import-quality exception. A production schema with an enforced valid foreign key would reject it."
+        },
+        {
+          "type": "worked_example",
+          "text": "Count the rows before looking at the output tables.",
+          "reasoning": [
+            "INNER JOIN: 2 rows, one for each of Asha's matching orders.",
+            "LEFT JOIN: 4 rows—Asha twice, Ben once with NULL order columns, and Chen once with NULL order columns.",
+            "RIGHT JOIN: 3 rows—Asha's two orders and the orphan order for customer_id 4. Ben and Chen are not preserved.",
+            "FULL OUTER JOIN: 5 rows—Asha's two matches, Ben and Chen unmatched on the left, and the orphan order unmatched on the right."
+          ],
+          "outcome": "The join type determines which unmatched side survives. Matching rows still appear once per matching pair."
         },
         {
           "type": "table",
