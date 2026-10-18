@@ -362,11 +362,11 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A report needs each order, its customer's running total, rank, and latest order. GROUP BY alone loses row-level detail, while tied timestamps can make a latest-row query return multiple rows."
+          "text": "1. Problem and motivation — A report needs one row per order plus each customer's running spend and rank. GROUP BY alone collapses the order rows, while choosing the latest order can be ambiguous when timestamps tie."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — Use GROUP BY when the result should contain one row per group; use window functions when each input row must remain visible. Add a unique tie-breaker when exactly one latest row is required."
+          "text": "2. Definition and design choice — GROUP BY reduces rows to one per group. A window function calculates across related rows while keeping each input row. Ordering and tie-breaking are part of the query's meaning, not optional decoration."
         },
         {
           "type": "steps",
@@ -396,13 +396,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "Customer 7 has orders at 10:00 for ₹100 and ₹250, and at 11:00 for ₹300. The report needs a deterministic latest row and a running total.",
+          "problem": "Customer 7 has orders (id 11, 10:00, ₹100), (id 12, 10:00, ₹250), and (id 13, 11:00, ₹300). Return each order, a running total, and exactly one latest order.",
           "reasoning": [
-            "ROW_NUMBER ordered only by timestamp cannot choose deterministically between the two 10:00 rows; add a unique key as a tie-breaker.",
-            "SUM(amount) OVER (PARTITION BY customer_id ORDER BY created_at, order_id ROWS UNBOUNDED PRECEDING) keeps each order while adding a running total.",
-            "Use RANK or DENSE_RANK when ties should share a rank; use UNION ALL when repeated events are meaningful."
+            "SUM(amount) OVER (PARTITION BY customer_id ORDER BY created_at, order_id ROWS UNBOUNDED PRECEDING) returns running totals ₹100, ₹350, and ₹650.",
+            "ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at DESC, order_id DESC) picks id 13 as the latest row. Without a unique tie-breaker, tied rows can be ordered unpredictably.",
+            "RANK and DENSE_RANK intentionally preserve ties; UNION removes duplicate complete rows, while UNION ALL preserves them."
           ],
-          "outcome": "Specify row grain, ordering, tie behavior, and duplicate semantics before choosing the SQL pattern."
+          "outcome": "State the output grain, window partition, ordering, frame, tie policy, and duplicate policy before writing the query."
         },
         {
           "type": "callout",
