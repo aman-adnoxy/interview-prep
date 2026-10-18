@@ -66,6 +66,20 @@
             "Embed line-item price snapshots if appropriate while keeping shared relationships and constraints explicit."
           ],
           "outcome": "Start with invariants and query patterns, not a blanket rule that one model always wins."
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine a marketplace with customers, orders, products, inventory, and refunds. If reports regularly join these entities and the database must reject invalid references or enforce uniqueness, PostgreSQL's relational model may make those rules easier to express. If a product page is usually loaded as one bounded document and its fields are naturally owned together, MongoDB's document model may make that access simpler. Either database can support more than one pattern; the point is to compare the actual operations and invariants."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A product has a current catalog price, but old orders must keep the price the buyer paid.",
+          "reasoning": [
+            "Keep the current catalog price as the authoritative product fact.",
+            "Store `unitPriceAtPurchase` on the order line because it describes a historical transaction, not the current catalog.",
+            "In either database, make the choice explicit so changing the catalog price does not rewrite old order totals."
+          ],
+          "outcome": "Choose where facts live by what they mean and how they change—not by a slogan that one database is normalized and the other is not."
         }
       ]
     },
@@ -117,6 +131,16 @@
         {
           "type": "paragraph",
           "text": "A purchase-time price snapshot is deliberate denormalization, not a reason to duplicate the current product catalog everywhere."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Each order contains 1–20 line items, while products are shared across thousands of orders and their descriptions change.",
+          "reasoning": [
+            "Embedding the bounded line items in an order can make reading the order convenient.",
+            "Keep a purchase-time price snapshot inside each line item because it must not change with the catalog.",
+            "Reference the shared product by ID rather than copying its current description as if that were authoritative. If the order must preserve the description shown at purchase, store that as a separate historical snapshot with an explicit purpose."
+          ],
+          "outcome": "Embed bounded data owned by the parent; reference shared entities; duplicate historical values only when the snapshot itself is a business fact."
         }
       ]
     },
@@ -143,6 +167,20 @@
             "In MongoDB, keep the invariant in one document when practical, or use a transaction and test retry behavior."
           ],
           "outcome": "Choose the model that makes the invariant enforceable and operationally understandable."
+        },
+        {
+          "type": "paragraph",
+          "text": "A payment workflow illustrates the boundary. A database transaction can atomically create an order and an outbox event. It cannot atomically commit with an external payment provider over the network. If the provider charges the card but the application times out before receiving the response, the application needs an idempotency key and a reconciliation/retry strategy; simply rolling back the database does not undo the external charge."
+        },
+        {
+          "type": "worked_example",
+          "problem": "The application writes an order, then crashes before publishing `OrderCreated` to a message broker.",
+          "reasoning": [
+            "If the order commit and message publish are separate operations, the crash can leave the order saved but no event published.",
+            "Write the order and an outbox row in the same database transaction.",
+            "A worker publishes unsent outbox rows and marks them delivered; consumers must tolerate duplicate delivery."
+          ],
+          "outcome": "The outbox makes the intent to publish durable with the business change. It does not make the broker call part of the database transaction, so delivery still needs retries and idempotency."
         }
       ]
     },
@@ -165,6 +203,16 @@
           "language": "sql",
           "title": "PostgreSQL JSONB index",
           "source": "CREATE INDEX events_payload_gin ON events USING GIN (payload);\nSELECT id FROM events WHERE payload @> '{\"kind\":\"purchase\"}';"
+        },
+        {
+          "type": "worked_example",
+          "problem": "An endpoint lists the 50 newest orders for one tenant.",
+          "reasoning": [
+            "The access pattern filters by `tenantId`, sorts by `createdAt` descending, and limits the result to 50.",
+            "A compound index beginning with tenantId and then createdAt can support both the filter and ordering in MongoDB; PostgreSQL can use the analogous B-tree index.",
+            "Check the actual plan and write rate. An index helps this query but adds storage and maintenance to every relevant write."
+          ],
+          "outcome": "Index both systems for real query shapes and verify with each engine's plan tools; document flexibility does not remove index trade-offs."
         }
       ]
     },
@@ -206,6 +254,10 @@
               "description": "Switch gradually and retain a tested rollback path."
             }
           ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For example, moving order data to a second database is not complete when the initial copy finishes. An order may change during the backfill, or an event may be delivered twice. Define which system owns writes, replay changes safely, compare important totals and invariants, and rehearse cutover and rollback before switching production traffic."
         }
       ]
     }
