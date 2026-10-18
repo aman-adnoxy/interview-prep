@@ -24,6 +24,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "A B-tree keeps keys in order and keeps leaf pages at the same depth, so a lookup does not turn into a long chain as the index grows."
+        },
+        {
+          "type": "paragraph",
           "text": "A B-tree keeps keys sorted inside pages. Separator keys tell the database which child page could contain a target value. All leaf pages stay at the same depth, so the search path remains balanced as the index grows. The number of child pages each page can point to is called fan-out; higher fan-out usually means fewer levels to traverse."
         },
         {
@@ -51,6 +55,16 @@
               "The database can find exact values and scan ranges in order."
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "An index contains keys from 1 to 1,000,000. You need key 725,000.",
+          "reasoning": [
+            "Compare the target with separator keys at the root and choose the child range that could contain it.",
+            "Repeat at each internal page until reaching a leaf page.",
+            "Search the leaf for the key. Many keys fit in each page, so the tree usually has only a few levels."
+          ],
+          "outcome": "The tree skips unrelated key ranges at each level instead of checking every indexed key."
         }
       ]
     },
@@ -58,6 +72,10 @@
       "id": "btree-lookup",
       "title": "Trace a lookup",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A lookup follows one path through the tree: root, internal pages, then a leaf."
+        },
         {
           "type": "paragraph",
           "text": "To find a key, start at the root page, compare the key with the separators, and follow the child range that could contain it. Repeat until you reach a leaf page. If the key is missing, the search still ends at the leaf where it would belong."
@@ -88,6 +106,16 @@
               "description": "Use actual rows and buffers to compare prediction with observed work."
             }
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Find key 25 in a tree whose root separates keys below 20, between 20 and 40, and above 40.",
+          "reasoning": [
+            "25 is greater than 20 and less than 40, so choose the middle child.",
+            "Continue comparing only within that child range.",
+            "At the leaf, find 25 or determine that it is absent."
+          ],
+          "outcome": "Each comparison narrows the possible range. A missing key is found by reaching the leaf where it would belong."
         }
       ]
     },
@@ -95,6 +123,10 @@
       "id": "btree-fanout",
       "title": "Pages and fan-out",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Fan-out is the number of child pages an internal page can point to. Higher fan-out usually means fewer levels to traverse."
+        },
         {
           "type": "paragraph",
           "text": "Databases read and write pages, not one index entry at a time from disk. An internal page can hold many separators, so one page can point to many child pages. Very wide keys fit fewer entries per page and can make the index larger."
@@ -107,13 +139,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A users table has one million rows. An API looks up a user by a unique email, and a B-tree index exists on email.",
+          "problem": "One internal page can point to 200 child pages, and each of those can point to 200 more.",
           "reasoning": [
-            "The database follows the tree from its root through a small number of pages to the matching email, instead of checking every user row.",
-            "The index then points to the table row if the query needs columns that are not available in the index.",
-            "Use EXPLAIN (ANALYZE, BUFFERS) on a representative query to confirm the work saved; an index still has storage and write costs."
+            "The root can cover 200 ranges.",
+            "A second level can cover roughly 200 × 200 ranges before reaching the leaves.",
+            "Actual capacity depends on page size, key width, page overhead, and how full the pages are."
           ],
-          "outcome": "A B-tree makes targeted lookups efficient by keeping keys sorted and the tree balanced. The full query cost still depends on how many rows match and what data must be fetched."
+          "outcome": "Indexes stay shallow because pages hold many keys and pointers; wider keys can reduce fan-out and increase tree height."
         }
       ]
     },
@@ -121,6 +153,10 @@
       "id": "btree-splits",
       "title": "Page splits",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "When an index page fills up, PostgreSQL splits it so new entries can fit while searches still follow the correct ranges."
+        },
         {
           "type": "paragraph",
           "text": "When a page runs out of room, the database splits it and updates the parent so searches still find the right range. If the parent is full too, it can split as well. A root split can add a level to the tree; it is not the same as rebuilding the whole index."
@@ -136,6 +172,16 @@
           "prompt": "Does the existence of an index guarantee PostgreSQL will use it?",
           "answer": "No.",
           "explanation": "The planner compares estimated costs, and another access path may be cheaper."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A full page needs to accept a new key that belongs between its existing keys.",
+          "reasoning": [
+            "The page is split into two pages with entries divided by key order.",
+            "The parent is updated with a separator so future searches choose the correct page.",
+            "If the parent is also full, the split can propagate upward; a root split adds another level."
+          ],
+          "outcome": "Splits preserve search correctness, but add write work and can affect page locality."
         }
       ]
     },
@@ -145,6 +191,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "B-tree lookup depth grows roughly with the logarithm of the number of keys, but query latency is not just a complexity formula."
+        },
+        {
+          "type": "paragraph",
           "text": "A balanced B-tree usually finds a key in about log₂(n) levels rather than checking all n keys. Real query time also depends on whether pages are in memory, how many rows match, and how much table data must be fetched."
         },
         {
@@ -152,6 +202,16 @@
           "language": "sql",
           "title": "PostgreSQL example",
           "source": "EXPLAIN (ANALYZE, BUFFERS) SELECT * FROM users WHERE user_id = 42;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A lookup touches four index pages and then fetches one table page.",
+          "reasoning": [
+            "If the pages are cached, those visits may be cheap.",
+            "If they require storage reads, latency depends on the number and pattern of page reads.",
+            "If the query matches thousands of rows, fetching those rows can dominate the initial tree traversal."
+          ],
+          "outcome": "Big-O explains growth, while the execution plan and buffer behavior explain real performance."
         }
       ]
     }
