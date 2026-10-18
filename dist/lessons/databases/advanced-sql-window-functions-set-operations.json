@@ -147,6 +147,16 @@
             "DENSE_RANK gives the top sellers rank 1 and the next seller rank 2."
           ],
           "outcome": "Choose ROW_NUMBER for unique positions, RANK for competition-style ranks with gaps, and DENSE_RANK for ranks without gaps."
+        },
+        {
+          "type": "worked_example",
+          "text": "Three salespeople have totals of 100, 90, and 90. You need to show who is in the top two rank positions.",
+          "reasoning": [
+            "`ROW_NUMBER()` assigns positions 1, 2, and 3; it chooses one of the tied 90s for position 2, so only two people appear if you filter to row number <= 2.",
+            "`RANK()` assigns 1, 2, and 2, so filtering rank <= 2 returns all three people.",
+            "`DENSE_RANK()` also returns all three for rank <= 2, and the next lower score would receive rank 3 rather than rank 4."
+          ],
+          "outcome": "Decide whether 'top two' means two rows or everyone whose score is among the top two distinct score levels. The ranking function should express that business rule."
         }
       ]
     },
@@ -223,6 +233,16 @@
             "Subtract the prior value and decide how the first month, which has no previous row, should be displayed."
           ],
           "outcome": "The order inside the window defines what previous means; make sure the input grain is correct."
+        },
+        {
+          "type": "worked_example",
+          "text": "Calculate each customer's running order total in chronological order.",
+          "reasoning": [
+            "Partition by customer so one customer's running total does not include another customer's orders.",
+            "Order by `created_at, id` so orders with the same timestamp still have a stable sequence.",
+            "Use `ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW` to add one row at a time; without an explicit ROWS frame, tied ordering values can be treated as peers."
+          ],
+          "outcome": "A running total needs both a clear partition and a clear order/frame. Otherwise the result may not match the intended sequence."
         }
       ]
     },
@@ -242,7 +262,7 @@
           "type": "code",
           "language": "sql",
           "title": "Combine active and invited users",
-          "source": "SELECT email, 'active' AS source\nFROM active_users\nUNION ALL\nSELECT email, 'invited' AS source\nFROM invited_users;"
+          "source": "-- Keep every email occurrence, including duplicates across the sources.\nSELECT email FROM active_users\nUNION ALL\nSELECT email FROM invited_users;\n\n-- Remove duplicate email values across the combined result.\nSELECT email FROM active_users\nUNION\nSELECT email FROM invited_users;"
         },
         {
           "type": "callout",
@@ -254,11 +274,15 @@
           "type": "worked_example",
           "problem": "Combine current subscribers with subscribers from an archived system.",
           "reasoning": [
-            "UNION ALL appends both result sets and keeps duplicate rows.",
-            "UNION removes duplicate result rows, which requires extra work to compare them.",
-            "Use UNION only if duplicate removal is part of the desired result."
+            "If the email `a@example.com` appears in both inputs, UNION ALL returns it twice.",
+            "UNION compares the complete output rows and returns that email once when email is the only selected column.",
+            "If the SELECT also includes different source labels, the rows differ and UNION keeps both."
           ],
-          "outcome": "Prefer UNION ALL when duplicates are valid or impossible by design; use UNION when the result must be deduplicated."
+          "outcome": "Choose UNION when duplicate result rows should be removed; choose UNION ALL when occurrences matter or deduplication is unnecessary."
+        },
+        {
+          "type": "paragraph",
+          "text": "The result columns must have compatible types and appear in the same positions in both SELECT statements. UNION removes duplicate complete rows, not duplicates according to a column you happen to consider important. If you add a `source` column with values such as 'active' and 'invited', those rows are no longer identical, so UNION will keep both."
         }
       ]
     },
