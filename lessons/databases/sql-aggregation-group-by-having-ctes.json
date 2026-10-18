@@ -181,6 +181,10 @@
           "text": "A CTE gives a meaningful query step a name, so a complicated query can be read as smaller stages."
         },
         {
+          "type": "callout",
+          "text": "In PostgreSQL 12 and later, many eligible non-recursive CTEs can be inlined into the surrounding query. A CTE is therefore not automatically a temporary table or a performance barrier. `MATERIALIZED` and `NOT MATERIALIZED` can influence the choice; check the plan before assuming either form is faster."
+        },
+        {
           "type": "paragraph",
           "text": "A CTE is a named step in a query, introduced with WITH. It can make a report easier to read by naming an intermediate result, such as monthly revenue. PostgreSQL may combine that step into the larger query, so a CTE is not automatically a performance barrier."
         },
