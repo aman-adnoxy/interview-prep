@@ -71,6 +71,16 @@
             "If rows are scattered, these visits can cost more than expected even when the index lookup is quick."
           ],
           "outcome": "Finding keys and fetching full rows are separate parts of an index scan."
+        },
+        {
+          "type": "worked_example",
+          "reasoning": [
+            "The index can identify matching heap row locations (TIDs).",
+            "If `description` is not stored in the index, PostgreSQL visits the heap to fetch it.",
+            "If those rows are scattered across many heap pages, the fetches can dominate the cost even though the index lookup itself is fast."
+          ],
+          "outcome": "An index can make finding rows cheap while fetching the requested columns remains expensive. That is one reason index-only scans and physical locality matter.",
+          "problem": "A query finds 500 product IDs through an index and then needs each product's description."
         }
       ]
     },
@@ -218,6 +228,12 @@
             "Plan for the rewrite's lock, I/O, disk-space, and maintenance implications; new writes gradually weaken the ordering."
           ],
           "outcome": "Use clustering only when measured locality benefits justify the operational cost."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "CLUSTER is not permanent ordering",
+          "content": "PostgreSQL's CLUSTER rewrites a table in the order of an index at the time it runs. Later inserts and updates do not guarantee that the table stays in that order. Treat it as a maintenance operation with locking, rewrite, and disk-space implications—not as a permanent clustered-index property."
         }
       ]
     }

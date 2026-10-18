@@ -123,6 +123,16 @@
             "A sequential scan may still win if most table pages are needed; a bitmap path generally does not preserve index order."
           ],
           "outcome": "The planner chooses an access path based on estimated work, not a rule that index scans are always faster."
+        },
+        {
+          "type": "worked_example",
+          "reasoning": [
+            "A plain index scan may visit many scattered heap pages to fetch the matching rows.",
+            "A bitmap heap scan can group matching row locations by page, reducing repeated random visits, but it still may need a separate sort.",
+            "A sequential scan may be cheaper if much of the table is needed. If the query returns only a few rows, a selective index path may win instead."
+          ],
+          "outcome": "The planner compares the work to find rows, fetch their columns, and produce the requested order. Matching a predicate is only one part of query cost.",
+          "problem": "A report returns 35% of orders matching a status and sorts them by total amount."
         }
       ]
     },
@@ -189,6 +199,10 @@
             "Use workload evidence to identify unused or duplicate indexes before considering removal."
           ],
           "outcome": "Evaluate indexes against the whole workload: read benefit, write cost, storage, and maintenance."
+        },
+        {
+          "type": "paragraph",
+          "text": "For example, adding five indexes to a write-heavy orders table means every insert must maintain five extra lookup structures where applicable. That can increase write latency, WAL volume, cache pressure, and storage. Before keeping an index, compare how often it helps important reads with the ongoing cost imposed on writes."
         }
       ]
     },

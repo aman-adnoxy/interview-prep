@@ -446,6 +446,12 @@
             "Test one index candidate, compare read latency and buffer activity, and measure the write overhead."
           ],
           "outcome": "A useful index is one that improves the workload enough to justify its ongoing cost."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Read EXPLAIN ANALYZE carefully",
+          "content": "EXPLAIN ANALYZE executes the statement. For a slow SELECT, it performs the read; for an INSERT, UPDATE, or DELETE, it can change data. Test write statements in a safe transaction or test environment, and remember that timing from a small or warm-cache test may not represent production."
         }
       ]
     }

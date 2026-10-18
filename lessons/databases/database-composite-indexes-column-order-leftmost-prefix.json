@@ -122,6 +122,16 @@
             "If the query filters only by status, an index whose first column is tenant_id may not provide a narrow lookup by status alone."
           ],
           "outcome": "Design from WHERE, JOIN, ORDER BY, and LIMIT together; column order determines which parts of the query an index can support."
+        },
+        {
+          "type": "worked_example",
+          "reasoning": [
+            "The query filters on `tenant_id = 7` and `status = 'open'`; these equality predicates define the group to search.",
+            "Within that group, the result needs `created_at DESC`, so place the ordering column after the equality columns.",
+            "An index on `(tenant_id, status, created_at DESC)` can seek to that tenant/status range and read newest-first. An index on `(created_at DESC, tenant_id, status)` orders by time across all tenants first, so it may have to examine many entries before finding 20 rows for tenant 7."
+          ],
+          "outcome": "Leading columns determine which contiguous part of the index can be searched directly. Column order should match the query's filters and required order.",
+          "problem": "You need the latest 20 open events for tenant 7."
         }
       ]
     },
@@ -147,9 +157,9 @@
           "type": "worked_example",
           "problem": "A feed query returns tenant_id, created_at, and status.",
           "reasoning": [
-            "Use tenant_id and created_at as key columns to support filtering and ordering.",
-            "INCLUDE (status) stores status in the index so it may be returned without reading the heap.",
-            "The index becomes larger, writes must maintain the included value, and visibility checks may still require heap visits."
+            "Use `tenant_id` and `created_at` as key columns to support filtering and ordering.",
+            "If the query also returns `event_type`, include that column in the index payload so PostgreSQL may return it without fetching the heap row.",
+            "The index grows larger and updates to included values require index maintenance. Even when all columns are present, PostgreSQL may still visit the heap to check row visibility."
           ],
           "outcome": "INCLUDE can reduce row fetches, but measure the read benefit against index size and write overhead."
         }

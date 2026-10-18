@@ -109,13 +109,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "Find key 25 in a tree whose root separates keys below 20, between 20 and 40, and above 40.",
+          "problem": "Find key 25 in a B-tree whose root separators are 20 and 40.",
           "reasoning": [
-            "25 is greater than 20 and less than 40, so choose the middle child.",
-            "Continue comparing only within that child range.",
-            "At the leaf, find 25 or determine that it is absent."
+            "The root separates keys into ranges: below 20, from 20 up to 40, and 40 or above.",
+            "Because 25 is between 20 and 40, follow the middle child page; do not inspect the other ranges.",
+            "At the leaf page, look for 25. If it is absent, reaching that leaf tells the database the key is not in the index."
           ],
-          "outcome": "Each comparison narrows the possible range. A missing key is found by reaching the leaf where it would belong."
+          "outcome": "A lookup follows one relevant path from root to leaf. The separator values make it possible to skip entire ranges of keys."
         }
       ]
     },
@@ -182,6 +182,10 @@
             "If the parent is also full, the split can propagate upward; a root split adds another level."
           ],
           "outcome": "Splits preserve search correctness, but add write work and can affect page locality."
+        },
+        {
+          "type": "paragraph",
+          "text": "A split is not a sign that the index is broken. It is how the index makes room while preserving key order. The cost is extra page writes and parent updates; repeated splits can also leave pages less ideally packed or affect locality. The database still maintains the ordering needed for correct lookups."
         }
       ]
     },

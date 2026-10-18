@@ -248,6 +248,20 @@
           "text": "Unknown delivery date versus no delivery required"
         },
         {
+          "type": "paragraph",
+          "text": "For example, a nullable `delivered_at` field may mean “not delivered yet.” But if it can also mean “delivery is not required” or “the source system failed to provide the date,” one NULL is carrying several different meanings. Queries and support teams then have to guess which state applies."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Make different business states explicit",
+          "source": "CREATE TABLE orders (\n  id BIGINT PRIMARY KEY,\n  delivery_status TEXT NOT NULL\n    CHECK (delivery_status IN ('pending', 'scheduled', 'not_required')),\n  delivered_at TIMESTAMPTZ,\n  CHECK (\n    (delivery_status = 'scheduled' AND delivered_at IS NOT NULL)\n    OR (delivery_status IN ('pending', 'not_required') AND delivered_at IS NULL)\n  )\n);"
+        },
+        {
+          "type": "paragraph",
+          "text": "This model gives the application a clear answer: `pending` means no delivery date has been set yet, `scheduled` requires a date, and `not_required` is an explicit business decision. The CHECK constraint keeps the status and timestamp consistent. If your domain does not need to distinguish these cases, a nullable timestamp may be enough—do not add state columns without a real need."
+        },
+        {
           "type": "worked_example",
           "problem": "A delivery_date is NULL for some orders.",
           "reasoning": [
