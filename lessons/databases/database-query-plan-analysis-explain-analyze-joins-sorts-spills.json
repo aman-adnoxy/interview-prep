@@ -6,13 +6,14 @@
   "title": "Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills",
   "description": "Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
   "difficulty": "advanced",
-  "estimatedMinutes": 42,
+  "estimatedMinutes": 47,
   "learningObjectives": [
     "Read plan nodes and compare estimates with actual execution.",
     "Use EXPLAIN (ANALYZE, BUFFERS) to localize work.",
     "Compare nested-loop, hash, and merge joins by input shape.",
     "Recognize sort/hash spills and temporary I/O.",
-    "Investigate plans using repeatable evidence."
+    "Investigate plans using repeatable evidence.",
+    "Explain query plan analysis: explain analyze, join algorithms, sorts, and memory spills using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -243,6 +244,68 @@
             "Increasing work_mem may help one query but is not a free global fix because many operations and sessions can use memory concurrently."
           ],
           "outcome": "Reduce unnecessary work first, then tune memory with concurrency in mind."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. EXPLAIN shows the plan PostgreSQL expects to use. EXPLAIN ANALYZE runs the statement and reports what actually happened."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — A query plan is the database's step-by-step recipe for answering a query. Each step reads rows or combines results from steps below it. EXPLAIN shows the planned recipe and estimates; EXPLAIN ANALYZE runs the query and reports what actually happened. Compare the estimate with reality and find where the work or surprise begins. Make assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Read EXPLAIN",
+              "description": "EXPLAIN shows the plan PostgreSQL expects to use. EXPLAIN ANALYZE runs the statement and reports what actually happened."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Estimated versus actual rows",
+              "description": "Cardinality is the number of rows a plan step is expected to produce. A large gap between estimated and actual rows can push the planner toward a poor join or sort strategy."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Join algorithms",
+              "description": "A nested-loop join repeats an inner lookup for each outer row. A hash join builds a lookup structure for one side and probes it with the other."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Sort nodes",
+              "description": "A Sort node orders rows when no earlier step provides the requested order at an acceptable cost."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "Planner costs are not milliseconds; parent timings include child work.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, resource cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Planner costs are not milliseconds; parent timings include child work."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — What does EXPLAIN ANALYZE add?",
+          "answer": "ANALYZE executes the statement; use caution with writes.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
     }

@@ -6,12 +6,13 @@
   "title": "Clustered vs. Non-Clustered Indexes and Heap Tables",
   "description": "Clustered vs. Non-Clustered Indexes and Heap Tables. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
   "difficulty": "intermediate",
-  "estimatedMinutes": 35,
+  "estimatedMinutes": 40,
   "learningObjectives": [
     "Explain logical index order versus physical row order.",
     "Describe PostgreSQL heap tuples and TIDs.",
     "Compare clustered-index engines with PostgreSQL CLUSTER.",
-    "Predict locality and heap-fetch trade-offs."
+    "Predict locality and heap-fetch trade-offs.",
+    "Explain clustered vs. non-clustered indexes and heap tables using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -234,6 +235,68 @@
           "kind": "pitfall",
           "title": "CLUSTER is not permanent ordering",
           "content": "PostgreSQL's CLUSTER rewrites a table in the order of an index at the time it runs. Later inserts and updates do not guarantee that the table stays in that order. Treat it as a maintenance operation with locking, rewrite, and disk-space implications—not as a permanent clustered-index property."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Clustered vs. Non-Clustered Indexes and Heap Tables. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. In PostgreSQL, table rows usually live in heap pages, while each index stores keys and a reference to a row location."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — Finding a row through an index often takes two steps: look up the key in the index, then fetch the row from the table. If matching rows are scattered across the table, that second step can be expensive. If they are stored close together, a range query may need fewer page reads. Different databases organize that relationship differently. Make assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Heap tables and tuple identifiers",
+              "description": "In PostgreSQL, table rows usually live in heap pages, while each index stores keys and a reference to a row location."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Clustered versus non-clustered",
+              "description": "In a clustered-index design, table rows are stored in the index's leaf order. PostgreSQL normally keeps table rows in a separate heap instead."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Locality and range scans",
+              "description": "Locality means how close the needed rows are to each other in the table's storage pages."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Index-only scans and INCLUDE",
+              "description": "An index-only scan can avoid heap visits when the index contains the requested columns and PostgreSQL can confirm visibility from its visibility map."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply Clustered vs. Non-Clustered Indexes and Heap Tables to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "Physical order is not logical index order: a PostgreSQL heap is not automatically sorted by each B-tree.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, resource cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Physical order is not logical index order: a PostgreSQL heap is not automatically sorted by each B-tree."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — In PostgreSQL, an ordinary B-tree index entry generally points to what?",
+          "answer": "PostgreSQL heap tuples are addressed by TIDs; locations can change after updates or rewrites.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
     }

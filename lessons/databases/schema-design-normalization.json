@@ -3,13 +3,14 @@
   "sectionId": "schema-design-normalization",
   "title": "Database Schema Design, Normalization (1NF–3NF), and Denormalization",
   "difficulty": "intermediate",
-  "estimatedMinutes": 50,
+  "estimatedMinutes": 55,
   "learningObjectives": [
     "Model entities, relationships, and cardinalities before choosing tables.",
     "Explain update, insert and delete anomalies caused by redundant facts.",
     "Apply 1NF, 2NF and 3NF as practical dependency checks.",
     "Choose between normalization and deliberate denormalization.",
-    "Design constraints and indexes that support the intended access patterns."
+    "Design constraints and indexes that support the intended access patterns.",
+    "Explain database schema design, normalization (1nf–3nf), and denormalization using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -312,6 +313,67 @@
           "kind": "tip",
           "title": "Normalization is about dependencies, not visual duplication",
           "content": "The current catalog price and the historical unit price charged on an order line are different facts, even if their values happen to match."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — When the same fact is copied into multiple rows, one update can change only some copies. These update, insert, and delete anomalies are data-modeling problems, not merely messy code."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — Normalization separates facts according to their dependencies so each fact has an appropriate home. Denormalization deliberately duplicates or precomputes data when measured read patterns justify the added consistency work."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the work",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Identify entities and dependencies",
+              "description": "Determine which attributes describe a customer, order, product, or relationship."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Choose keys",
+              "description": "A candidate key uniquely identifies a row; functional dependencies show which attributes depend on which keys."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Separate independent facts",
+              "description": "Move repeated product or customer facts into their own relations and reference them with foreign keys."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Validate query and write paths",
+              "description": "Check joins, transaction boundaries, and reporting needs; denormalize only with a refresh or consistency strategy."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "If every order row stores the product name, renaming a product requires updating many historical orders and can leave inconsistent copies. A normalized product table avoids that anomaly; a reporting snapshot may still intentionally store a product-name-at-purchase value because historical meaning differs from the current product name.",
+          "reasoning": [
+            "Normalize facts that must stay consistent, but distinguish current attributes from historical snapshots. The right schema follows business meaning and invariants, not a rule to minimize joins at all costs.",
+            "Check the actual query shape, data distribution, concurrency, and database-engine behavior before generalizing the result."
+          ],
+          "outcome": "Normalize facts that must stay consistent, but distinguish current attributes from historical snapshots. The right schema follows business meaning and invariants, not a rule to minimize joins at all costs."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Do not denormalize just because joins exist, and do not normalize historical facts so aggressively that a past transaction changes meaning when a current entity changes."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — When is storing a duplicated value in an order table correct rather than a normalization mistake?",
+          "answer": "When it captures a historical fact that must remain stable, such as the price or product description shown at purchase time. Document that meaning and decide how it differs from the current catalog value.",
+          "explanation": "Normalization is about dependencies and anomalies. Intentional snapshots are valid when they represent a different business fact."
         }
       ]
     }

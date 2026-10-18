@@ -6,13 +6,15 @@
   "title": "Database Index Fundamentals",
   "description": "Understand what database indexes do, how they speed up reads, and what they cost.",
   "difficulty": "beginner",
-  "estimatedMinutes": 25,
+  "estimatedMinutes": 30,
   "learningObjectives": [
     "Explain what a database index is and why a database may use one.",
     "Describe the basic idea behind a B-tree index.",
     "Recognize query patterns that can benefit from an index.",
     "Explain the read-performance, storage, and write-performance trade-offs of indexes.",
-    "Use a PostgreSQL EXPLAIN plan at a basic level to investigate query access."
+    "Use a PostgreSQL EXPLAIN plan at a basic level to investigate query access.",
+    "Explain where PostgreSQL stores index data, how caching works, and what indexes cost in disk and memory.",
+    "Explain database index fundamentals using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -452,6 +454,97 @@
           "kind": "pitfall",
           "title": "Read EXPLAIN ANALYZE carefully",
           "content": "EXPLAIN ANALYZE executes the statement. For a slow SELECT, it performs the read; for an INSERT, UPDATE, or DELETE, it can change data. Test write statements in a safe transaction or test environment, and remember that timing from a small or warm-cache test may not represent production."
+        }
+      ]
+    },
+    {
+      "id": "where-indexes-live",
+      "title": "Where indexes live: disk space and memory",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "An index is a persistent database structure, not just a setting and not something that exists only in RAM. In PostgreSQL, table rows and index entries are stored in database files on persistent storage. The index has its own pages and consumes disk space in addition to the table."
+        },
+        {
+          "type": "paragraph",
+          "text": "When PostgreSQL reads a table or index page, it can keep that page in shared_buffers. The operating system may also cache file pages in memory. A later lookup may reuse a cached page instead of waiting for storage. So an index consumes disk space whether or not it is cached, and its frequently used pages may also consume memory."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "-- Approximate on-disk size of one index\nSELECT pg_size_pretty(pg_relation_size('idx_users_email')) AS index_size;\n\n-- Table size including its indexes and other auxiliary storage\nSELECT pg_size_pretty(pg_total_relation_size('users')) AS total_size;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A users table is 2 GB, and its email index is 400 MB. The application repeatedly looks up users by email.",
+          "reasoning": [
+            "The table and index both occupy persistent storage; the index adds 400 MB rather than replacing the table.",
+            "Frequently used index pages may stay in memory, making later lookups faster than cold reads.",
+            "If the index is much larger than available cache, lookups may require more storage reads. Other workloads also compete for memory."
+          ],
+          "outcome": "Think of an index as an extra on-disk data structure whose hot pages may be cached. More indexes improve some reads but increase storage, memory pressure, and write work."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Understand what database indexes do, how they speed up reads, and what they cost.. Begin by explaining the practical failure, cost, or engineering need that makes this topic matter. An index is an extra lookup structure that helps PostgreSQL find rows without checking every row in the table."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — Imagine a contacts table with a million people. Without an index, finding one email may mean checking many rows. An index is like an ordered lookup list that helps the database jump toward matching rows. It can make reads faster, but the database must keep that list updated whenever the table changes. State the assumptions under which this design is a good fit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: explain the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "What is a database index?",
+              "description": "An index is an extra lookup structure that helps PostgreSQL find rows without checking every row in the table."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Why indexes can speed up reads",
+              "description": "An index helps most when it avoids enough table work to repay the cost of looking up keys and fetching matching rows."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "B-tree indexes",
+              "description": "A B-tree keeps keys sorted across balanced pages. The database narrows the possible key range at each level until it reaches the relevant leaf."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Match indexes to query patterns",
+              "description": "Build indexes around the queries the application actually runs, including their filters, joins, sort order, and limits."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply Database Index Fundamentals to a realistic production workload. What changes as the data volume, request rate, concurrency, or failure rate grows?",
+          "reasoning": [
+            "An index makes some access patterns cheaper; it does not make every query faster.",
+            "Use measured workload data and explicit assumptions for any performance estimate; avoid presenting one latency, size, or threshold as universal.",
+            "Compare correctness, operational complexity, storage or compute cost, and the effect on adjacent components."
+          ],
+          "outcome": "Choose the design that best satisfies the actual workload and invariants, then validate the decision with representative measurements and failure cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "An index makes some access patterns cheaper; it does not make every query faster."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — What is the primary purpose of a database index?",
+          "answer": "An index provides an additional access structure that can help the database find matching rows without examining the entire table. It does not replace the table or guarantee a particular runtime. Uniqueness is enforced only by a suitable unique constraint or unique index.",
+          "explanation": "A strong interview answer states the problem, walks through the mechanism, names assumptions and trade-offs, and describes how to verify the result rather than relying on a rule of thumb."
         }
       ]
     }

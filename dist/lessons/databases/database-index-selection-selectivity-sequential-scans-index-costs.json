@@ -6,13 +6,14 @@
   "title": "Index Selection, Selectivity, Sequential Scans, and When Indexes Hurt",
   "description": "Index Selection, Selectivity, Sequential Scans, and When Indexes Hurt. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
   "difficulty": "intermediate",
-  "estimatedMinutes": 38,
+  "estimatedMinutes": 43,
   "learningObjectives": [
     "Explain selectivity and its effect on access-path cost.",
     "Explain why PostgreSQL may choose sequential scan despite an index.",
     "Compare index, bitmap heap, and sequential scans.",
     "Identify index write, storage, cache, vacuum, and operational costs.",
-    "Use workload evidence to justify adding or removing indexes."
+    "Use workload evidence to justify adding or removing indexes.",
+    "Explain index selection, selectivity, sequential scans, and when indexes hurt using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -233,6 +234,68 @@
             "Test one candidate index, compare latency and buffer activity, and measure write overhead."
           ],
           "outcome": "An index is justified by a measured workload improvement, not merely because a column appears in WHERE."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Index Selection, Selectivity, Sequential Scans, and When Indexes Hurt. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. Selectivity describes the fraction of rows that match a condition. Cardinality is the number of matching rows, estimated by the planner or observed during execution."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — An index is an option, not an instruction. If a query needs five rows from a million, an index can save a lot of work. If it needs half the table, finding rows through an index and then jumping around the table may cost more than reading the table in order. PostgreSQL estimates those costs and chooses the path it expects to be cheapest. Make assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Selectivity and cardinality",
+              "description": "Selectivity describes the fraction of rows that match a condition. Cardinality is the number of matching rows, estimated by the planner or observed during execution."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Sequential, index, and bitmap paths",
+              "description": "PostgreSQL can read table pages in order, follow an index to row locations, or use a bitmap to group row locations by page."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Why sequential scan can win",
+              "description": "A sequential scan can be cheapest when the table is small or the query needs a large fraction of its rows."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Indexes cost more than disk",
+              "description": "Every index speeds some reads but creates ongoing work for relevant writes, storage, memory, and maintenance."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply Index Selection, Selectivity, Sequential Scans, and When Indexes Hurt to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "More indexes is not automatically better: an index may speed one query while slowing writes and consuming cache.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, resource cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "More indexes is not automatically better: an index may speed one query while slowing writes and consuming cache."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — What does high selectivity mean?",
+          "answer": "A selective predicate narrows results substantially.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
     }

@@ -3,13 +3,14 @@
   "sectionId": "advanced-sql-window-functions-set-operations",
   "title": "Advanced SQL: Window Functions, Ranking, Set Operations, and Latest-Row-per-Group Queries",
   "difficulty": "intermediate",
-  "estimatedMinutes": 54,
+  "estimatedMinutes": 59,
   "learningObjectives": [
     "Distinguish grouped aggregation from window calculations.",
     "Use ROW_NUMBER, RANK, DENSE_RANK, LAG and running aggregates correctly.",
     "Choose UNION versus UNION ALL and understand set-operation column compatibility.",
     "Select the latest row per group deterministically.",
-    "Explain tie-breaking, NULL ordering, and filtering window results with a subquery or CTE."
+    "Explain tie-breaking, NULL ordering, and filtering window results with a subquery or CTE.",
+    "Explain advanced sql: window functions, ranking, set operations, and latest-row-per-group queries using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -353,6 +354,68 @@
             "Joining raw payments to raw orders first could multiply rows and inflate payment totals."
           ],
           "outcome": "Make each input one row per customer before combining them, and confirm totals match the business definition."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Advanced SQL: Window Functions, Ranking, Set Operations, and Latest-Row-per-Group Queries. Interview-focused explanations, worked examples, trade-offs, and practice.. Begin by explaining the practical failure, cost, or engineering need that makes this topic matter. GROUP BY reduces many input rows to one row per group. A window function calculates across related rows while keeping each input row in the output."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — GROUP BY summarizes a group into one row. A window function calculates something about a group while keeping each original row visible. That makes it useful for ranking employees, comparing this month's sales with last month's, or finding the latest order for every customer. State the assumptions under which this design is a good fit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: explain the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Window functions preserve row identity",
+              "description": "GROUP BY reduces many input rows to one row per group. A window function calculates across related rows while keeping each input row in the output."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "ROW_NUMBER, RANK, and DENSE_RANK",
+              "description": "ROW_NUMBER, RANK, and DENSE_RANK differ in what happens when rows tie."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Latest row per group",
+              "description": "MAX(timestamp) finds the latest time, but it does not by itself identify one complete row."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "LAG, LEAD, and running aggregates",
+              "description": "LAG and LEAD compare a row with a previous or next row in a defined order."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply Advanced SQL: Window Functions, Ranking, Set Operations, and Latest-Row-per-Group Queries to a realistic production workload. What changes as the data volume, request rate, concurrency, or failure rate grows?",
+          "reasoning": [
+            "Trade-off: GROUP BY returns one row per group; windows retain row-level detail while adding group/sequence metrics.\n\nFailure mode: A query loses order-level columns because it aggregates too early, or duplicates a group total because it joins afterward.\n\nDecision rule: Use GROUP BY when the desired output grain is the group; use a window when each original row must remain visible.",
+            "Use measured workload data and explicit assumptions for any performance estimate; avoid presenting one latency, size, or threshold as universal.",
+            "Compare correctness, operational complexity, storage or compute cost, and the effect on adjacent components."
+          ],
+          "outcome": "Choose the design that best satisfies the actual workload and invariants, then validate the decision with representative measurements and failure cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Trade-off: GROUP BY returns one row per group; windows retain row-level detail while adding group/sequence metrics.\n\nFailure mode: A query loses order-level columns because it aggregates too early, or duplicates a group total because it joins afterward.\n\nDecision rule: Use GROUP BY when the desired output grain is the group; use a window when each original row must remain visible."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — You need exactly one latest order per customer, even when timestamps tie. What is the best general pattern?",
+          "answer": "ROW_NUMBER selects one row, and a stable tie-breaker makes the choice deterministic.",
+          "explanation": "A strong interview answer states the problem, walks through the mechanism, names assumptions and trade-offs, and describes how to verify the result rather than relying on a rule of thumb."
         }
       ]
     }

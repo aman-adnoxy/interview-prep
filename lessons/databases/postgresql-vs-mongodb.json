@@ -6,12 +6,13 @@
   "title": "PostgreSQL vs. MongoDB Trade-offs",
   "description": "PostgreSQL vs. MongoDB Trade-offs. Interview-first coverage of modeling, invariants, transactions, indexing, and migration trade-offs.",
   "difficulty": "intermediate",
-  "estimatedMinutes": 43,
+  "estimatedMinutes": 48,
   "learningObjectives": [
     "Choose storage based on access patterns, invariants, and change frequency.",
     "Model embedded and referenced relationships in MongoDB.",
     "Explain relational constraints, joins, transactions, and indexing trade-offs.",
-    "Plan a migration or polyglot boundary with clear data ownership and consistency rules."
+    "Plan a migration or polyglot boundary with clear data ownership and consistency rules.",
+    "Explain postgresql vs. mongodb trade-offs using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -258,6 +259,68 @@
         {
           "type": "paragraph",
           "text": "For example, moving order data to a second database is not complete when the initial copy finishes. An order may change during the backfill, or an event may be delivered twice. Define which system owns writes, replay changes safely, compare important totals and invariants, and rehearse cutover and rollback before switching production traffic."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — PostgreSQL vs. MongoDB Trade-offs. Interview-first coverage of modeling, invariants, transactions, indexing, and migration trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. Start with the rules the application must never break. For example, an order must belong to a customer and payment totals must reconcile. PostgreSQL makes relationships, joins, and constraints explicit. MongoDB can fit data that is usually read and updated together as one document. Compare actual queries and rules rather than picking by popularity."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — Choose a database by asking what the application needs to store and how it will read and change that data. Orders, payments, and shared relationships often fit a relational model. A self-contained document that is usually read and updated as one unit may fit MongoDB well. Neither choice is automatically faster; the data model and queries decide. Make assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Model first: entities and invariants",
+              "description": "Start with the rules the application must never break. For example, an order must belong to a customer and payment totals must reconcile. PostgreSQL makes relationships, joins, and constraints explicit. MongoDB can fit data that is usually read and updated together as one document. Compare actual queries and rules rather than picking by popularity."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Embedding versus references",
+              "description": "Embedding means keeping related data inside one document; referencing means storing an ID that points to another document. Embedding a small list of items in an order can make it easy to load the full order at once. But don't embed an unlimited stream of events or duplicate a changing product record everywhere. A purchase-time price belongs on the order because it records what was charged then."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Transactions and consistency",
+              "description": "A database transaction can keep related database changes together, but it cannot make an external action such as charging a payment provider part of the same transaction. Both PostgreSQL and MongoDB support transactions. A common solution is an outbox table: save the business change and a record saying 'publish this event' in the same transaction, then let a worker publish it. Make the worker idempotent, meaning safely repeatable, so a retry does not apply the same effect twice."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Queries, indexes, and flexibility",
+              "description": "Both databases support indexes, but the right type depends on the query. PostgreSQL can combine relational tables with JSONB for flexible attributes; MongoDB has indexes for document fields and arrays. In either system, indexes take space and slow some writes, and flexible fields still need validation and a plan for changes."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply PostgreSQL vs. MongoDB Trade-offs to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "A document database is not automatically faster, and a relational database is not automatically rigid. Choose based on access patterns and invariants.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, resource cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "A document database is not automatically faster, and a relational database is not automatically rigid. Choose based on access patterns and invariants."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — A service relies on joins, foreign keys, and multi-row invariants across orders and payments. What is the strongest starting point?",
+          "answer": "The relational model and declarative constraints align with this workload.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
     }
