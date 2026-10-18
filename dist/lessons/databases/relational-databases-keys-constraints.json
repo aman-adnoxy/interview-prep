@@ -3,13 +3,14 @@
   "sectionId": "relational-databases-keys-constraints",
   "title": "Relational Databases, Primary Keys, Foreign Keys, and Constraints",
   "difficulty": "beginner",
-  "estimatedMinutes": 42,
+  "estimatedMinutes": 47,
   "learningObjectives": [
     "Explain relations, rows, columns, and the role of a relational schema.",
     "Choose primary and candidate keys based on identity and business rules.",
     "Distinguish primary, foreign, unique, check, and not-null constraints.",
     "Explain how constraints protect invariants under concurrent writes.",
-    "Diagnose when a constraint should be immediate, deferred, or represented differently."
+    "Diagnose when a constraint should be immediate, deferred, or represented differently.",
+    "Explain relational databases, primary keys, foreign keys, and constraints using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -441,6 +442,67 @@
               "Does not replace durable constraints such as uniqueness."
             ]
           ]
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — An application needs to store customers, orders, and payments without contradictory copies of the same fact. Without a clear relational model, updates can leave orphaned orders, duplicate identities, or totals that disagree."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — A relational database represents entities as rows, relationships as keys, and business invariants as constraints. Compared with validating only in application code, database constraints protect the data even when several services, scripts, or concurrent requests write to it."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the work",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Identify the fact",
+              "description": "Choose the entity and its stable identity, such as customer_id for a customer."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Represent relationships",
+              "description": "Store a foreign key such as orders.customer_id that points to the owning customer."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Declare invariants",
+              "description": "Use PRIMARY KEY, FOREIGN KEY, UNIQUE, NOT NULL, and CHECK constraints for rules the database can enforce."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Commit atomically",
+              "description": "A transaction groups related changes so observers do not see a half-finished business operation."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Suppose two requests try to register the same email at the same time. A pre-insert SELECT in application code can race: both requests see no row. A UNIQUE constraint arbitrates the conflict at the database boundary; one insert succeeds and the other receives a uniqueness violation.",
+          "reasoning": [
+            "Use database constraints for durable invariants and application validation for friendly error messages and rules that need external context. The two complement rather than replace each other.",
+            "Check the actual query shape, data distribution, concurrency, and database-engine behavior before generalizing the result."
+          ],
+          "outcome": "Use database constraints for durable invariants and application validation for friendly error messages and rules that need external context. The two complement rather than replace each other."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Do not treat an application-side existence check as a substitute for UNIQUE, or use a foreign key only as documentation. Concurrent writers and alternate write paths can bypass those assumptions."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — How would you guarantee that every order belongs to a real customer and that two concurrent requests cannot create duplicate customer emails?",
+          "answer": "Use a primary key for customer identity, a foreign key from orders to customers, and a UNIQUE constraint on the normalized email representation. Handle the expected uniqueness error in the application.",
+          "explanation": "The database is the shared consistency boundary. Application checks improve user experience, but constraints enforce invariants under concurrency."
         }
       ]
     }
