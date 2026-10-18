@@ -3,13 +3,14 @@
   "sectionId": "sql-aggregation-group-by-having-ctes",
   "title": "Aggregations, GROUP BY, HAVING, Subqueries, and CTEs",
   "difficulty": "intermediate",
-  "estimatedMinutes": 47,
+  "estimatedMinutes": 52,
   "learningObjectives": [
     "Explain how GROUP BY changes output grain.",
     "Use COUNT, SUM, AVG, MIN, MAX and understand NULL behavior.",
     "Distinguish WHERE from HAVING.",
     "Choose between a subquery, CTE, and join based on clarity and semantics.",
-    "Avoid common aggregate errors caused by joins and ambiguous grouping."
+    "Avoid common aggregate errors caused by joins and ambiguous grouping.",
+    "Explain aggregations, group by, having, subqueries, and ctes using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -209,6 +210,67 @@
             "In PostgreSQL, a CTE is not automatically a performance barrier; inspect the plan if performance matters."
           ],
           "outcome": "Use a CTE when naming an intermediate result makes logic easier to follow. Verify performance instead of assuming syntax determines it."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Raw rows answer individual-event questions, but interviews and dashboards often ask for totals per customer, daily revenue, or groups that cross a threshold. Aggregation changes the grain of the result."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — GROUP BY forms one output group per distinct grouping-key combination; aggregate functions summarize each group. WHERE filters input rows before grouping, while HAVING filters groups after aggregation. Subqueries and CTEs can make multi-stage logic readable, but do not automatically make it faster."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the work",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Filter source rows",
+              "description": "WHERE removes rows that should not participate in the calculation."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Form groups",
+              "description": "Rows sharing the grouping key belong to the same group."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Compute aggregates",
+              "description": "SUM, COUNT, AVG, MIN, and MAX summarize each group; NULL handling differs by function."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Filter grouped results",
+              "description": "HAVING tests aggregate results, then the query returns the remaining groups."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "To find customers with more than five paid orders, filter paid orders in WHERE, group by customer_id, and use HAVING COUNT(*) > 5. Applying the count condition in WHERE cannot work because the group aggregate does not exist yet.",
+          "reasoning": [
+            "State the result grain explicitly: one row per what? This catches accidental over-grouping, under-grouping, and joins that inflate counts.",
+            "Check the actual query shape, data distribution, concurrency, and database-engine behavior before generalizing the result."
+          ],
+          "outcome": "State the result grain explicitly: one row per what? This catches accidental over-grouping, under-grouping, and joins that inflate counts."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Do not select non-aggregated columns that are not functionally determined by the grouping key, or use HAVING for ordinary row filters when WHERE can reduce work earlier."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — You need total paid revenue per customer, but only for customers whose total exceeds ₹10,000. Where do the filters belong?",
+          "answer": "Filter individual orders by paid status in WHERE, group by customer, compute SUM(amount), then use HAVING SUM(amount) > 10000.",
+          "explanation": "WHERE controls input rows; HAVING controls groups. The distinction is both semantic and often relevant to efficiency."
         }
       ]
     }
