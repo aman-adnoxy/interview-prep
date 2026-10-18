@@ -4,7 +4,7 @@ Audit date: 2026-10-18
 
 ## Summary
 
-The audit reviewed all published database lessons for teaching quality, not just JSON validity. The six-layer interview synthesis is now topic-specific across the 16 original published lessons. Two new lessons have been added: SQL Query Fundamentals and Database Transactions and Isolation. The existing Redis/Caching section has been completed and moved from upcoming to published. The database curriculum now has 19 sections, all published. The remaining priority is production operations, which should be taught explicitly or added as a focused lesson.
+The audit reviewed all published database lessons for teaching quality, not just JSON validity. The six-layer interview synthesis is now topic-specific across the 16 original published lessons. Two new lessons have been added: SQL Query Fundamentals and Database Transactions and Isolation. The existing Redis/Caching section has been completed and moved from upcoming to published. A production operations lesson covering backups, PITR/WAL, RPO/RTO, safe migrations, connection pools, and diagnosis has also been added. The database curriculum now has 20 sections, all published.
 
 ## Fixes applied in this branch
 
@@ -15,16 +15,17 @@ The audit reviewed all published database lessons for teaching quality, not just
 - **New SQL fundamentals lesson:** Covers SELECT/WHERE, expressions, CASE, DISTINCT, ORDER BY/LIMIT, NULL basics, logical query order, expected outputs, and deterministic top-N queries.
 - **New transactions/isolation lesson:** Covers ACID, atomic inventory updates, check-then-write races, isolation and locks, deadlocks/serialization retries, transaction boundaries, and external side-effect/idempotency pitfalls.
 - **Redis/caching lesson:** Added cache-aside, TTL and invalidation, stale data, cache stampedes, hot keys, memory/eviction, persistence, replication lag, and failure handling. Updated the manifest from upcoming to published and retained its prerequisite relationship to index fundamentals.
-- **Curriculum ordering:** Added SQL fundamentals first and transactions after relational keys/constraints, then shifted existing section order without changing existing lesson IDs. The manifest now has 19 sections, all published.
+- **Production operations lesson:** Added restore drills, RPO/RTO, WAL-based point-in-time recovery, expand-and-contract migrations, connection-pool/backpressure guidance, and incident diagnosis.
+- **Curriculum ordering:** Added SQL fundamentals first and transactions after relational keys/constraints, then shifted existing section order without changing existing lesson IDs. The manifest now has 20 sections, all published.
 
 ## Remaining coverage gaps
 
 These are follow-up priorities rather than claims that every item needs a separate lesson:
 
-1. **Production operations and recovery:** backup/restore drills, point-in-time recovery, RPO/RTO, safe expand-contract migrations, connection-pool sizing, observability, and incident diagnosis.
-2. **Index operations:** concurrent index builds, index size and bloat measurement, unused/redundant indexes, and safe index replacement. Existing lessons explain index costs but do not fully teach operational procedures.
-3. **Replication and distribution:** deeper failure cases for replica lag, failover, read-after-write guarantees, partitioning versus sharding, hot partitions, and recovery after promotion.
-4. **Redis durability choices:** the new lesson covers RDB/AOF and replication at interview level; deeper production configuration and failover runbooks can be a separate operations module if needed.
+1. **Deeper index operations:** concurrent index builds, index size and bloat measurement, unused/redundant indexes, and safe index replacement. Existing lessons explain index costs but do not fully teach operational procedures.
+2. **Replication and distribution:** deeper failure cases for replica lag, failover, read-after-write guarantees, partitioning versus sharding, hot partitions, and recovery after promotion.
+3. **Redis durability choices:** the new lesson covers RDB/AOF and replication at interview level; deeper production configuration and failover runbooks can be a separate operations module if needed.
+4. **Advanced transaction cases:** add more hands-on exercises for write skew, optimistic concurrency, deferred constraints, and idempotent upserts where relevant to target interviews.
 
 ## Acceptance checklist used
 
