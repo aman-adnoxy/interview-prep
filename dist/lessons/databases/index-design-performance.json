@@ -6,13 +6,14 @@
   "title": "B-Trees: Structure, Traversal, Splits, and Balanced Search",
   "description": "B-Trees: Structure, Traversal, Splits, and Balanced Search. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
   "difficulty": "intermediate",
-  "estimatedMinutes": 35,
+  "estimatedMinutes": 40,
   "learningObjectives": [
     "Trace a lookup from root to leaf and explain why height matters.",
     "Explain fan-out and page-oriented storage.",
     "Describe page splits and their maintenance effects.",
     "Separate index navigation from end-to-end query latency.",
-    "Trace a B-tree lookup from root to leaf and explain cache hits, storage reads, heap fetches, and latency variability."
+    "Trace a B-tree lookup from root to leaf and explain cache hits, storage reads, heap fetches, and latency variability.",
+    "Explain b-trees: structure, traversal, splits, and balanced search using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -308,6 +309,68 @@
             "Inspect the actual plan and buffer counts. A `shared hit` indicates a page found in PostgreSQL's buffer cache; a `shared read` indicates it had to be read into that cache, though the operating system may have served it from its own cache."
           ],
           "outcome": "An index reduces the search work; it does not eliminate row fetching or other sources of latency. Use `EXPLAIN (ANALYZE, BUFFERS)` and application timing to find where the time goes."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — B-Trees: Structure, Traversal, Splits, and Balanced Search. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. A B-tree keeps keys in order and keeps leaf pages at the same depth, so a lookup does not turn into a long chain as the index grows."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — A B-tree is a sorted map built from pages. Each page points you toward a range of keys, like choosing a branch on a road sign. The tree stays balanced, so finding a key takes a small number of page visits even as the table grows. Adding data can split a full page, but it does not normally rebuild the whole index. Make the assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "B-tree invariants",
+              "description": "A B-tree keeps keys in order and keeps leaf pages at the same depth, so a lookup does not turn into a long chain as the index grows."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Trace a lookup",
+              "description": "A lookup follows one path through the tree: root, internal pages, then a leaf."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Pages and fan-out",
+              "description": "Fan-out is the number of child pages an internal page can point to. Higher fan-out usually means fewer levels to traverse."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Page splits",
+              "description": "When an index page fills up, PostgreSQL splits it so new entries can fit while searches still follow the correct ranges."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply B-Trees: Structure, Traversal, Splits, and Balanced Search to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "Navigation is not the whole query: fetching rows or returning a large result remains expensive.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, storage or compute cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the actual workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Navigation is not the whole query: fetching rows or returning a large result remains expensive."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — A root has separators 20 and 60. Where should key 42 go?",
+          "answer": "Separators partition the key space; 42 belongs in the middle range.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how the decision would be verified in practice."
         }
       ]
     }
