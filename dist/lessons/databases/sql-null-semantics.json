@@ -22,6 +22,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "SQL conditions can evaluate to TRUE, FALSE, or UNKNOWN. NULL usually means a value is missing or not known, so an ordinary comparison cannot decide whether it matches."
+        },
+        {
+          "type": "paragraph",
           "text": "NULL is not zero, an empty string, or another ordinary value. Comparing a value with NULL usually gives UNKNOWN. WHERE keeps only rows where the condition is TRUE, so `WHERE delivery_date = NULL` finds nothing; write `WHERE delivery_date IS NULL` instead."
         },
         {
@@ -98,6 +102,16 @@
         {
           "type": "paragraph",
           "text": "IS NOT DISTINCT FROM is null-safe equality: two NULLs compare as not distinct. Joining nullable keys with it can create multiple matches among rows whose keys are NULL. NOT EXISTS avoids the subquery-NULL trap of NOT IN, but nullable outer keys still need a deliberate policy: a NULL outer key normally has no equal match and can therefore satisfy NOT EXISTS."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A shipment has delivered_at = NULL. You run `WHERE delivered_at = NULL`.",
+          "reasoning": [
+            "The comparison evaluates to UNKNOWN, not TRUE.",
+            "WHERE keeps only rows whose condition is TRUE, so the row is not returned.",
+            "Use `WHERE delivered_at IS NULL` to find missing delivery timestamps."
+          ],
+          "outcome": "Use IS NULL and IS NOT NULL for missing values; do not compare NULL with `=`."
         }
       ]
     },
@@ -105,6 +119,10 @@
       "id": "null-safe-operations",
       "title": "IS NULL and NULL-safe comparison",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "IS DISTINCT FROM and IS NOT DISTINCT FROM compare values without producing UNKNOWN when one or both values are NULL."
+        },
         {
           "type": "code",
           "language": "sql",
@@ -126,6 +144,16 @@
           "kind": "pitfall",
           "title": "NULL-safe equality can create many matches",
           "content": "If both sides contain multiple NULLs, NULL-safe equality can match every NULL on one side with every NULL on the other. Use it only when that multiplicity matches the domain semantics."
+        },
+        {
+          "type": "worked_example",
+          "problem": "You need to compare saved and incoming phone numbers, treating two missing numbers as equal.",
+          "reasoning": [
+            "A normal `saved_phone <> incoming_phone` can evaluate to UNKNOWN if either value is NULL.",
+            "IS DISTINCT FROM treats NULL as a comparable state: NULL differs from a real phone, while NULL does not differ from NULL.",
+            "Use this only when that is the business meaning of missing values."
+          ],
+          "outcome": "Null-safe comparison is useful when NULL should be treated as a comparable state, but it can change join multiplicity if many NULL keys match."
         }
       ]
     },
@@ -133,6 +161,10 @@
       "id": "not-in",
       "title": "The NOT IN trap",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "NOT IN can reject rows unexpectedly when the list or subquery contains NULL."
+        },
         {
           "type": "paragraph",
           "text": "NOT IN can surprise you when its list or subquery contains NULL. If no equal value is found, the result may be UNKNOWN instead of TRUE, so WHERE removes the row. NOT EXISTS is often safer, but still decide what to do when the outer row's value is NULL."
@@ -152,6 +184,16 @@
         {
           "type": "paragraph",
           "text": "NOT EXISTS is usually robust to NULLs in unrelated rows of the subquery. Still inspect the actual matching predicate and the intended semantics, especially if the outer key itself can be NULL."
+        },
+        {
+          "type": "worked_example",
+          "problem": "You want users who are not in blocked_users, but that table contains one NULL user_id.",
+          "reasoning": [
+            "For a user not otherwise found, NOT IN can become UNKNOWN because the subquery includes NULL.",
+            "WHERE removes UNKNOWN rows, so the query may return no users you expected.",
+            "NOT EXISTS avoids that subquery-NULL trap; still decide whether an outer NULL user_id should qualify."
+          ],
+          "outcome": "For anti-joins, NOT EXISTS is often safer because unrelated NULLs in the subquery do not poison the result."
         }
       ]
     },
@@ -159,6 +201,10 @@
       "id": "null-constraints-and-aggregates",
       "title": "NULL affects constraints, uniqueness and aggregates",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Constraints and aggregates handle NULL differently: constraints govern stored values, while aggregates govern how rows are counted or combined."
+        },
         {
           "type": "paragraph",
           "text": "NOT NULL says a value must be present. CHECK (quantity > 0) alone still allows NULL because the comparison is UNKNOWN, so use both rules when quantity is required and positive. By default, PostgreSQL UNIQUE also allows more than one NULL; NULLS NOT DISTINCT changes that behavior in supported versions."
@@ -172,6 +218,16 @@
         {
           "type": "paragraph",
           "text": "COUNT(column) skips NULL; COUNT(*) counts rows. SUM and AVG ignore NULL inputs. These are separate rules: constraints govern valid stored states, while aggregate behavior governs how query results are computed."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A quantity must be present and greater than zero.",
+          "reasoning": [
+            "CHECK (quantity > 0) rejects zero and negative values.",
+            "If quantity is NULL, the check evaluates to UNKNOWN, which a CHECK constraint allows.",
+            "Add NOT NULL as well as CHECK to require a real positive quantity."
+          ],
+          "outcome": "Use NOT NULL for presence and CHECK for the allowed range; one rule does not replace the other."
         }
       ]
     },
@@ -179,6 +235,10 @@
       "id": "data-modeling-null",
       "title": "Modeling absence without ambiguity",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Before allowing NULL, decide what absence means in the domain."
+        },
         {
           "type": "paragraph",
           "text": "Before allowing NULL, decide what it means. Is a delivery date unknown, not set because the order has not shipped, or unnecessary because no delivery is required? If those cases lead to different behavior, represent them separately instead of making the application guess."
@@ -189,13 +249,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "An orders table has nullable delivered_at.",
+          "problem": "A delivery_date is NULL for some orders.",
           "reasoning": [
-            "NULL could mean not delivered yet, date unknown, or delivery not required.",
-            "Those states imply different operational actions and metrics.",
-            "Use an explicit fulfillment state, and make delivered_at nullable only where the lifecycle allows it."
+            "It might mean the order has not shipped yet.",
+            "It might mean the date is unknown because an import failed.",
+            "It might mean delivery is not required at all; that is a different business state."
           ],
-          "outcome": "Queries become clearer because state is represented intentionally rather than inferred from a missing timestamp."
+          "outcome": "If different meanings lead to different behavior, model those states explicitly instead of relying on one ambiguous NULL."
         }
       ]
     }
