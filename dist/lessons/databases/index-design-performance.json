@@ -109,14 +109,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "Find key 25 in a tree whose root separates keys below 20, between 20 and 40, and above 40.",
+          "problem": "Find key 25 in a B-tree whose root separators are 20 and 40.",
           "reasoning": [
             "The root separates keys into ranges: below 20, from 20 up to 40, and 40 or above.",
             "Because 25 is between 20 and 40, follow the middle child page; do not inspect the other ranges.",
             "At the leaf page, look for 25. If it is absent, reaching that leaf tells the database the key is not in the index."
           ],
-          "outcome": "A lookup follows one relevant path from root to leaf. The separator values make it possible to skip entire ranges of keys.",
-          "text": "Find key 25 in a B-tree whose root separators are 20 and 40."
+          "outcome": "A lookup follows one relevant path from root to leaf. The separator values make it possible to skip entire ranges of keys."
         }
       ]
     },
