@@ -279,7 +279,7 @@
         },
         {
           "type": "callout",
-          "kind": "note",
+          "kind": "info",
           "title": "Commit latency is not page-write latency",
           "content": "A commit may wait for WAL flush, locks, or synchronous replicas. Dirty heap and index pages can be written later. Exact latency depends on storage, configuration, batching, and load."
         }
