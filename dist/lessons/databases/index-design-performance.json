@@ -11,7 +11,8 @@
     "Trace a lookup from root to leaf and explain why height matters.",
     "Explain fan-out and page-oriented storage.",
     "Describe page splits and their maintenance effects.",
-    "Separate index navigation from end-to-end query latency."
+    "Separate index navigation from end-to-end query latency.",
+    "Trace a B-tree lookup from root to leaf and explain cache hits, storage reads, heap fetches, and latency variability."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -216,6 +217,97 @@
             "If the query matches thousands of rows, fetching those rows can dominate the initial tree traversal."
           ],
           "outcome": "Big-O explains growth, while the execution plan and buffer behavior explain real performance."
+        }
+      ]
+    },
+    {
+      "id": "lookup-pages-and-latency",
+      "title": "What happens during a real index lookup?",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "An index lookup is a sequence of page accesses. A page is a fixed-size block of database storage; PostgreSQL commonly uses 8 KB pages by default, though builds can use a different block size. The B-tree stores many keys and child pointers in each page, so a lookup usually visits only a few index pages."
+        },
+        {
+          "type": "steps",
+          "title": "Follow a lookup for `email = 'aman@example.com'`",
+          "steps": [
+            {
+              "id": "root",
+              "title": "Start at the root page",
+              "description": "PostgreSQL examines separator keys to choose the child range that can contain the email."
+            },
+            {
+              "id": "internal",
+              "title": "Follow internal pages",
+              "description": "At each level, it chooses one child page. It does not scan every key in the index."
+            },
+            {
+              "id": "leaf",
+              "title": "Find the key in a leaf page",
+              "description": "The leaf page contains the matching key and the row-location information for the table row."
+            },
+            {
+              "id": "heap",
+              "title": "Fetch the table row if needed",
+              "description": "For a normal index scan, PostgreSQL uses the row location to visit the heap page and read the requested columns. If the needed values are available in the index and visibility checks permit it, an index-only scan may avoid that heap visit."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Each page may already be cached in PostgreSQL's shared buffers or the operating system's page cache. A cache hit avoids a storage read, though PostgreSQL still has CPU and execution work to do. A cache miss may require a random read from the storage device. The table row may be on a different page from the index leaf, so finding the key does not always mean the query has finished."
+        },
+        {
+          "type": "table",
+          "columns": [
+            "Situation",
+            "Rough order of magnitude",
+            "What it means"
+          ],
+          "rows": [
+            [
+              "CPU and memory work on already-cached pages",
+              "Nanoseconds to microseconds for individual operations; a database lookup usually involves many operations",
+              "No storage wait, but query execution and coordination still take time."
+            ],
+            [
+              "Random read from a fast SSD",
+              "Often tens to hundreds of microseconds per read, but can be higher",
+              "A cold page access can cost much more than examining a cached page."
+            ],
+            [
+              "Random read from a hard disk",
+              "Often several milliseconds",
+              "Mechanical seek and rotational delay can dominate a small lookup."
+            ],
+            [
+              "End-to-end database query",
+              "Can be sub-millisecond to many milliseconds or more",
+              "Depends on page cache, row count, locks, CPU, network, concurrency, and application work."
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Do not promise a fixed index latency",
+          "content": "These are rough scale examples, not guarantees. An index lookup is not automatically a microsecond query: a cache miss, many matching rows, lock waits, or network round trips can dominate. Measure the actual workload."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "EXPLAIN (ANALYZE, BUFFERS)\nSELECT id, email, display_name\nFROM users\nWHERE email = 'aman@example.com';"
+        },
+        {
+          "type": "worked_example",
+          "problem": "The index lookup finds one email, but the endpoint still takes 25 ms.",
+          "reasoning": [
+            "The B-tree traversal may be quick, while the matching heap page is not cached and must be read from storage.",
+            "The query may also wait for a connection or lock, or spend time in application and network layers.",
+            "Inspect the actual plan and buffer counts. A `shared hit` indicates a page found in PostgreSQL's buffer cache; a `shared read` indicates it had to be read into that cache, though the operating system may have served it from its own cache."
+          ],
+          "outcome": "An index reduces the search work; it does not eliminate row fetching or other sources of latency. Use `EXPLAIN (ANALYZE, BUFFERS)` and application timing to find where the time goes."
         }
       ]
     }
