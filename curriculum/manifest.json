@@ -224,6 +224,17 @@
             "redis-and-caching"
           ],
           "status": "published"
+        },
+        {
+          "id": "database-production-operations",
+          "title": "Database Production Operations: Backups, Migrations, and Monitoring",
+          "lessonId": "database-production-operations",
+          "difficulty": "advanced",
+          "order": 20,
+          "prerequisites": [
+            "scaling-and-reliability"
+          ],
+          "status": "published"
         }
       ]
     },
