@@ -22,6 +22,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "Start by deciding what one row represents and which facts belong to that thing."
+        },
+        {
+          "type": "paragraph",
           "text": "First decide what each table represents. A customers table stores customer facts; an orders table stores order facts. If one customer can have many orders, put customer_id on each order. If students can take many courses and each course has many students, use an enrollment table for each student-course relationship."
         },
         {
@@ -33,6 +37,16 @@
         {
           "type": "paragraph",
           "text": "The enrollment is a real relationship with its own date and identity rule, not merely a repeated list of course IDs on a student row."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A student can enroll in many courses, and each course has many students. Each enrollment also has a grade.",
+          "reasoning": [
+            "The relationship is many-to-many, so create an enrollments table with student_id and course_id.",
+            "Store grade on the enrollment because it describes that student's participation in that course.",
+            "Add a uniqueness rule on the pair if a student may enroll in a course only once."
+          ],
+          "outcome": "Model a relationship as data when it has its own facts, such as grade, enrollment date, or status."
         }
       ]
     },
@@ -40,6 +54,10 @@
       "id": "anomalies",
       "title": "Why redundancy creates anomalies",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Redundancy becomes risky when the same fact is copied into several rows that can drift apart."
+        },
         {
           "type": "table",
           "columns": [
@@ -64,6 +82,16 @@
         {
           "type": "paragraph",
           "text": "When the same fact is copied into many rows, changes become risky. If an address is repeated across ten orders, a move requires ten updates. If only nine are changed, the database now tells two different stories. Putting the address in one customer row removes that problem."
+        },
+        {
+          "type": "worked_example",
+          "problem": "The same instructor name is copied into 200 enrollment rows.",
+          "reasoning": [
+            "When the instructor's name changes, every copy must be updated.",
+            "If one row is missed, the database disagrees with itself about the instructor's name.",
+            "If instructors are stored only on enrollment rows, a new instructor with no students may be impossible to represent."
+          ],
+          "outcome": "Update, insertion, and deletion anomalies are signs that facts are stored at the wrong level."
         }
       ]
     },
@@ -71,6 +99,10 @@
       "id": "normal-forms",
       "title": "1NF, 2NF, and 3NF as dependency checks",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Normalization checks whether a table mixes facts that depend on different things."
+        },
         {
           "type": "paragraph",
           "text": "Normal forms are checks for whether a table mixes facts that depend on different things. First normal form avoids packing a list into one cell. Second normal form matters when a key has multiple columns: a non-key fact should depend on the whole key, not just one part. Third normal form catches facts that depend on another non-key fact, such as storing a department name on every employee row when department_id already determines it."
@@ -81,13 +113,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "Enrollment(student_id, course_id, student_name, course_title, grade) uses (student_id, course_id) as a key.",
+          "problem": "A table uses (student_id, course_id) as its key but repeats student_name and course_title on every enrollment.",
           "reasoning": [
-            "student_name depends on student_id alone, not the whole composite key.",
-            "course_title depends on course_id alone.",
-            "grade depends on the enrollment pair."
+            "student_name depends on student_id, not on the whole student-course pair.",
+            "course_title depends on course_id, not on the whole pair.",
+            "Move student facts to students, course facts to courses, and keep grade in enrollments."
           ],
-          "outcome": "Move student facts to Students, course facts to Courses, and keep grade and enrollment-specific facts in Enrollments."
+          "outcome": "Ask what determines each fact. Store it with that determinant so one fact has one authoritative home."
         },
         {
           "type": "callout",
@@ -102,6 +134,10 @@
       "title": "A practical normalized model",
       "blocks": [
         {
+          "type": "paragraph",
+          "text": "A normalized model separates current product facts from facts about what was purchased at a particular time."
+        },
+        {
           "type": "code",
           "language": "sql",
           "title": "Orders and line items",
@@ -110,6 +146,16 @@
         {
           "type": "paragraph",
           "text": "A line item should store quantity and the price charged at purchase time. The product table stores today's catalog price, which may change later. The order's unit_price is not a mistake just because the number appears twice: it records what the customer was actually charged."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A product currently costs $20, but a customer bought it last year for $15.",
+          "reasoning": [
+            "products.price represents the current catalog price.",
+            "order_items.unit_price records the price charged for that purchase.",
+            "If the catalog price changes tomorrow, historical order totals should not silently change."
+          ],
+          "outcome": "Some duplication is intentional when it records a historical snapshot. Define what the duplicated value means."
         }
       ]
     },
@@ -117,6 +163,10 @@
       "id": "denormalization",
       "title": "When denormalization is justified",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Denormalization deliberately stores a duplicate or precomputed value to make a measured workload faster; it adds a consistency responsibility."
+        },
         {
           "type": "paragraph",
           "text": "Denormalization means deliberately copying or precomputing data to make an important read faster or simpler. A dashboard might store a daily sales total instead of adding millions of orders on every page load. That total can become stale, so the system needs a clear update and repair process."
@@ -154,6 +204,16 @@
         {
           "type": "paragraph",
           "text": "Denormalize only after measuring a real bottleneck and defining the consistency contract. Start with the normalized model because it is easier to reason about, then add a projection when evidence justifies it."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A dashboard repeatedly sums 50 million order rows to display today's revenue.",
+          "reasoning": [
+            "Measure the query and confirm repeated aggregation is the real bottleneck.",
+            "A daily summary table may make reads much cheaper, but it must handle new, cancelled, refunded, and corrected orders.",
+            "Define whether the dashboard may be briefly stale and how to rebuild or reconcile the summary."
+          ],
+          "outcome": "Denormalize only when the read benefit justifies the extra storage and there is a clear plan to keep the value correct."
         }
       ]
     },
@@ -163,6 +223,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "Review a schema against real reads, writes, and business rules rather than designing from table names alone."
+        },
+        {
+          "type": "paragraph",
           "text": "For each important query, write down what it filters, which tables it joins, what one result row represents, how often the data changes, and how fast the query needs to be. Then choose constraints and indexes to support it. Don't duplicate data just because a column appears in a query."
         },
         {
@@ -170,6 +234,16 @@
           "kind": "pitfall",
           "title": "Avoid premature denormalization",
           "content": "A copied field creates a synchronization contract even if no one writes that contract down. If the source changes and the copy does not, the system now has two conflicting answers."
+        },
+        {
+          "type": "worked_example",
+          "problem": "An endpoint lists the newest 20 orders for one customer and includes the customer's current name.",
+          "reasoning": [
+            "The query filters orders by customer_id and orders by created_at.",
+            "An index beginning with customer_id and then created_at may support that access pattern.",
+            "Keep customer name in customers and join it when needed unless measurements justify a maintained copy."
+          ],
+          "outcome": "Model facts correctly first, then optimize the queries the application actually runs."
         }
       ]
     },
@@ -177,6 +251,10 @@
       "id": "worked-normalization-walkthrough",
       "title": "Worked exercise: normalize an enrollment table",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Use dependencies to decide where facts belong; don't normalize just to follow a rule mechanically."
+        },
         {
           "type": "paragraph",
           "text": "Start with Enrollment(student_id, student_name, course_id, course_title, instructor_id, instructor_name, grade), where (student_id, course_id) identifies one enrollment. student_id determines student_name; course_id determines course_title and instructor_id; instructor_id determines instructor_name. Those rules tell us which facts belong together."
@@ -213,15 +291,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "Normalize the enrollment relation while preserving the grade for each student-course pair.",
+          "problem": "Enrollment(student_id, student_name, course_id, course_title, instructor_id, instructor_name, grade) has key (student_id, course_id).",
           "reasoning": [
-            "Create Students(student_id PRIMARY KEY, student_name).",
-            "Create Instructors(instructor_id PRIMARY KEY, instructor_name).",
-            "Create Courses(course_id PRIMARY KEY, course_title, instructor_id FOREIGN KEY REFERENCES Instructors).",
-            "Create Enrollments(student_id FOREIGN KEY REFERENCES Students, course_id FOREIGN KEY REFERENCES Courses, grade, PRIMARY KEY (student_id, course_id)).",
-            "Move partial dependencies to Students and Courses; instructor_name belongs in Instructors because it depends on instructor_id."
+            "student_name depends on student_id; course_title and instructor_id depend on course_id; instructor_name depends on instructor_id.",
+            "Move students, courses, and instructors into their own tables and let enrollments refer to them.",
+            "Keep grade in enrollments because it depends on the student-course relationship."
           ],
-          "outcome": "Each fact has one authoritative home. Enrollments stores only facts that depend on the complete student-course key."
+          "outcome": "Each table now stores facts about one entity or relationship, reducing inconsistent copies while preserving the ability to query through joins."
         },
         {
           "type": "callout",
