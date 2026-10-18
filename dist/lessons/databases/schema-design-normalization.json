@@ -130,16 +130,6 @@
           "problem": "A course changes its title, but the title is copied into 400 enrollment rows."
         },
         {
-          "type": "worked_example",
-          "problem": "A table uses (student_id, course_id) as its key but repeats student_name and course_title on every enrollment.",
-          "reasoning": [
-            "student_name depends on student_id, not on the whole student-course pair.",
-            "course_title depends on course_id, not on the whole pair.",
-            "Move student facts to students, course facts to courses, and keep grade in enrollments."
-          ],
-          "outcome": "Ask what determines each fact. Store it with that determinant so one fact has one authoritative home."
-        },
-        {
           "type": "callout",
           "kind": "info",
           "title": "Normal forms are not a substitute for dependency analysis",
