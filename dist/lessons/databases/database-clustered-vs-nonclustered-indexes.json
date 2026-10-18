@@ -243,11 +243,11 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — An index scan finds the right keys, yet a range query still reads many table pages. The problem may be that matching rows are scattered physically, not that the index is poorly ordered."
+          "text": "1. Problem and motivation — An index scan finds the right keys, yet a range query still reads many table pages. The issue may be scattered physical rows, not a badly ordered index."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — An index's logical key order is separate from the table's physical row layout. PostgreSQL stores ordinary table rows in a heap; CLUSTER rewrites the table in index order once, but later writes can weaken that ordering."
+          "text": "2. Definition and design choice — An index's logical key order is separate from the table's physical row layout. PostgreSQL stores ordinary rows in a heap; CLUSTER rewrites the table in index order once, but later writes can weaken that ordering."
         },
         {
           "type": "steps",
@@ -279,11 +279,11 @@
           "type": "worked_example",
           "problem": "A range query returns 5,000 rows scattered across roughly 4,000 heap pages.",
           "reasoning": [
-            "The index can find tuple locations quickly, but fetching scattered heap pages still costs I/O and cache space.",
+            "The index finds tuple locations, but fetching scattered heap pages still costs I/O and cache space.",
             "CLUSTER can improve locality for read-heavy ranges, but it rewrites the table, needs a strong lock, and does not keep rows ordered forever.",
-            "An index-only scan can avoid heap visits only when the index contains all required values and the visibility map allows PostgreSQL to trust tuple visibility."
+            "An index-only scan can avoid heap visits only when the index contains all required values and the visibility map permits PostgreSQL to trust tuple visibility."
           ],
-          "outcome": "Inspect heap fetches and buffer reads before choosing a fix. Compare a covering index, CLUSTER, or a sequential scan against write overhead and the maintenance window."
+          "outcome": "Inspect heap fetches and buffer reads before choosing a fix. Compare a covering index, CLUSTER, or sequential scan against write overhead and the maintenance window."
         },
         {
           "type": "callout",
