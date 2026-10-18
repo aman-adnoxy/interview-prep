@@ -22,6 +22,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "A JOIN combines rows that satisfy a relationship. Before choosing the join, decide which rows must remain in the result."
+        },
+        {
+          "type": "paragraph",
           "text": "A join matches rows from two tables. INNER JOIN keeps only matching pairs. LEFT JOIN keeps every row from the left table, even when no right-side row matches. RIGHT JOIN does the same for the right table, and FULL OUTER JOIN keeps unmatched rows from both sides too."
         },
         {
@@ -58,6 +62,16 @@
               "Kept"
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "customers has Asha and Ravi. orders has two rows for Asha and none for Ravi.",
+          "reasoning": [
+            "INNER JOIN returns Asha's two customer-order pairs and omits Ravi.",
+            "LEFT JOIN returns those two pairs and also one Ravi row with NULL in the order columns.",
+            "Each matching pair becomes an output row, so a join does not automatically mean one row per customer."
+          ],
+          "outcome": "Use INNER JOIN when only matches matter and LEFT JOIN when every left-side row must remain."
         }
       ]
     },
@@ -65,6 +79,10 @@
       "id": "worked-join",
       "title": "Predict output before running SQL",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Predict the rows before running the query. This makes join behavior easier to debug."
+        },
         {
           "type": "code",
           "language": "sql",
@@ -294,6 +312,16 @@
               "90"
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "You need every customer, but only their paid orders.",
+          "reasoning": [
+            "Put `o.status = 'paid'` in the LEFT JOIN's ON condition so pending orders do not count as matches.",
+            "A customer without a paid order remains in the result with NULL order columns.",
+            "Putting that condition in WHERE removes those NULL rows, so the customers disappear."
+          ],
+          "outcome": "For outer joins, ON controls which rows match; WHERE filters the result after unmatched rows have been preserved."
         }
       ]
     },
@@ -301,6 +329,10 @@
       "id": "on-vs-where",
       "title": "The ON versus WHERE trap",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "With an outer join, moving a filter between ON and WHERE can change which parent rows survive."
+        },
         {
           "type": "paragraph",
           "text": "ON decides which order rows count as a match; WHERE filters the joined result. Put orders.status = 'paid' in WHERE and customers with no paid order disappear. Put it in ON when you want to keep every customer but attach only paid orders."
@@ -322,6 +354,16 @@
           "kind": "pitfall",
           "title": "Why the second query changes behavior",
           "content": "For customers without a paid order, o.status is NULL after the outer join. The WHERE predicate is not TRUE, so those rows are removed. The query behaves like an inner filter for this condition."
+        },
+        {
+          "type": "worked_example",
+          "problem": "You want all customers and their paid orders, including customers who have never paid.",
+          "reasoning": [
+            "Use `LEFT JOIN orders o ON o.customer_id = c.id AND o.status = 'paid'`.",
+            "A customer with no paid order still produces a row with NULL order columns.",
+            "If `o.status = 'paid'` appears in WHERE instead, that NULL row is removed."
+          ],
+          "outcome": "Put right-table conditions in ON when they decide what counts as a match but should not remove left-side rows."
         }
       ]
     },
@@ -329,6 +371,10 @@
       "id": "cardinality-and-duplicates",
       "title": "Cardinality, many-to-many joins, and accidental multiplication",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Joining two one-to-many relationships can multiply rows, even when each JOIN is correct."
+        },
         {
           "type": "paragraph",
           "text": "Suppose one customer has 3 orders and 2 addresses. Joining both child tables can produce 3 × 2 = 6 rows. Summing order totals after this join may count each order twice. Aggregate each child table first, or use EXISTS when you only need to know whether a match exists."
@@ -348,6 +394,16 @@
           "language": "sql",
           "title": "Customers who have at least one paid order",
           "source": "SELECT c.id, c.name\nFROM customers c\nWHERE EXISTS (\n  SELECT 1 FROM orders o\n  WHERE o.customer_id = c.id\n    AND o.status = 'paid'\n);"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A customer has three orders and two addresses. A report joins both tables and sums order totals.",
+          "reasoning": [
+            "The join can create six rows: each order pairs with each address.",
+            "Each order total appears twice, so SUM can be doubled.",
+            "Aggregate orders and addresses separately before joining, or use EXISTS if you only need to test for a related row."
+          ],
+          "outcome": "Check the result grain and row multiplication before trusting aggregates over multiple child tables."
         }
       ]
     },
@@ -355,6 +411,10 @@
       "id": "join-design",
       "title": "Choosing a join that matches the question",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A good join starts with the meaning of one output row, not with the syntax."
+        },
         {
           "type": "paragraph",
           "text": "Before writing a join, say what one output row should represent: one customer, one order, or one customer-order pair. Then decide which side must remain even without a match and whether you need related columns or only need to test that a row exists."
@@ -388,6 +448,16 @@
               "A regular join can duplicate customers when multiple orders match."
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A report needs one row per customer and the number of paid orders.",
+          "reasoning": [
+            "Joining customers to paid orders creates one row per matching order, not one row per customer.",
+            "Group paid orders by customer_id first, then LEFT JOIN those counts to customers.",
+            "Use COALESCE for a missing count only if displaying zero is the intended meaning."
+          ],
+          "outcome": "Define the output grain first. Aggregate a one-to-many relation before joining when the result must stay one row per parent."
         }
       ]
     }

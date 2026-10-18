@@ -25,6 +25,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "EXPLAIN shows the plan PostgreSQL expects to use. EXPLAIN ANALYZE runs the statement and reports what actually happened."
+        },
+        {
+          "type": "paragraph",
           "text": "EXPLAIN shows the plan PostgreSQL intends to use. EXPLAIN ANALYZE actually runs the query and reports measured row counts and timing. Be careful with INSERT, UPDATE, and DELETE: ANALYZE executes them, so use a safe test or transaction when appropriate."
         },
         {
@@ -58,6 +62,16 @@
               "Read it alongside row counts and plan shape, not as a standalone verdict."
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A query is slow, and you want to know whether PostgreSQL is scanning too many rows.",
+          "reasoning": [
+            "Run EXPLAIN first to inspect planned nodes and estimates without executing the query.",
+            "Use EXPLAIN (ANALYZE, BUFFERS) on a representative safe query to compare estimated rows, actual rows, and page activity.",
+            "EXPLAIN ANALYZE executes writes too; use a test environment or a transaction you roll back when appropriate."
+          ],
+          "outcome": "Read the plan as evidence: estimates describe the planner's expectations, while ANALYZE reports measured execution."
         }
       ]
     },
@@ -65,6 +79,10 @@
       "id": "cardinality",
       "title": "Estimated versus actual rows",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Cardinality is the number of rows a plan step is expected to produce. A large gap between estimated and actual rows can push the planner toward a poor join or sort strategy."
+        },
         {
           "type": "paragraph",
           "text": "The planner guesses how many rows each step will produce. If it expects 900 rows but actually sees 120,000, later choices such as join order or sorting may be poor. Find the earliest step where the estimate is far off, then investigate stale statistics, uneven data, or filters that are related to each other."
@@ -104,15 +122,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A report sorts all orders for one tenant. The plan estimates 900 qualifying rows but observes 120,000, and the sort uses an external merge with temporary I/O.",
+          "problem": "The plan estimates 900 active customers, but EXPLAIN ANALYZE shows 120,000.",
           "reasoning": [
-            "Compare estimated and actual rows at the scan and sort. The estimate is off by over two orders of magnitude.",
-            "Inspect the tenant_id distribution, predicate, and statistics; run ANALYZE when evidence suggests stale or insufficient statistics, and consider extended statistics only when they fit the correlation involved.",
-            "Use the sort method and temporary-buffer activity as evidence that the sort exceeded in-memory capacity for this execution.",
-            "Check total buffers, execution time, and whether a suitable index could reduce rows or provide useful ordering. Do not assume an index is better without comparing plans.",
-            "If considering work_mem, scope and test the change because memory can multiply across operations and concurrent sessions."
+            "Find the earliest node where estimated and actual row counts diverge.",
+            "Check whether statistics are stale or the data distribution is uneven; run ANALYZE when appropriate.",
+            "Re-check the plan before forcing a join type. First understand why the estimate was wrong."
           ],
-          "outcome": "Investigate the estimate error first, then compare representative plans after any statistics or index change. Treat the spill as a measured symptom, not proof that one global memory setting is the right fix."
+          "outcome": "Fix the reason the planner misunderstands the data before trying to tune later plan nodes."
         }
       ]
     },
@@ -120,6 +136,10 @@
       "id": "joins",
       "title": "Join algorithms",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A nested-loop join repeats an inner lookup for each outer row. A hash join builds a lookup structure for one side and probes it with the other."
+        },
         {
           "type": "paragraph",
           "text": "A nested-loop join takes each row from one side and looks for matches on the other side, so it often works well when the outer side is small and the inner lookup is cheap. A hash join builds a lookup table for one side, and a merge join walks two ordered inputs. None is always best; input size and ordering matter."
@@ -132,13 +152,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query joins 40 active tenants to a large orders table. The plan uses a nested loop and performs many inner lookups.",
+          "problem": "A nested-loop join performs 100,000 inner index lookups when the planner expected only 100 outer rows.",
           "reasoning": [
-            "Check actual rows and loop counts: a nested loop can be efficient for a small outer input, but expensive if the outer input is much larger than expected.",
-            "Compare estimated and actual row counts at the earliest step where they diverge; stale statistics or uneven data may explain the bad choice.",
-            "Compare buffers and total execution time before testing another join strategy or index. Do not assume a hash join is always better."
+            "Repeated inner work may dominate once the actual outer row count is much larger than expected.",
+            "A hash join may help for a large equality join, but it needs memory and may spill to disk.",
+            "Compare actual time, rows, loops, and buffers before deciding another join strategy is better."
           ],
-          "outcome": "Join algorithms are tools, not rankings. The row counts and repeated work in the actual plan explain whether a chosen strategy is expensive."
+          "outcome": "Join algorithms are trade-offs. The right choice depends on row counts, indexes, memory, and data shape."
         }
       ]
     },
@@ -146,6 +166,10 @@
       "id": "sorts",
       "title": "Sort nodes",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A Sort node orders rows when no earlier step provides the requested order at an acceptable cost."
+        },
         {
           "type": "paragraph",
           "text": "A Sort step arranges rows for ORDER BY or another operation that needs order. A matching index can sometimes provide that order, but using the index may still cost more than reading many rows and sorting them together."
@@ -161,6 +185,16 @@
           "prompt": "Does the existence of an index guarantee PostgreSQL will use it?",
           "answer": "No.",
           "explanation": "The planner compares estimated costs, and another access path may be cheaper."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A query filters orders by customer_id and sorts by created_at DESC before returning 20 rows.",
+          "reasoning": [
+            "An index on (customer_id, created_at DESC) may provide the order directly.",
+            "Without a useful ordering index, PostgreSQL may sort all qualifying rows before applying LIMIT.",
+            "An index is not automatically better; compare the work needed to find rows with the work needed to sort them."
+          ],
+          "outcome": "Look for Sort nodes and ask whether a suitable index can provide the requested order."
         }
       ]
     },
@@ -170,6 +204,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "Sorts and hash joins use working memory. When a step needs more than it can keep in memory, PostgreSQL can use temporary disk space or process a hash join in batches."
+        },
+        {
+          "type": "paragraph",
           "text": "Sorts and hash joins need working memory. If they need more than is available, PostgreSQL can write temporary data to disk or process a hash join in batches. Raising work_mem affects each operation and can multiply across many simultaneous queries, so don't increase it blindly. When a sort reports an “external merge,” it means PostgreSQL used temporary disk space rather than keeping the whole sort in memory."
         },
         {
@@ -177,6 +215,16 @@
           "language": "sql",
           "title": "PostgreSQL example",
           "source": "EXPLAIN (ANALYZE, BUFFERS) SELECT customer_id,sum(total_amount) FROM orders GROUP BY customer_id ORDER BY sum(total_amount) DESC;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "EXPLAIN ANALYZE shows a sort using an external merge and large temporary reads/writes.",
+          "reasoning": [
+            "The sort exceeded its available memory and used temporary files.",
+            "Check how many rows are sorted and whether an index can provide the order or earlier filters can reduce the input.",
+            "Increasing work_mem may help one query but is not a free global fix because many operations and sessions can use memory concurrently."
+          ],
+          "outcome": "Reduce unnecessary work first, then tune memory with concurrency in mind."
         }
       ]
     }

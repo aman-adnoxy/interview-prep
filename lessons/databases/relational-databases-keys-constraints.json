@@ -22,6 +22,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "Start with the facts the application needs to remember, not the fields that happen to appear on one screen."
+        },
+        {
+          "type": "paragraph",
           "text": "Think of a table as a list of facts about one kind of thing. A customers table describes customers; an orders table describes orders. One customer can have many orders, so each order points to its customer instead of copying every customer detail."
         },
         {
@@ -30,13 +34,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "An order screen displays customer name, customer email, order number, order date, and total.",
+          "problem": "An order screen shows order number, customer name, customer email, and total.",
           "reasoning": [
-            "The screen combines facts about a customer and an order.",
-            "Store customer identity and contact details in customers; store order identity, customer reference, and date in orders.",
-            "Calculate the total from order lines when that is the authoritative definition, or persist a carefully maintained snapshot if business requirements demand it."
+            "The order number and date describe the order; name and email describe the customer.",
+            "Store customer details once in customers and refer to that customer from orders using customer_id.",
+            "Join the tables when the screen needs both sets of facts. Keep a purchase-time snapshot only when history requires it."
           ],
-          "outcome": "The model avoids duplicating mutable customer facts on every order while preserving the ability to query the screen with a JOIN."
+          "outcome": "Separate tables by the facts they own. A JOIN can assemble a screen without making every order a second source of truth for customer details."
         },
         {
           "type": "callout",
@@ -50,6 +54,10 @@
       "id": "keys-and-identity",
       "title": "Primary keys, candidate keys, and business identity",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A primary key answers 'which row is this?' A UNIQUE constraint answers 'which values must not be repeated?'."
+        },
         {
           "type": "paragraph",
           "text": "A primary key is a row's stable ID. A candidate key is any smallest set of columns that could uniquely identify the row. For example, user_id might be the primary key while email has a UNIQUE rule. Email can change, so it is not always a good permanent ID."
@@ -85,13 +93,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A users table uses email as its primary key.",
+          "problem": "A user has user_id = 42 and email = 'sam@example.com'. The user changes email next month.",
           "reasoning": [
-            "Email can change when a person changes address.",
-            "Case normalization and provider-specific semantics can be subtle.",
-            "Other tables now couple their references to a mutable contact attribute."
+            "Other tables can keep referring to user_id = 42.",
+            "A UNIQUE constraint on email can still prevent two users from claiming the same email.",
+            "If email were the primary key, changing it would also require updating every foreign key that refers to it."
           ],
-          "outcome": "Use a stable user_id as primary key and, if required, enforce the product's email uniqueness policy separately with a UNIQUE constraint and a clearly defined normalization rule."
+          "outcome": "Use a stable primary key for row identity and separate UNIQUE constraints for business rules such as email uniqueness."
         }
       ]
     },
@@ -99,6 +107,10 @@
       "id": "foreign-keys",
       "title": "Foreign keys and relationship integrity",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A foreign key lets the database enforce that a reference points to a real parent row."
+        },
         {
           "type": "paragraph",
           "text": "A foreign key is a database-enforced link to another row. If orders.customer_id points to customers.id, the database can reject an order for a customer who does not exist. PostgreSQL does not automatically index the child column, so add one when queries or parent deletes need it."
@@ -139,6 +151,16 @@
           "kind": "warning",
           "title": "CASCADE is a business decision",
           "content": "It is not merely a convenience. A cascade can remove a large graph of data. Use it when the child has no independent lifecycle and deletion is intended to propagate."
+        },
+        {
+          "type": "worked_example",
+          "problem": "An API inserts an order with customer_id = 900, but no customer with id 900 exists.",
+          "reasoning": [
+            "The application may have checked earlier, but the customer could have been deleted before the insert.",
+            "An enforced foreign key checks the relationship at write time and rejects the invalid order.",
+            "If queries often filter orders by customer_id, consider indexing that child column; PostgreSQL does not do so automatically."
+          ],
+          "outcome": "The foreign key protects relationship integrity even when requests race. Indexing the referencing column is a separate performance decision."
         }
       ]
     },
@@ -146,6 +168,10 @@
       "id": "constraints-as-invariants",
       "title": "Constraints encode invariants",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A constraint puts a rule next to the data, where every writer must obey it."
+        },
         {
           "type": "paragraph",
           "text": "Constraints are rules the database checks before accepting data. NOT NULL means a value is required; UNIQUE prevents duplicates; CHECK enforces a rule on one row; a foreign key checks a relationship. A default fills an omitted value, but does not stop an invalid value being supplied."
@@ -166,13 +192,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "Two requests check whether a username exists; both see no row and both attempt to insert it.",
+          "problem": "Two requests try to create username 'sam' at almost the same time.",
           "reasoning": [
-            "The reads can both be correct at the time they execute.",
-            "Without a database uniqueness rule, both inserts may succeed.",
-            "A transaction around each request does not necessarily serialize the competing requests."
+            "Both requests can check first and see no matching username.",
+            "A UNIQUE constraint on username allows at most one conflicting insert to succeed.",
+            "Handle the uniqueness error as a normal conflict; do not rely on a prior SELECT as the guarantee."
           ],
-          "outcome": "Add UNIQUE(username), attempt the insert, and handle the unique-violation result as a normal conflict. The database constraint is the concurrency-safe invariant."
+          "outcome": "Application validation improves the user message, while the database constraint provides the concurrency-safe guarantee."
         }
       ]
     },
@@ -180,6 +206,10 @@
       "id": "transactions-and-constraint-timing",
       "title": "Constraints under concurrent writes and deferred checks",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A transaction groups related changes together, but it does not automatically replace constraints or solve every race."
+        },
         {
           "type": "paragraph",
           "text": "Imagine two requests both check whether a username is free. Both can see 'available' before either inserts. A UNIQUE constraint makes the database the final referee, so only one conflicting insert succeeds. Some key and foreign-key constraints can be deferred until a transaction ends."
@@ -209,6 +239,16 @@
           "language": "sql",
           "title": "Enforce uniqueness under concurrency",
           "source": "CREATE UNIQUE INDEX users_username_uq ON users (username);\n\nINSERT INTO users (username) VALUES ('aman') ON CONFLICT (username) DO NOTHING;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A transfer moves $50 from account A to account B. Both balances must change together.",
+          "reasoning": [
+            "Begin a transaction and update both accounts within it.",
+            "If the second update fails, roll back so the first change is not left committed alone.",
+            "Use constraints and safe update logic to protect rules such as non-negative balances; a transaction alone does not define those rules."
+          ],
+          "outcome": "Atomicity keeps the transfer together. Constraints and concurrency control protect the business invariants."
         }
       ]
     }

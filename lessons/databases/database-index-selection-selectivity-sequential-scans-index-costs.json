@@ -25,6 +25,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "Selectivity describes the fraction of rows that match a condition. Cardinality is the number of matching rows, estimated by the planner or observed during execution."
+        },
+        {
+          "type": "paragraph",
           "text": "Selectivity tells you how much of the table matches a condition. Searching for one rare email is highly selective; searching for a status shared by most orders is not. Cardinality is the actual or estimated number of matching rows."
         },
         {
@@ -58,6 +62,16 @@
               "An index scan can help for a few rows; a sequential scan can win for a broad result."
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A million-row orders table has a rare external reference and a status column where 70% of rows are 'paid'.",
+          "reasoning": [
+            "A unique reference matches about one row, so it is highly selective.",
+            "The status predicate matches roughly 700,000 rows, so using an index may require fetching a large part of the table.",
+            "Compare estimated rows with actual rows because bad estimates can lead the planner to choose a poor path."
+          ],
+          "outcome": "The same index type can be useful for a selective predicate and unhelpful for a broad one."
         }
       ]
     },
@@ -65,6 +79,10 @@
       "id": "paths",
       "title": "Sequential, index, and bitmap paths",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "PostgreSQL can read table pages in order, follow an index to row locations, or use a bitmap to group row locations by page."
+        },
         {
           "type": "paragraph",
           "text": "A sequential scan reads table pages in order and checks each row. An index scan finds matching keys and then fetches their table rows, which can involve many scattered reads. A bitmap heap scan collects row locations by page to reduce random visits, but usually cannot preserve the index's ordering."
@@ -95,6 +113,16 @@
               "description": "Use actual rows and buffers to compare prediction with observed work."
             }
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A query matches 30,000 orders spread across a large table.",
+          "reasoning": [
+            "An index scan may jump to individual row locations, which can mean many scattered page visits.",
+            "A bitmap heap scan groups locations by page to reduce repeated random access.",
+            "A sequential scan may still win if most table pages are needed; a bitmap path generally does not preserve index order."
+          ],
+          "outcome": "The planner chooses an access path based on estimated work, not a rule that index scans are always faster."
         }
       ]
     },
@@ -102,6 +130,10 @@
       "id": "seq-scan",
       "title": "Why sequential scan can win",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A sequential scan can be cheapest when the table is small or the query needs a large fraction of its rows."
+        },
         {
           "type": "paragraph",
           "text": "A sequential scan can be the right choice for a small table or a query that needs many rows. Following an index and then fetching most rows one by one may cost more than reading the table pages together. An index existing does not mean PostgreSQL should use it."
@@ -114,13 +146,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query filters orders with status = 'paid'. An index on status exists, but about 70% of rows match.",
+          "problem": "An index exists on orders.status, but a report returns 90% of all orders.",
           "reasoning": [
-            "Because most rows match, an index scan may fetch a large share of the table through many separate page visits.",
-            "A sequential scan can read table pages in order and be cheaper for this broad result.",
-            "Compare estimated and actual row counts, buffers, and execution time; also consider the extra write work caused by maintaining the index."
+            "Using the index can require reading many index entries and then fetching most table rows.",
+            "A sequential scan reads table pages in order and checks their rows in one pass.",
+            "The exact crossover depends on table size, cache, statistics, and the query."
           ],
-          "outcome": "PostgreSQL does not have to use every index. For broad results, reading the table in order can be cheaper than following the index."
+          "outcome": "An existing index is an option, not an instruction. A sequential scan can be the sensible choice."
         }
       ]
     },
@@ -128,6 +160,10 @@
       "id": "index-costs",
       "title": "Indexes cost more than disk",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Every index speeds some reads but creates ongoing work for relevant writes, storage, memory, and maintenance."
+        },
         {
           "type": "paragraph",
           "text": "Every index must be updated when relevant rows change. Indexes use disk and memory, add work to writes and WAL, and need maintenance as rows are deleted or updated. Keeping unused indexes can slow the whole workload, not just take up space."
@@ -143,6 +179,16 @@
           "prompt": "Does the existence of an index guarantee PostgreSQL will use it?",
           "answer": "No.",
           "explanation": "The planner compares estimated costs, and another access path may be cheaper."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A high-write events table has eight indexes, but only three support frequent queries.",
+          "reasoning": [
+            "Each insert must maintain relevant indexes; updates can also change index entries.",
+            "Extra indexes consume disk and cache space and can increase WAL and maintenance work.",
+            "Use workload evidence to identify unused or duplicate indexes before considering removal."
+          ],
+          "outcome": "Evaluate indexes against the whole workload: read benefit, write cost, storage, and maintenance."
         }
       ]
     },
@@ -152,6 +198,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "Measure before adding or dropping an index, and change one thing at a time so you can tell what caused the result."
+        },
+        {
+          "type": "paragraph",
           "text": "Before adding or dropping an index, look at real query frequency, latency, plans, write rate, and index size over a representative period. Change one thing at a time and check whether the improvement to reads is worth the extra write and storage cost."
         },
         {
@@ -159,6 +209,16 @@
           "language": "sql",
           "title": "PostgreSQL example",
           "source": "SELECT relname,indexrelname,idx_scan,idx_tup_read,idx_tup_fetch FROM pg_stat_user_indexes;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A dashboard query is slow, and the team proposes an index on every column in its WHERE clause.",
+          "reasoning": [
+            "Capture the exact query, representative parameters, frequency, and current plan.",
+            "Check whether the bottleneck is scanning, repeated joins, sorting, or returning many rows.",
+            "Test one candidate index, compare latency and buffer activity, and measure write overhead."
+          ],
+          "outcome": "An index is justified by a measured workload improvement, not merely because a column appears in WHERE."
         }
       ]
     }

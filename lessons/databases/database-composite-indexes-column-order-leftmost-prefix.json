@@ -24,6 +24,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "A composite index sorts by its first column, then by its second column within equal first-column values, and so on."
+        },
+        {
+          "type": "paragraph",
           "text": "For an index on (tenant_id, status, created_at DESC), tenant_id is sorted first, status is sorted within each tenant, and time is sorted within each tenant/status pair. This is why column order changes what the index can find efficiently."
         },
         {
@@ -57,6 +61,16 @@
               "Included columns do not change search order and make the index larger."
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "You create an index on (tenant_id, status, created_at DESC).",
+          "reasoning": [
+            "Rows are ordered first by tenant_id.",
+            "Within each tenant, rows are ordered by status.",
+            "Within each tenant/status pair, rows are ordered by newest created_at first."
+          ],
+          "outcome": "The order lets PostgreSQL narrow by leading columns and may provide a requested sort, but it is not a shortcut for every filter combination."
         }
       ]
     },
@@ -64,6 +78,10 @@
       "id": "column-order",
       "title": "Choosing order",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Put index columns in an order that supports the queries you actually run. Equality filters on leading columns often narrow the search before a range or ordering column."
+        },
         {
           "type": "paragraph",
           "text": "Put the columns used to narrow the search first, based on the actual query. Equality filters on leading columns often narrow the search well. A range filter can limit how much later columns help; ORDER BY and LIMIT can also make one order much better than another."
@@ -94,6 +112,16 @@
               "description": "Use actual rows and buffers to compare prediction with observed work."
             }
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A feed query filters by tenant_id, sorts newest first, and returns 20 rows.",
+          "reasoning": [
+            "An index on (tenant_id, created_at DESC) can seek to one tenant and read its newest entries in order.",
+            "An index starting with created_at may not narrow to that tenant as directly.",
+            "If the query filters only by status, an index whose first column is tenant_id may not provide a narrow lookup by status alone."
+          ],
+          "outcome": "Design from WHERE, JOIN, ORDER BY, and LIMIT together; column order determines which parts of the query an index can support."
         }
       ]
     },
@@ -101,6 +129,10 @@
       "id": "covering",
       "title": "Covering and INCLUDE",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A covering index contains all columns needed by a query. PostgreSQL's INCLUDE adds output columns without making them part of the search order."
+        },
         {
           "type": "paragraph",
           "text": "A covering index stores all the values a query needs, either as searchable key columns or as included payload. In PostgreSQL, INCLUDE columns can supply output values but do not change the index's sort order. More stored values mean a larger index and more write work."
@@ -113,13 +145,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A tenant feed runs `WHERE tenant_id = 42 ORDER BY created_at DESC LIMIT 20` and returns only created_at and status.",
+          "problem": "A feed query returns tenant_id, created_at, and status.",
           "reasoning": [
-            "An index on `(tenant_id, created_at DESC)` can seek to one tenant and read the newest entries first.",
-            "Adding `INCLUDE (status)` may let the query get status from the index too, although PostgreSQL may still visit the heap when visibility information requires it.",
-            "Measure the read improvement against the larger index and extra work on inserts and updates."
+            "Use tenant_id and created_at as key columns to support filtering and ordering.",
+            "INCLUDE (status) stores status in the index so it may be returned without reading the heap.",
+            "The index becomes larger, writes must maintain the included value, and visibility checks may still require heap visits."
           ],
-          "outcome": "Choose key columns for filtering and ordering. Use INCLUDE only when the saved table visits justify the added index size and write cost."
+          "outcome": "INCLUDE can reduce row fetches, but measure the read benefit against index size and write overhead."
         }
       ]
     },
@@ -127,6 +159,10 @@
       "id": "ordering-limit",
       "title": "Ordering, joins, and LIMIT",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "When an index provides the requested order, PostgreSQL may avoid a separate sort. LIMIT can make this especially useful because the scan can stop early."
+        },
         {
           "type": "paragraph",
           "text": "If the index order matches a query's ORDER BY, PostgreSQL may return rows already sorted and avoid a separate Sort step. With LIMIT, it may stop once it has found enough rows, rather than sorting every matching row first."
@@ -142,6 +178,16 @@
           "prompt": "Does the existence of an index guarantee PostgreSQL will use it?",
           "answer": "No.",
           "explanation": "The planner compares estimated costs, and another access path may be cheaper."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Return the newest 20 orders for customer 42.",
+          "reasoning": [
+            "An index on (customer_id, created_at DESC) can locate customer 42's range.",
+            "The entries already arrive newest first, so PostgreSQL may stop after finding 20 qualifying rows.",
+            "If the index order does not match the requested order, a separate Sort may be needed."
+          ],
+          "outcome": "An index can save both lookup work and sorting work when its order matches the query."
         }
       ]
     },
@@ -151,6 +197,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "When an index is not helping, compare the query shape with the index definition before adding another index."
+        },
+        {
+          "type": "paragraph",
           "text": "To diagnose an index that isn't helping, write down the query's WHERE, JOIN, ORDER BY, LIMIT, and selected columns. Compare that shape with the index's column order, then inspect the actual plan to see how many rows and table pages it reads."
         },
         {
@@ -158,6 +208,16 @@
           "language": "sql",
           "title": "PostgreSQL example",
           "source": "EXPLAIN (ANALYZE, BUFFERS) SELECT id,created_at FROM orders WHERE customer_id=42 ORDER BY created_at DESC LIMIT 10;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "An index exists on (tenant_id, status, created_at), but a query filters only by status.",
+          "reasoning": [
+            "The index is sorted by tenant_id first, so rows with the same status may be spread across many tenant ranges.",
+            "Check whether another index would serve a frequent workload well enough to justify its storage and write cost.",
+            "Use EXPLAIN (ANALYZE, BUFFERS) to verify the access path and number of rows/pages touched."
+          ],
+          "outcome": "Index design is about matching real predicates and ordering, not merely including every column mentioned in the query."
         }
       ]
     }

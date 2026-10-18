@@ -24,6 +24,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "B-tree is the general-purpose starting point because it supports equality, range conditions, and ordered results. Hash is narrower: it supports equality lookups."
+        },
+        {
+          "type": "paragraph",
           "text": "B-tree is the general-purpose choice for equality checks, ranges, and sorted results. Hash indexes support equality checks but not range searches or ordered output. Start with B-tree unless the query needs a different kind of search."
         },
         {
@@ -62,6 +66,16 @@
               "Small summary index; matching pages may need row rechecks."
             ]
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A query asks for all events between two timestamps and orders them by timestamp.",
+          "reasoning": [
+            "A B-tree on timestamp can navigate to the range and return keys in order.",
+            "A hash index can help equality checks but cannot provide a timestamp range or sorted output.",
+            "Choose the index type that supports the operators and ordering the query needs."
+          ],
+          "outcome": "Start with B-tree for common scalar searches unless the workload gives a clear reason to choose another type."
         }
       ]
     },
@@ -69,6 +83,10 @@
       "id": "gin",
       "title": "GIN inverted indexes",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "GIN is an inverted index: it maps each component to the rows that contain that component. This suits searches inside composite values such as arrays and JSONB."
+        },
         {
           "type": "paragraph",
           "text": "A GIN index helps find rows that contain a particular component, such as a value inside an array or a key/value pattern inside JSONB. It stores a lookup from each component to the rows that contain it, so it is useful for supported containment and text-search queries."
@@ -99,6 +117,16 @@
               "description": "Use actual rows and buffers to compare prediction with observed work."
             }
           ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "An events table has JSONB tags and the query asks for events whose tags contain 'security'.",
+          "reasoning": [
+            "A GIN index can index components inside the JSONB value.",
+            "The query must use an operator supported by the chosen GIN operator class.",
+            "GIN can use significant storage and add write work, so validate the plan and write workload."
+          ],
+          "outcome": "GIN can speed up containment-style searches that a simple B-tree on the whole JSON document may not support well."
         }
       ]
     },
@@ -106,6 +134,10 @@
       "id": "gist-brin",
       "title": "GiST and BRIN",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "GiST supports several operator families, including spatial and range searches. BRIN stores summaries for groups of nearby table pages and works best when physical order correlates with the searched value."
+        },
         {
           "type": "paragraph",
           "text": "GiST supports different kinds of searches, including some geometric and range operations. BRIN stores a small summary for groups of nearby table pages. BRIN is compact and useful when nearby pages contain similar values, such as timestamps inserted in order, but PostgreSQL may need to recheck matching rows."
@@ -118,13 +150,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A large event table is inserted mostly in timestamp order. Reports filter by a time range, while another endpoint searches for a value inside a JSONB payload.",
+          "problem": "A huge append-only events table is mostly inserted in timestamp order and reports filter by a broad time range.",
           "reasoning": [
-            "A B-tree on the timestamp is a strong candidate when reports need precise range lookups or sorted results.",
-            "A BRIN index may use much less space when nearby table pages contain nearby timestamps, but it can return extra rows that must be checked.",
-            "A GIN index may fit JSONB containment searches. Compare the query operators, index size, write cost, and actual plans before choosing."
+            "BRIN can summarize minimum and maximum timestamps for groups of pages.",
+            "PostgreSQL can skip page ranges whose summaries cannot match, but it may need to recheck rows in selected pages.",
+            "If timestamps are scattered randomly through the table, the summaries become less useful."
           ],
-          "outcome": "Different queries on the same table may need different index types. Choose from the search operation and data layout, then measure."
+          "outcome": "BRIN is compact when nearby pages contain similar values; GiST fits searches supported by its operator class."
         }
       ]
     },
@@ -132,6 +164,10 @@
       "id": "partial",
       "title": "Partial indexes",
       "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A partial index contains only rows that satisfy a condition, so it can be smaller when queries repeatedly target a stable subset."
+        },
         {
           "type": "paragraph",
           "text": "A partial index includes only rows that meet a condition, such as jobs whose status is 'pending'. It can be smaller than an index on every job. PostgreSQL can use it only when it can prove that the query asks for rows covered by that condition."
@@ -147,6 +183,16 @@
           "prompt": "Does the existence of an index guarantee PostgreSQL will use it?",
           "answer": "No.",
           "explanation": "The planner compares estimated costs, and another access path may be cheaper."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A jobs table has ten million completed jobs but only a few thousand pending jobs, and workers repeatedly claim pending jobs.",
+          "reasoning": [
+            "Create an index on scheduling columns with a predicate such as WHERE status = 'pending'.",
+            "Queries must imply that predicate for PostgreSQL to use the partial index.",
+            "A parameterized condition can prevent the planner from proving the predicate in some plans, so test the actual prepared query."
+          ],
+          "outcome": "Partial indexes can keep a hot subset small, but the query predicate must match the index condition."
         }
       ]
     },
@@ -156,6 +202,10 @@
       "blocks": [
         {
           "type": "paragraph",
+          "text": "An expression index stores the result of an expression, so a query can search using the same expression instead of calculating it for every row."
+        },
+        {
+          "type": "paragraph",
           "text": "An expression index stores the result of a calculation, such as lower(email), instead of only the original column. It can help when queries use that same expression, but the query must match the indexed expression closely and PostgreSQL requires index functions to be immutable."
         },
         {
@@ -163,6 +213,16 @@
           "language": "sql",
           "title": "PostgreSQL example",
           "source": "CREATE UNIQUE INDEX users_lower_email_uq ON users (lower(email));"
+        },
+        {
+          "type": "worked_example",
+          "problem": "Email lookups should be case-insensitive and queries use lower(email) = lower($1).",
+          "reasoning": [
+            "Create an index on lower(email), not only on the raw email column.",
+            "Write the predicate using the indexed expression so PostgreSQL can match it to the index.",
+            "Define a consistent normalization and uniqueness policy if differently cased emails should count as the same address."
+          ],
+          "outcome": "Expression indexes help when the application consistently queries through that expression; they also add write cost."
         }
       ]
     }
