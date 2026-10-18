@@ -135,14 +135,14 @@
         },
         {
           "type": "worked_example",
-          "text": "Count the rows before looking at the output tables.",
           "reasoning": [
             "INNER JOIN: 2 rows, one for each of Asha's matching orders.",
             "LEFT JOIN: 4 rows—Asha twice, Ben once with NULL order columns, and Chen once with NULL order columns.",
             "RIGHT JOIN: 3 rows—Asha's two orders and the orphan order for customer_id 4. Ben and Chen are not preserved.",
             "FULL OUTER JOIN: 5 rows—Asha's two matches, Ben and Chen unmatched on the left, and the orphan order unmatched on the right."
           ],
-          "outcome": "The join type determines which unmatched side survives. Matching rows still appear once per matching pair."
+          "outcome": "The join type determines which unmatched side survives. Matching rows still appear once per matching pair.",
+          "problem": "Count the rows before looking at the output tables."
         },
         {
           "type": "table",
