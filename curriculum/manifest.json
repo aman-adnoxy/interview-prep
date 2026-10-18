@@ -30,7 +30,7 @@
           "title": "Relational Databases, Primary Keys, Foreign Keys, and Constraints",
           "lessonId": "relational-databases-keys-constraints",
           "difficulty": "beginner",
-          "order": 3,
+          "order": 2,
           "prerequisites": [
             "sql-query-fundamentals"
           ],
