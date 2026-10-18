@@ -121,13 +121,13 @@
         },
         {
           "type": "worked_example",
-          "text": "A course changes its title, but the title is copied into 400 enrollment rows.",
           "reasoning": [
             "If the title is stored only in the courses table, one row needs updating.",
             "If it is copied into every enrollment, every copy must be updated correctly or reports disagree.",
             "Keep course facts with the course; keep enrollment-specific facts such as grade on the student-course relationship."
           ],
-          "outcome": "Use normal forms to find facts stored at the wrong grain. The goal is consistent data and clear ownership, not normalization for its own sake."
+          "outcome": "Use normal forms to find facts stored at the wrong grain. The goal is consistent data and clear ownership, not normalization for its own sake.",
+          "problem": "A course changes its title, but the title is copied into 400 enrollment rows."
         },
         {
           "type": "worked_example",
