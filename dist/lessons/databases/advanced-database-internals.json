@@ -294,7 +294,7 @@
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — PostgreSQL uses MVCC so transactions can see a consistent version of rows while other transactions write. Updates create new row versions; VACUUM cleans up versions that are no longer visible to any active snapshot, and WAL records changes for recovery."
+          "text": "2. Definition and design choice — PostgreSQL uses MVCC so transactions can see a consistent version of rows while other transactions write. Updates create new row versions; VACUUM cleans up versions no active snapshot needs, and WAL records changes for recovery."
         },
         {
           "type": "steps",
@@ -330,7 +330,7 @@
             "Ordinary VACUUM usually makes space reusable inside the table; it does not promise to shrink the file on disk. VACUUM FULL rewrites the table and takes a stronger lock.",
             "Check WAL volume, checkpoint activity, lock waits, and the earliest plan-estimate mismatch before changing memory or vacuum settings."
           ],
-          "outcome": "Remove the cause of the old snapshot or blocking, then verify dead-tuple trends, query latency, and disk growth over time; do not judge success from one instantaneous size reading."
+          "outcome": "Remove the cause of the old snapshot or blocking, then verify dead-tuple trends, query latency, and disk growth over time."
         },
         {
           "type": "callout",
