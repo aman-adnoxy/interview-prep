@@ -151,6 +151,7 @@
           "type": "table",
           "title": "Symptom",
           "columns": [
+            "Symptom",
             "Inspect first"
           ],
           "rows": [
