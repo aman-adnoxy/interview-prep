@@ -42,6 +42,11 @@
       "contentVersion": "2.0.0",
       "questionCount": 12
     },
+    "database-production-operations": {
+      "path": "/lessons/databases/database-production-operations.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 8
+    },
     "database-transactions-isolation": {
       "path": "/lessons/databases/database-transactions-isolation.json",
       "contentVersion": "2.0.0",
