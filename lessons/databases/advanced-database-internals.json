@@ -45,6 +45,51 @@
         {
           "type": "paragraph",
           "text": "Think of a row as having versions over time. If a transaction changes an account balance from 100 to 70, a concurrent query that began with an older snapshot may still read the version showing 100, while a later query can see 70 after the update commits. PostgreSQL decides which version is visible from the transaction's snapshot; readers do not simply read whichever bytes were written most recently."
+        },
+        {
+          "type": "paragraph",
+          "text": "A useful physical model is that a PostgreSQL table page can contain several versions of what an application thinks of as the same row. Tuple metadata records transaction information, including which transaction created a version and whether a later transaction made it obsolete. PostgreSQL checks that metadata against the query's snapshot before deciding whether the version is visible. The old version is not simply overwritten in place every time."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Transaction A starts a report. Transaction B updates a customer's address and commits. A continues reading while B has finished.",
+          "reasoning": [
+            "A's snapshot determines which committed row versions its query may see; it does not blindly pick the newest bytes on disk.",
+            "B's update creates a new row version. A can continue to see the older version if its snapshot requires it.",
+            "PostgreSQL must keep versions that might still be visible to an active snapshot, which is why a long-running transaction can delay cleanup."
+          ],
+          "outcome": "MVCC trades extra row versions and cleanup work for reader/writer concurrency. When debugging old values or bloat, check transaction age and snapshot behavior, not just whether the latest update committed."
+        },
+        {
+          "type": "table",
+          "title": "What a query is deciding",
+          "columns": [
+            "Term",
+            "Plain-English meaning",
+            "Why it matters"
+          ],
+          "rows": [
+            [
+              "Row version",
+              "One physical version of a logical row",
+              "Updates can leave multiple versions behind"
+            ],
+            [
+              "Snapshot",
+              "The transaction's view of which changes are visible",
+              "Two concurrent queries can legitimately see different versions"
+            ],
+            [
+              "Dead tuple",
+              "An old version that no longer needs to be visible",
+              "Vacuum can eventually make its space reusable"
+            ],
+            [
+              "Long-running transaction",
+              "A transaction that keeps an old snapshot or transaction state alive",
+              "It can prevent cleanup and contribute to bloat"
+            ]
+          ]
         }
       ]
     },
@@ -75,6 +120,32 @@
         {
           "type": "paragraph",
           "text": "For example, repeatedly updating a row does not mean PostgreSQL can immediately erase every older version. A transaction that started earlier may still need to see one of those versions. VACUUM can reclaim versions only when they are no longer visible to any relevant snapshot. A long-running transaction can therefore hold up cleanup even if it is mostly idle."
+        },
+        {
+          "type": "paragraph",
+          "text": "VACUUM normally marks space occupied by removable row versions as reusable inside the table; it does not usually compact the table file and return all that space to the operating system. A later insert may reuse that space. `VACUUM FULL` rewrites the table to compact it, but needs an ACCESS EXCLUSIVE lock and extra disk space during the rewrite, so it is not a routine first response to a large table."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Inspect table size and vacuum progress",
+          "source": "SELECT relname,\n       pg_size_pretty(pg_relation_size(relid)) AS table_size,\n       n_live_tup,\n       n_dead_tup,\n       last_autovacuum,\n       autovacuum_count\nFROM pg_stat_user_tables\nORDER BY n_dead_tup DESC\nLIMIT 10;\n\nSELECT *\nFROM pg_stat_progress_vacuum;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "A table grew from 8 GB to 20 GB after a high-update period. The write rate has returned to normal, but the file is still around 20 GB.",
+          "reasoning": [
+            "First distinguish allocated file size from reusable space inside the file; normal VACUUM may make space reusable without shrinking the file.",
+            "Check whether dead tuples are falling, whether autovacuum is running, and whether long transactions or replication slots are holding back cleanup.",
+            "If the table can reuse its free space for future writes, a large on-disk size alone does not prove an urgent problem. Consider a rewrite only when measured requirements justify its lock and disk costs."
+          ],
+          "outcome": "Bloat diagnosis is about live data, dead versions, reusable free space, and ongoing growth—not just the size number shown by the filesystem."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Transaction ID wraparound is a separate risk",
+          "content": "Vacuum also protects PostgreSQL from transaction-ID wraparound by freezing old row versions. If vacuum falls dangerously behind, PostgreSQL can restrict writes to protect data correctness. Monitor age-of-oldest-transaction and vacuum warnings; do not treat every vacuum alert as only a disk-space issue."
         }
       ]
     },
@@ -127,6 +198,72 @@
             "A checkpoint records a recovery point and reduces how far back recovery needs to replay, but checkpoints do not replace WAL."
           ],
           "outcome": "WAL is the recovery record; checkpoints help bound recovery work. They solve related but different problems."
+        },
+        {
+          "type": "paragraph",
+          "text": "WAL is a sequential log stored on persistent storage in the database's WAL directory. A change is recorded in WAL before PostgreSQL can safely rely on the corresponding data page being written. This lets PostgreSQL acknowledge a committed transaction without forcing every modified table and index page to be written immediately: recovery can replay WAL after a crash. WAL therefore consumes disk space and generates write I/O of its own."
+        },
+        {
+          "type": "steps",
+          "title": "What happens when a transaction commits?",
+          "steps": [
+            {
+              "id": "change",
+              "title": "Modify a row in memory",
+              "description": "PostgreSQL changes a shared buffer page; that page is now dirty, meaning its on-disk copy needs to be updated later."
+            },
+            {
+              "id": "wal",
+              "title": "Record the change in WAL",
+              "description": "WAL records describe enough of the change for crash recovery. WAL must reach the required durability point before the commit can be safely acknowledged."
+            },
+            {
+              "id": "flush",
+              "title": "Make the commit durable",
+              "description": "With the usual durable settings, PostgreSQL flushes the relevant WAL through the commit record to persistent storage. Exact waiting behavior depends on settings such as synchronous_commit and replication configuration."
+            },
+            {
+              "id": "data-page",
+              "title": "Write data pages later",
+              "description": "Background writing and checkpoints eventually write dirty table and index pages. A crash can be repaired by replaying WAL after the last checkpoint."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "An API updates one row and commits in 3 ms, but the table page may not be written to its main data file until later. Is the commit unsafe?",
+          "reasoning": [
+            "Not necessarily. PostgreSQL's durability design relies on WAL being safely persisted before acknowledging the commit, not on immediately flushing every changed data page.",
+            "After a crash, PostgreSQL starts from a checkpoint and replays the necessary WAL records to recover committed changes.",
+            "If WAL storage is slow, full, or under heavy write pressure, commit latency can rise even when the SQL statement changes only one row."
+          ],
+          "outcome": "WAL and data files have different jobs. WAL supports durability and recovery; data-page writes and checkpoints manage the durable table/index representation and recovery distance."
+        },
+        {
+          "type": "table",
+          "title": "WAL and checkpoint costs",
+          "columns": [
+            "What you notice",
+            "Possible explanation",
+            "What to inspect"
+          ],
+          "rows": [
+            [
+              "Commit latency rises during writes",
+              "WAL flush or storage latency may be on the critical path",
+              "Commit latency, storage metrics, WAL settings"
+            ],
+            [
+              "WAL disk usage grows quickly",
+              "High write volume, long-running replication slots, or lagging consumers can retain WAL",
+              "WAL generation rate, replication slots, replication lag"
+            ],
+            [
+              "Checkpoint I/O spikes",
+              "Many dirty pages are being written in a short period",
+              "Checkpoint logs, checkpoint write/sync time, storage throughput"
+            ]
+          ]
         }
       ]
     },
