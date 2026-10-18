@@ -11,7 +11,9 @@
     "Explain MVCC snapshots and why updates create new row versions in PostgreSQL.",
     "Diagnose vacuum pressure, dead tuples, bloat, and transaction-ID wraparound risk.",
     "Trace how WAL, checkpoints, and crash recovery support durability.",
-    "Reason about locks, blocking, deadlocks, and transaction isolation."
+    "Reason about locks, blocking, deadlocks, and transaction isolation.",
+    "Trace how MVCC tuple versions occupy table pages and why long transactions delay cleanup.",
+    "Explain WAL flush, checkpoints, crash recovery, lock waits, and their effects on latency."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -45,6 +47,20 @@
         {
           "type": "paragraph",
           "text": "Think of a row as having versions over time. If a transaction changes an account balance from 100 to 70, a concurrent query that began with an older snapshot may still read the version showing 100, while a later query can see 70 after the update commits. PostgreSQL decides which version is visible from the transaction's snapshot; readers do not simply read whichever bytes were written most recently."
+        },
+        {
+          "type": "paragraph",
+          "text": "What is physically stored? PostgreSQL does not normally overwrite a row in place for every UPDATE. It creates a new row version (tuple) and marks the old version as no longer current for future snapshots. Both versions can occupy table pages at the same time until vacuum can reclaim space for reuse. An index may also temporarily point to versions that are no longer visible to a new query."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A product row is updated 20 times in one hour while a long-running report keeps an old snapshot open.",
+          "reasoning": [
+            "Each UPDATE can create another tuple version rather than replacing the old bytes immediately.",
+            "The report's snapshot may still need to see an older version, so vacuum cannot remove versions that might still be visible to it.",
+            "The table can grow even though the application still sees only one logical product row."
+          ],
+          "outcome": "Logical row count and physical table size are different. Long-running transactions can delay cleanup and contribute to bloat."
         }
       ]
     },
@@ -75,6 +91,21 @@
         {
           "type": "paragraph",
           "text": "For example, repeatedly updating a row does not mean PostgreSQL can immediately erase every older version. A transaction that started earlier may still need to see one of those versions. VACUUM can reclaim versions only when they are no longer visible to any relevant snapshot. A long-running transaction can therefore hold up cleanup even if it is mostly idle."
+        },
+        {
+          "type": "paragraph",
+          "text": "VACUUM usually marks dead tuple space as reusable inside the table; it does not normally shrink the table file back to the operating system. VACUUM FULL rewrites the table and can return space, but it takes a stronger lock and needs extra disk space while rewriting."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "-- Inspect approximate table and index sizes\nSELECT\n  pg_size_pretty(pg_relation_size('orders')) AS heap_size,\n  pg_size_pretty(pg_indexes_size('orders')) AS indexes_size,\n  pg_size_pretty(pg_total_relation_size('orders')) AS total_size;\n\n-- Inspect transaction age; investigate unusually old transactions\nSELECT pid, xact_start, state, query\nFROM pg_stat_activity\nWHERE xact_start IS NOT NULL\nORDER BY xact_start;"
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Vacuum is not a magic shrink button",
+          "content": "Autovacuum helps maintain visibility maps, statistics-related maintenance, and reusable space. It cannot clean versions still needed by old snapshots, and ordinary VACUUM generally does not return the relation's allocated file space to the OS."
         }
       ]
     },
@@ -127,6 +158,46 @@
             "A checkpoint records a recovery point and reduces how far back recovery needs to replay, but checkpoints do not replace WAL."
           ],
           "outcome": "WAL is the recovery record; checkpoints help bound recovery work. They solve related but different problems."
+        },
+        {
+          "type": "paragraph",
+          "text": "WAL (write-ahead log) records changes in a sequential log before the corresponding changed data pages must be written to their final table or index locations. With the usual synchronous-commit settings, PostgreSQL waits for the commit record to be flushed to durable storage before confirming COMMIT. That is why a commit can be durable even while some changed table pages have not yet been written."
+        },
+        {
+          "type": "steps",
+          "title": "What happens when a transaction commits?",
+          "steps": [
+            {
+              "id": "change",
+              "title": "Change pages in memory",
+              "description": "The transaction changes table or index pages in shared_buffers and generates WAL records describing the changes."
+            },
+            {
+              "id": "log",
+              "title": "Write WAL records",
+              "description": "WAL records are written to the log. Before a dirty data page is allowed to reach its final location, the WAL describing that page change must be durable first."
+            },
+            {
+              "id": "commit",
+              "title": "Flush the commit record",
+              "description": "With synchronous_commit enabled, PostgreSQL waits for the commit record to be flushed according to the configured durability policy before reporting success."
+            },
+            {
+              "id": "checkpoint",
+              "title": "Write data pages later",
+              "description": "Background writing and checkpoints push dirty table and index pages toward their data files. After a crash, PostgreSQL replays WAL needed to bring data files to a consistent state."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "WAL is usually written sequentially, while table and index page writes can be scattered. A checkpoint limits how far recovery may need to replay the log, but very aggressive checkpointing can increase write pressure. WAL flush latency, group commit, storage performance, replication settings, and transaction size all affect commit time."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "A commit is not the same as flushing every changed table page",
+          "content": "The write-ahead rule requires the relevant WAL to become durable before a dirty data page is written. It does not require every changed table page to be flushed before COMMIT returns."
         }
       ]
     },
@@ -157,6 +228,20 @@
         {
           "type": "paragraph",
           "text": "A lock wait and a deadlock are not the same. If transaction B waits for A and A eventually commits, B can continue: that is blocking. If A waits for B while B waits for A, neither can progress without intervention: that cycle is a deadlock, so PostgreSQL aborts one transaction."
+        },
+        {
+          "type": "paragraph",
+          "text": "A lock wait is different from slow disk I/O: the query may be ready to proceed but is waiting for another transaction to release a conflicting lock. A request can therefore take hundreds of milliseconds or seconds even when its SQL plan is efficient."
+        },
+        {
+          "type": "worked_example",
+          "problem": "An API update normally takes 8 ms but sometimes takes 2 seconds during a batch job.",
+          "reasoning": [
+            "The batch job may hold a row or table lock while doing unrelated work.",
+            "The API query's execution time can be small once it acquires the lock; most elapsed time may be waiting.",
+            "Inspect pg_stat_activity, wait_event, and pg_blocking_pids(pid) to identify the blocker before adding indexes or increasing CPU."
+          ],
+          "outcome": "Measure waiting separately from execution. Keep transactions short, acquire locks in a consistent order, and avoid external network calls while holding database locks."
         }
       ]
     },
@@ -209,6 +294,10 @@
           "kind": "pitfall",
           "title": "Higher isolation can mean retries",
           "content": "SERIALIZABLE does not silently make every transaction succeed. PostgreSQL can abort a transaction with a serialization failure when concurrent changes cannot safely be ordered. The application should retry the entire transaction, not just the last statement, and the operation should be designed so retrying is safe."
+        },
+        {
+          "type": "paragraph",
+          "text": "Isolation levels describe which concurrent changes a transaction is allowed to observe; they do not automatically encode every business rule. For example, two transactions can each read a total and make decisions that are individually reasonable but jointly violate a limit unless the invariant is protected with a suitable constraint, lock, or serializable transaction strategy."
         }
       ]
     }
