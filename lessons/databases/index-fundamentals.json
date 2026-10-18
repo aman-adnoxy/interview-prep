@@ -236,16 +236,6 @@
             "An index beginning with a different column may not provide the same efficient path."
           ],
           "outcome": "Choose column order from the whole query shape, not from a list of columns that seem important."
-        },
-        {
-          "type": "worked_example",
-          "reasoning": [
-            "The filter is `customer_id = 42`, so make that the leading index column.",
-            "The result is ordered by `created_at DESC`, so put `created_at DESC` next.",
-            "Because the query has `LIMIT 10`, PostgreSQL may stop after finding ten qualifying entries instead of sorting every order for that customer."
-          ],
-          "outcome": "A useful index is designed around the filter, order, and limit together—not just the column that appears in WHERE.",
-          "problem": "A feed endpoint asks for the newest 10 orders for one customer."
         }
       ]
     },
