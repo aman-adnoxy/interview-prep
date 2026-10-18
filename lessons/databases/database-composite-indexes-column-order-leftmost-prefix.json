@@ -125,13 +125,13 @@
         },
         {
           "type": "worked_example",
-          "text": "You need the latest 20 open events for tenant 7.",
           "reasoning": [
             "The query filters on `tenant_id = 7` and `status = 'open'`; these equality predicates define the group to search.",
             "Within that group, the result needs `created_at DESC`, so place the ordering column after the equality columns.",
             "An index on `(tenant_id, status, created_at DESC)` can seek to that tenant/status range and read newest-first. An index on `(created_at DESC, tenant_id, status)` orders by time across all tenants first, so it may have to examine many entries before finding 20 rows for tenant 7."
           ],
-          "outcome": "Leading columns determine which contiguous part of the index can be searched directly. Column order should match the query's filters and required order."
+          "outcome": "Leading columns determine which contiguous part of the index can be searched directly. Column order should match the query's filters and required order.",
+          "problem": "You need the latest 20 open events for tenant 7."
         }
       ]
     },
