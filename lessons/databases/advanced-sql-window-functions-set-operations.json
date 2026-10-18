@@ -279,10 +279,6 @@
             "If the SELECT also includes different source labels, the rows differ and UNION keeps both."
           ],
           "outcome": "Choose UNION when duplicate result rows should be removed; choose UNION ALL when occurrences matter or deduplication is unnecessary."
-        },
-        {
-          "type": "paragraph",
-          "text": "The result columns must have compatible types and appear in the same positions in both SELECT statements. UNION removes duplicate complete rows, not duplicates according to a column you happen to consider important. If you add a `source` column with values such as 'active' and 'invited', those rows are no longer identical, so UNION will keep both."
         }
       ]
     },
