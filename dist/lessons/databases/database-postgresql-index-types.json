@@ -127,6 +127,16 @@
             "GIN can use significant storage and add write work, so validate the plan and write workload."
           ],
           "outcome": "GIN can speed up containment-style searches that a simple B-tree on the whole JSON document may not support well."
+        },
+        {
+          "type": "worked_example",
+          "text": "A product's `attributes` JSONB column stores color, size, and material. The endpoint asks for products whose attributes contain `{\"color\":\"blue\"}`.",
+          "reasoning": [
+            "A regular B-tree on the entire JSONB value is not the general tool for this containment search.",
+            "A GIN index with an operator class that supports the `@>` containment operator can index the document's components.",
+            "The query must use an operator supported by that operator class. GIN's extra entries also increase index size and write cost."
+          ],
+          "outcome": "Choose an index by the operator the query uses and the data shape—not simply because a column is JSONB."
         }
       ]
     },
@@ -193,6 +203,16 @@
             "A parameterized condition can prevent the planner from proving the predicate in some plans, so test the actual prepared query."
           ],
           "outcome": "Partial indexes can keep a hot subset small, but the query predicate must match the index condition."
+        },
+        {
+          "type": "worked_example",
+          "text": "A job queue repeatedly asks for the oldest pending jobs, while most historical jobs are completed.",
+          "reasoning": [
+            "Create a partial index containing only pending jobs, ordered by creation time.",
+            "The queue query must include a condition PostgreSQL can recognize as implying `status = 'pending'`.",
+            "If the query uses a generic prepared parameter for status, PostgreSQL may not be able to prove that the predicate always matches the partial index; test the actual prepared plan."
+          ],
+          "outcome": "Partial indexes save space by indexing only a useful subset, but their predicate must line up with the query PostgreSQL plans."
         }
       ]
     },
