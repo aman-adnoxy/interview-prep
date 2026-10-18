@@ -239,13 +239,13 @@
         },
         {
           "type": "worked_example",
-          "text": "A feed endpoint asks for the newest 10 orders for one customer.",
           "reasoning": [
             "The filter is `customer_id = 42`, so make that the leading index column.",
             "The result is ordered by `created_at DESC`, so put `created_at DESC` next.",
             "Because the query has `LIMIT 10`, PostgreSQL may stop after finding ten qualifying entries instead of sorting every order for that customer."
           ],
-          "outcome": "A useful index is designed around the filter, order, and limit together—not just the column that appears in WHERE."
+          "outcome": "A useful index is designed around the filter, order, and limit together—not just the column that appears in WHERE.",
+          "problem": "A feed endpoint asks for the newest 10 orders for one customer."
         }
       ]
     },
@@ -461,7 +461,7 @@
           "type": "callout",
           "kind": "pitfall",
           "title": "Read EXPLAIN ANALYZE carefully",
-          "text": "EXPLAIN ANALYZE executes the statement. For a slow SELECT, it performs the read; for an INSERT, UPDATE, or DELETE, it can change data. Test write statements in a safe transaction or test environment, and remember that timing from a small or warm-cache test may not represent production."
+          "content": "EXPLAIN ANALYZE executes the statement. For a slow SELECT, it performs the read; for an INSERT, UPDATE, or DELETE, it can change data. Test write statements in a safe transaction or test environment, and remember that timing from a small or warm-cache test may not represent production."
         }
       ]
     }
