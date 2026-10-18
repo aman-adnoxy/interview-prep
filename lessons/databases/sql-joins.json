@@ -3,13 +3,14 @@
   "sectionId": "sql-joins",
   "title": "SQL Joins: INNER, LEFT, RIGHT, and FULL OUTER JOIN",
   "difficulty": "beginner",
-  "estimatedMinutes": 44,
+  "estimatedMinutes": 49,
   "learningObjectives": [
     "Predict which rows survive each common join type.",
     "Explain how join predicates and NULL extension affect results.",
     "Distinguish filtering rows in ON from filtering rows in WHERE.",
     "Recognize one-to-many row multiplication and accidental duplicates.",
-    "Choose a join shape that answers a concrete business question."
+    "Choose a join shape that answers a concrete business question.",
+    "Explain sql joins: inner, left, right, and full outer join using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -469,6 +470,67 @@
             "Use COALESCE for a missing count only if displaying zero is the intended meaning."
           ],
           "outcome": "Define the output grain first. Aggregate a one-to-many relation before joining when the result must stay one row per parent."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Related business facts are stored in different tables to avoid duplication, but a report often needs columns from both. A join combines related rows without requiring the data to be copied into one giant table."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — A join matches rows using a predicate. INNER JOIN keeps matching pairs; LEFT JOIN also preserves every left-side row, filling right-side columns with NULL when no match exists. Choose the join from the required output semantics, not from which syntax looks familiar."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the work",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Read the inputs",
+              "description": "The optimizer chooses access paths for each table or intermediate result."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Match rows",
+              "description": "A nested-loop, hash, or merge join algorithm evaluates the join condition using a plan suited to estimates and available ordering."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Preserve or discard unmatched rows",
+              "description": "INNER JOIN discards unmatched rows; LEFT JOIN emits the left row with NULLs for missing right-side values."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Apply remaining filters",
+              "description": "WHERE filters the joined result; putting a predicate in ON can change outer-join behavior."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "For customers and orders, a LEFT JOIN keeps customers who have never ordered. Moving `orders.status = 'paid'` from the ON clause into WHERE rejects the NULL-extended rows, making the result behave like an inner join for that condition.",
+          "reasoning": [
+            "Reason about the desired row set first, then place predicates deliberately. A join can multiply rows when the relationship is one-to-many, so count the expected grain before trusting aggregates.",
+            "Check the actual query shape, data distribution, concurrency, and database-engine behavior before generalizing the result."
+          ],
+          "outcome": "Reason about the desired row set first, then place predicates deliberately. A join can multiply rows when the relationship is one-to-many, so count the expected grain before trusting aggregates."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Do not add `DISTINCT` reflexively to hide duplicate rows. First determine whether the join key is unique and whether one-to-many multiplication is correct for the question."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — Why can a LEFT JOIN unexpectedly remove rows after adding a WHERE condition on the right table?",
+          "answer": "Rows with no right-side match receive NULLs, and a WHERE predicate such as `orders.status = 'paid'` evaluates to unknown for those rows, so they are filtered out.",
+          "explanation": "Outer joins preserve unmatched rows only until later predicates reject them. Predicate placement is part of query semantics."
         }
       ]
     }
