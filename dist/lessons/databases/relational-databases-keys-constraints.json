@@ -122,29 +122,125 @@
           "source": "CREATE TABLE customers (\n  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  email TEXT NOT NULL UNIQUE\n);\n\nCREATE TABLE orders (\n  id BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,\n  customer_id BIGINT NOT NULL\n    REFERENCES customers(id) ON DELETE RESTRICT,\n  created_at TIMESTAMPTZ NOT NULL DEFAULT now()\n);\n\nCREATE INDEX idx_orders_customer_id ON orders(customer_id);"
         },
         {
+          "type": "paragraph",
+          "text": "The SQL above uses `ON DELETE RESTRICT`. That choice matters when someone tries to delete a customer who still has orders. Before choosing an action, ask: if the parent row goes away, what should happen to each dependent row? The database can enforce that decision for you."
+        },
+        {
+          "type": "paragraph",
+          "text": "### 1. RESTRICT / NO ACTION: do not allow the delete"
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine customer 12 has three orders. You try to delete customer 12. With `RESTRICT`, PostgreSQL refuses because those orders still point to that customer. The customer and orders remain unchanged. This is useful when the child records must not be left pointing at a missing parent."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Deletion is blocked while orders exist",
+          "source": "DELETE FROM customers WHERE id = 12;\n-- Fails while orders still reference customer 12"
+        },
+        {
+          "type": "paragraph",
+          "text": "`RESTRICT` and `NO ACTION` often look the same: both prevent an invalid reference. The difference is timing. `RESTRICT` blocks the operation immediately. A deferrable `NO ACTION` constraint can postpone the check until the end of the transaction, which can help when a sequence of changes temporarily breaks the relationship but restores it before commit."
+        },
+        {
+          "type": "paragraph",
+          "text": "### 2. CASCADE: delete the dependent rows too"
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine a shopping cart and its cart items. A cart item has no useful life once its cart is deleted. With `ON DELETE CASCADE`, deleting the cart also deletes its cart items. You do not need a separate DELETE for every item."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "A child that belongs only to its parent",
+          "source": "CREATE TABLE carts (\n  id BIGINT PRIMARY KEY\n);\n\nCREATE TABLE cart_items (\n  cart_id BIGINT REFERENCES carts(id) ON DELETE CASCADE,\n  product_id BIGINT NOT NULL,\n  quantity INT NOT NULL CHECK (quantity > 0),\n  PRIMARY KEY (cart_id, product_id)\n);\n\nDELETE FROM carts WHERE id = 12;\n-- Cart 12 and all its cart_items are deleted."
+        },
+        {
+          "type": "paragraph",
+          "text": "That convenience can be dangerous for orders, payments, invoices, or audit records. Those records may need to survive even if a customer account is closed. Do not use CASCADE just because it avoids writing another query; use it only when the child truly has no independent lifecycle and deletion is the intended business rule."
+        },
+        {
+          "type": "paragraph",
+          "text": "### 3. SET NULL: keep the child, clear the relationship"
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine a support ticket assigned to an employee. If that employee leaves, you may want to keep the ticket but make it unassigned. `ON DELETE SET NULL` keeps the ticket and changes `assigned_employee_id` to NULL. The column must allow NULL, and the application must know what an unassigned ticket means."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Keep the ticket after its assignee is deleted",
+          "source": "CREATE TABLE support_tickets (\n  id BIGINT PRIMARY KEY,\n  assigned_employee_id BIGINT NULL\n    REFERENCES employees(id) ON DELETE SET NULL\n);\n\nDELETE FROM employees WHERE id = 7;\n-- Tickets assigned to employee 7 remain,\n-- but assigned_employee_id becomes NULL."
+        },
+        {
+          "type": "paragraph",
+          "text": "This is not appropriate for the `orders.customer_id` column shown earlier because it is `NOT NULL`. It would also be a poor choice if you must preserve who handled a ticket for audit reasons; in that case, retain the employee record or store an appropriate historical snapshot."
+        },
+        {
+          "type": "paragraph",
+          "text": "### 4. SET DEFAULT: replace the reference with a fallback"
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine support tickets are assigned to a team. When a team is removed, you want its tickets to move to a special team called `Unassigned`. `ON DELETE SET DEFAULT` replaces the deleted team's ID with the column's default value. That default must still point to a real team, or the foreign-key check will fail."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Use a valid fallback team",
+          "source": "CREATE TABLE teams (\n  id BIGINT PRIMARY KEY,\n  name TEXT NOT NULL UNIQUE\n);\n\nINSERT INTO teams (id, name) VALUES (0, 'Unassigned');\n\nCREATE TABLE tickets (\n  id BIGINT PRIMARY KEY,\n  team_id BIGINT NOT NULL DEFAULT 0\n    REFERENCES teams(id) ON DELETE SET DEFAULT\n);\n\n-- Deleting a non-default team moves its tickets to team_id = 0.\n-- Team 0 must remain present for the foreign key to stay valid."
+        },
+        {
+          "type": "paragraph",
+          "text": "`SET DEFAULT` does not mean 'accept any missing parent'. It substitutes the default, then the foreign key still checks that the new value exists. This is useful only when the fallback has a clear meaning and is guaranteed to exist."
+        },
+        {
+          "type": "paragraph",
+          "text": "### Compare the choices"
+        },
+        {
           "type": "table",
           "columns": [
-            "Referential action",
-            "Use carefully when"
+            "Action",
+            "What happens to the child row?",
+            "Typical fit"
           ],
           "rows": [
             [
-              "RESTRICT / NO ACTION",
-              "Prevent parent deletion while dependent rows exist; NO ACTION can be deferred if the constraint is deferrable."
+              "RESTRICT",
+              "Parent deletion is rejected while child rows refer to it.",
+              "An order must keep its customer reference valid."
+            ],
+            [
+              "NO ACTION",
+              "The reference must be valid when the constraint is checked; a deferrable constraint can check at transaction end.",
+              "A multi-step transaction temporarily changes relationships before restoring validity."
             ],
             [
               "CASCADE",
-              "Delete or update dependent rows automatically when that is genuinely the lifecycle rule."
+              "The child row is deleted along with the parent.",
+              "Cart items that have no independent life outside their cart."
             ],
             [
               "SET NULL",
-              "Keep the child but remove the relationship; the foreign-key column must permit NULL."
+              "The child stays, but its foreign-key value becomes NULL.",
+              "A ticket stays after its optional assignee is removed."
             ],
             [
               "SET DEFAULT",
-              "Replace the reference with its default, which must still satisfy the constraint."
+              "The child stays, and its foreign-key value changes to the column default; that default must reference a real parent.",
+              "A ticket moves to a permanent 'Unassigned' team."
             ]
           ]
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Choose based on what the data means",
+          "content": "Before selecting an action, ask what the child record represents and whether it must survive the parent's deletion. For customer orders, preserving history is usually more important than automatically deleting the order. For temporary cart items, cascading deletion may be exactly right. The database action should match the product's retention and lifecycle rules."
         },
         {
           "type": "callout",
