@@ -243,11 +243,11 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A range query uses an index correctly but still performs many scattered table-page reads. The bottleneck may be row locality, not index navigation."
+          "text": "1. Problem and motivation — An index scan finds the right keys, yet a range query still reads many table pages. The problem may be that matching rows are scattered physically, not that the index is poorly ordered."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — An index orders its own entries. PostgreSQL heap tables are not continuously kept in B-tree key order; CLUSTER can rewrite a table once, but later writes do not preserve that order perfectly."
+          "text": "2. Definition and design choice — An index's logical key order is separate from the table's physical row layout. PostgreSQL stores ordinary table rows in a heap; CLUSTER rewrites the table in index order once, but later writes can weaken that ordering."
         },
         {
           "type": "steps",
@@ -277,13 +277,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A query returns 5,000 matching rows, and those rows are spread across 4,000 heap pages.",
+          "problem": "A range query returns 5,000 rows scattered across roughly 4,000 heap pages.",
           "reasoning": [
-            "The index can find matching keys cheaply while scattered heap access remains expensive.",
-            "CLUSTER may improve locality for a read-heavy range workload, but it rewrites the table, needs a strong lock, and does not maintain order after later writes.",
-            "An index-only scan avoids heap visits only when required values are in the index and visibility information permits it."
+            "The index can find tuple locations quickly, but fetching scattered heap pages still costs I/O and cache space.",
+            "CLUSTER can improve locality for read-heavy ranges, but it rewrites the table, needs a strong lock, and does not keep rows ordered forever.",
+            "An index-only scan can avoid heap visits only when the index contains all required values and the visibility map allows PostgreSQL to trust tuple visibility."
           ],
-          "outcome": "Measure heap fetches and buffer reads first; consider a covering index or controlled CLUSTER only when the workload and maintenance window justify the cost."
+          "outcome": "Inspect heap fetches and buffer reads before choosing a fix. Compare a covering index, CLUSTER, or a sequential scan against write overhead and the maintenance window."
         },
         {
           "type": "callout",
