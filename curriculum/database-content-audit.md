@@ -4,7 +4,7 @@ Audit date: 2026-10-18
 
 ## Summary
 
-The audit reviewed all published database lessons for teaching quality, not just JSON validity. The six-layer interview synthesis is now topic-specific across the 16 original published lessons. Three missing foundational lessons have also been added: SQL Query Fundamentals, Database Transactions and Isolation, and Redis and Caching Architecture. The database curriculum now has 20 sections: 19 published lessons. The remaining priority is production operations, which should be taught explicitly or added as a focused lesson.
+The audit reviewed all published database lessons for teaching quality, not just JSON validity. The six-layer interview synthesis is now topic-specific across the 16 original published lessons. Two new lessons have been added: SQL Query Fundamentals and Database Transactions and Isolation. The existing Redis/Caching section has been completed and moved from upcoming to published. The database curriculum now has 19 sections, all published. The remaining priority is production operations, which should be taught explicitly or added as a focused lesson.
 
 ## Fixes applied in this branch
 
@@ -15,7 +15,7 @@ The audit reviewed all published database lessons for teaching quality, not just
 - **New SQL fundamentals lesson:** Covers SELECT/WHERE, expressions, CASE, DISTINCT, ORDER BY/LIMIT, NULL basics, logical query order, expected outputs, and deterministic top-N queries.
 - **New transactions/isolation lesson:** Covers ACID, atomic inventory updates, check-then-write races, isolation and locks, deadlocks/serialization retries, transaction boundaries, and external side-effect/idempotency pitfalls.
 - **Redis/caching lesson:** Added cache-aside, TTL and invalidation, stale data, cache stampedes, hot keys, memory/eviction, persistence, replication lag, and failure handling. Updated the manifest from upcoming to published and retained its prerequisite relationship to index fundamentals.
-- **Curriculum ordering:** Added SQL fundamentals first and transactions after relational keys/constraints, then shifted existing section order without changing existing lesson IDs. The manifest now has 20 sections, with 19 published.
+- **Curriculum ordering:** Added SQL fundamentals first and transactions after relational keys/constraints, then shifted existing section order without changing existing lesson IDs. The manifest now has 19 sections, all published.
 
 ## Remaining coverage gaps
 
