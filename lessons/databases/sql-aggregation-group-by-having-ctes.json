@@ -182,7 +182,9 @@
         },
         {
           "type": "callout",
-          "content": "In PostgreSQL 12 and later, many eligible non-recursive CTEs can be inlined into the surrounding query. A CTE is therefore not automatically a temporary table or a performance barrier. `MATERIALIZED` and `NOT MATERIALIZED` can influence the choice; check the plan before assuming either form is faster."
+          "content": "In PostgreSQL 12 and later, many eligible non-recursive CTEs can be inlined into the surrounding query. A CTE is therefore not automatically a temporary table or a performance barrier. `MATERIALIZED` and `NOT MATERIALIZED` can influence the choice; check the plan before assuming either form is faster.",
+          "kind": "info",
+          "title": "A CTE is a named query stage, not automatically a temporary table"
         },
         {
           "type": "paragraph",
