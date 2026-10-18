@@ -17,12 +17,34 @@
       "order": 1,
       "sections": [
         {
+          "id": "sql-query-fundamentals",
+          "title": "SQL Query Fundamentals: Filtering, Sorting, NULLs, and Query Shape",
+          "lessonId": "sql-query-fundamentals",
+          "difficulty": "beginner",
+          "order": 1,
+          "prerequisites": [],
+          "status": "published"
+        },
+        {
           "id": "relational-databases-keys-constraints",
           "title": "Relational Databases, Primary Keys, Foreign Keys, and Constraints",
           "lessonId": "relational-databases-keys-constraints",
           "difficulty": "beginner",
-          "order": 1,
-          "prerequisites": [],
+          "order": 3,
+          "prerequisites": [
+            "sql-query-fundamentals"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "database-transactions-isolation",
+          "title": "Database Transactions and Isolation: ACID, Locks, and Concurrency",
+          "lessonId": "database-transactions-isolation",
+          "difficulty": "intermediate",
+          "order": 3,
+          "prerequisites": [
+            "relational-databases-keys-constraints"
+          ],
           "status": "published"
         },
         {
@@ -30,7 +52,7 @@
           "title": "SQL Joins: INNER, LEFT, RIGHT, and FULL OUTER JOIN",
           "lessonId": "sql-joins-inner-left-right-full",
           "difficulty": "beginner",
-          "order": 2,
+          "order": 4,
           "prerequisites": [
             "relational-databases-keys-constraints"
           ],
@@ -41,7 +63,7 @@
           "title": "Aggregations, GROUP BY, HAVING, Subqueries, and CTEs",
           "lessonId": "sql-aggregation-group-by-having-ctes",
           "difficulty": "intermediate",
-          "order": 3,
+          "order": 5,
           "prerequisites": [
             "sql-joins"
           ],
@@ -52,7 +74,7 @@
           "title": "NULL Semantics, Three-Valued Logic, and Common SQL Pitfalls",
           "lessonId": "sql-null-three-valued-logic",
           "difficulty": "intermediate",
-          "order": 4,
+          "order": 6,
           "prerequisites": [
             "sql-aggregation-group-by-having-ctes"
           ],
@@ -63,7 +85,7 @@
           "title": "Database Schema Design, Normalization (1NF–3NF), and Denormalization",
           "lessonId": "database-schema-design-normalization",
           "difficulty": "intermediate",
-          "order": 5,
+          "order": 7,
           "prerequisites": [
             "relational-databases-keys-constraints"
           ],
@@ -74,7 +96,7 @@
           "title": "Advanced SQL: Window Functions, Ranking, Set Operations, and Latest-Row-per-Group Queries",
           "lessonId": "advanced-sql-window-functions-set-operations",
           "difficulty": "intermediate",
-          "order": 6,
+          "order": 8,
           "prerequisites": [
             "sql-aggregation-group-by-having-ctes",
             "sql-null-semantics"
@@ -86,7 +108,7 @@
           "title": "Database Index Fundamentals",
           "lessonId": "database-index-fundamentals",
           "difficulty": "beginner",
-          "order": 7,
+          "order": 9,
           "prerequisites": [
             "advanced-sql-window-functions-set-operations"
           ],
@@ -97,7 +119,7 @@
           "title": "B-Trees: Structure, Traversal, Splits, and Balanced Search",
           "lessonId": "database-btree-structure-traversal-splits",
           "difficulty": "intermediate",
-          "order": 8,
+          "order": 10,
           "prerequisites": [
             "index-fundamentals"
           ],
@@ -108,7 +130,7 @@
           "title": "Clustered vs. Non-Clustered Indexes and Heap Tables",
           "lessonId": "database-clustered-vs-nonclustered-indexes",
           "difficulty": "intermediate",
-          "order": 9,
+          "order": 11,
           "prerequisites": [
             "index-design-performance"
           ],
@@ -119,7 +141,7 @@
           "title": "Composite Indexes: Column Order, Leftmost Prefix, and Covering Indexes",
           "lessonId": "database-composite-indexes-column-order-leftmost-prefix",
           "difficulty": "intermediate",
-          "order": 10,
+          "order": 12,
           "prerequisites": [
             "database-clustered-vs-nonclustered-indexes"
           ],
@@ -130,7 +152,7 @@
           "title": "PostgreSQL Index Types: B-tree, GIN, GiST, BRIN, Partial, and Expression Indexes",
           "lessonId": "database-postgresql-index-types",
           "difficulty": "intermediate",
-          "order": 11,
+          "order": 13,
           "prerequisites": [
             "database-composite-indexes-column-order-leftmost-prefix"
           ],
@@ -141,7 +163,7 @@
           "title": "Query Plan Analysis: EXPLAIN ANALYZE, Join Algorithms, Sorts, and Memory Spills",
           "lessonId": "database-query-plan-analysis-explain-analyze-joins-sorts-spills",
           "difficulty": "advanced",
-          "order": 12,
+          "order": 14,
           "prerequisites": [
             "database-postgresql-index-types"
           ],
@@ -152,7 +174,7 @@
           "title": "Index Selection, Selectivity, Sequential Scans, and When Indexes Hurt",
           "lessonId": "database-index-selection-selectivity-sequential-scans-index-costs",
           "difficulty": "intermediate",
-          "order": 13,
+          "order": 15,
           "prerequisites": [
             "database-query-plan-analysis-explain-analyze-joins-sorts-spills"
           ],
@@ -163,7 +185,7 @@
           "title": "Advanced Database Internals",
           "lessonId": "advanced-database-internals",
           "difficulty": "advanced",
-          "order": 14,
+          "order": 16,
           "prerequisites": [
             "database-index-selection-selectivity-sequential-scans-index-costs"
           ],
@@ -174,7 +196,7 @@
           "title": "Redis and Caching Architecture",
           "lessonId": "redis-and-caching",
           "difficulty": "intermediate",
-          "order": 15,
+          "order": 17,
           "prerequisites": [
             "index-fundamentals"
           ],
@@ -185,7 +207,7 @@
           "title": "PostgreSQL vs. MongoDB Trade-offs",
           "lessonId": "postgresql-vs-mongodb",
           "difficulty": "intermediate",
-          "order": 16,
+          "order": 18,
           "prerequisites": [
             "index-fundamentals"
           ],
@@ -196,7 +218,7 @@
           "title": "Scaling and Reliability",
           "lessonId": "scaling-and-reliability",
           "difficulty": "advanced",
-          "order": 17,
+          "order": 19,
           "prerequisites": [
             "advanced-database-internals",
             "redis-and-caching"
