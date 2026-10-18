@@ -6,13 +6,14 @@
   "title": "Database Scaling and Reliability",
   "description": "Database Scaling and Reliability. Interview-first coverage of bottleneck diagnosis, replication, partitioning, backpressure, and recovery.",
   "difficulty": "advanced",
-  "estimatedMinutes": 50,
+  "estimatedMinutes": 55,
   "learningObjectives": [
     "Distinguish vertical scaling, read replicas, partitioning, and sharding by the bottleneck they address.",
     "Explain replication lag, failover, consistency, RPO, and RTO.",
     "Design connection pooling, backpressure, timeouts, and retries to protect a database.",
     "Choose partition and shard keys that avoid hotspots and preserve queryability.",
-    "Plan safe schema migrations and validate recovery with SLOs."
+    "Plan safe schema migrations and validate recovery with SLOs.",
+    "Explain database scaling and reliability using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -274,6 +275,68 @@
             "Switch reads only after the new field is populated; remove the old field in a later release after rollback is no longer needed."
           ],
           "outcome": "Expand-and-contract keeps each deployment compatible with the schema during rollout. A migration is not safe merely because the DDL succeeds."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — Database Scaling and Reliability. Interview-first coverage of bottleneck diagnosis, replication, partitioning, backpressure, and recovery.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. Before adding servers, find the bottleneck. If a query does too much work, improving it may be cheaper than buying more hardware. Read replicas can serve suitable read traffic, but writes still go to the primary and a replica may be a little behind."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — When a database slows down, first find what it is waiting on. More CPU helps CPU pressure, a better query helps unnecessary work, and a read replica helps only reads that can tolerate its lag. Reliability also means knowing how much data could be lost, how quickly service must return, and proving those targets with recovery drills. Make assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "Scale the measured bottleneck",
+              "description": "Before adding servers, find the bottleneck. If a query does too much work, improving it may be cheaper than buying more hardware. Read replicas can serve suitable read traffic, but writes still go to the primary and a replica may be a little behind."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "Replication, failover, and consistency",
+              "description": "A read replica may take time to receive the latest write. If a user saves a profile and immediately reads old data from that replica, the replica may not have caught up; send that read to the primary or wait until it does. When planning recovery, define the recovery point objective (RPO: how much recent data loss is acceptable) and recovery time objective (RTO: how long service may take to return). Failover also needs a safe way to promote the new primary, reconnect clients, and prevent two nodes from accepting conflicting writes."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "Partitioning versus sharding",
+              "description": "Partitioning splits a large table into smaller pieces inside one database, often by date so old data is easier to manage and queries can skip irrelevant partitions. Sharding distributes rows across separate database nodes. Sharding adds routing and rebalancing work, so the shard key should fit both data distribution and the queries the app runs."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Connection pools, backpressure, and retries",
+              "description": "Every database connection uses resources. If 20 application instances each open 50 connections, they can create 1,000 connections before workers or admin tools are counted. Set a total budget, limit queues, and use timeouts. Retries should stop after a bounded number of attempts and use backoff so an outage doesn't create even more traffic. For latency, p99 means 99% of requests finish within that time; the slowest 1% take longer."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply Database Scaling and Reliability to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "More replicas or connections do not fix every bottleneck; first distinguish CPU, I/O, locks, pool waits, and query work.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, resource cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "More replicas or connections do not fix every bottleneck; first distinguish CPU, I/O, locks, pool waits, and query work."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — CPU is low but p99 latency is high and many sessions wait on one inventory row. What should be investigated first?",
+          "answer": "Lock waits indicate contention; more concurrent sessions can make it worse.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
     }
