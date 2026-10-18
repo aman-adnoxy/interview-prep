@@ -6,12 +6,13 @@
   "title": "PostgreSQL Index Types: B-tree, GIN, GiST, BRIN, Partial, and Expression Indexes",
   "description": "PostgreSQL Index Types: B-tree, GIN, GiST, BRIN, Partial, and Expression Indexes. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.",
   "difficulty": "intermediate",
-  "estimatedMinutes": 40,
+  "estimatedMinutes": 45,
   "learningObjectives": [
     "Match PostgreSQL index families to operators and data shape.",
     "Explain GIN, GiST, and BRIN trade-offs.",
     "Use partial and expression indexes when predicates match.",
-    "Recognize operator-class requirements."
+    "Recognize operator-class requirements.",
+    "Explain postgresql index types: b-tree, gin, gist, brin, partial, and expression indexes using the six-layer interview framework."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -243,6 +244,68 @@
             "Define a consistent normalization and uniqueness policy if differently cased emails should count as the same address."
           ],
           "outcome": "Expression indexes help when the application consistently queries through that expression; they also add write cost."
+        }
+      ]
+    },
+    {
+      "id": "interview-synthesis-six-layers",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — PostgreSQL Index Types: B-tree, GIN, GiST, BRIN, Partial, and Expression Indexes. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. B-tree is the general-purpose starting point because it supports equality, range conditions, and ordered results. Hash is narrower: it supports equality lookups."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — Different indexes are like different lookup tools. A B-tree is a good everyday choice for exact values, ranges, and sorting. GIN is useful when searching inside arrays or JSON documents. BRIN summarizes large runs of nearby table pages. Pick the tool that supports the question your query is asking. Make assumptions explicit."
+        },
+        {
+          "type": "steps",
+          "title": "3. Internal mechanism: trace the sequence",
+          "steps": [
+            {
+              "id": "mechanism-step-1",
+              "title": "B-tree and hash",
+              "description": "B-tree is the general-purpose starting point because it supports equality, range conditions, and ordered results. Hash is narrower: it supports equality lookups."
+            },
+            {
+              "id": "mechanism-step-2",
+              "title": "GIN inverted indexes",
+              "description": "GIN is an inverted index: it maps each component to the rows that contain that component. This suits searches inside composite values such as arrays and JSONB."
+            },
+            {
+              "id": "mechanism-step-3",
+              "title": "GiST and BRIN",
+              "description": "GiST supports several operator families, including spatial and range searches. BRIN stores summaries for groups of nearby table pages and works best when physical order correlates with the searched value."
+            },
+            {
+              "id": "mechanism-step-4",
+              "title": "Partial indexes",
+              "description": "A partial index contains only rows that satisfy a condition, so it can be smaller when queries repeatedly target a stable subset."
+            }
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "4. Trade-offs and scale — Apply PostgreSQL Index Types: B-tree, GIN, GiST, BRIN, Partial, and Expression Indexes to a realistic workload. What changes as data volume, concurrency, or failure rate grows?",
+          "reasoning": [
+            "Index type follows operators and data shape, not column labels.",
+            "Use quantitative estimates only with units, assumptions, and caveats; avoid universal thresholds.",
+            "Compare correctness, performance, resource cost, operational complexity, and failure behavior."
+          ],
+          "outcome": "Choose based on the workload and invariants, then validate with representative measurements and edge cases."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "5. Anti-pattern to avoid",
+          "content": "Index type follows operators and data shape, not column labels."
+        },
+        {
+          "type": "checkpoint",
+          "prompt": "6. Interview probe — Which is the default starting point for scalar equality, range, and ordered scans?",
+          "answer": "B-tree supports equality, range, and compatible ordering.",
+          "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
     }
