@@ -11,8 +11,7 @@
     "Explain MVCC snapshots and why updates create new row versions in PostgreSQL.",
     "Diagnose vacuum pressure, dead tuples, bloat, and transaction-ID wraparound risk.",
     "Trace how WAL, checkpoints, and crash recovery support durability.",
-    "Reason about locks, blocking, deadlocks, and transaction isolation.",
-    "Explain advanced database internals using the six-layer interview framework."
+    "Reason about locks, blocking, deadlocks, and transaction isolation."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -291,11 +290,11 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — Advanced Database Internals. Interview-first coverage of mechanisms, prediction, diagnosis, and trade-offs.. Explain the practical problem, failure mode, or engineering cost that makes the topic important. PostgreSQL uses multi-version concurrency control (MVCC): when a transaction updates a row, it usually creates a new version rather than overwriting the old one immediately. A query sees the version allowed by its snapshot. This lets readers and writers work at the same time, but old versions cannot be cleaned up while an active transaction might still need them."
+          "text": "1. Problem and motivation — A PostgreSQL service develops slow writes and rising table size even though request volume has not changed much. The cause may be old row versions, locks, storage I/O, or query plans."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — A database has to let many people read and change data at once, recover after a crash, and clean up old data safely. PostgreSQL tracks row versions, records changes for recovery, and uses locks to coordinate conflicting work. Many production problems happen when a long transaction or busy workload stops these systems from keeping up. Make assumptions explicit."
+          "text": "2. Definition and design choice — MVCC controls which row versions a transaction can see; VACUUM reclaims obsolete versions; WAL supports crash recovery; locks coordinate conflicting work."
         },
         {
           "type": "steps",
@@ -325,13 +324,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A production PostgreSQL service slows down after data volume and concurrency grow. Explain how to investigate database internals before changing configuration.",
+          "problem": "A transaction stays open for 45 minutes while another workload updates 300,000 rows. Dead tuples rise and VACUUM cannot remove versions the old snapshot might still need.",
           "reasoning": [
-            "Start with the observed symptom and query plans; use EXPLAIN (ANALYZE, BUFFERS) where safe to compare estimated and actual rows, buffer hits, and reads.",
-            "Check whether the bottleneck is CPU, storage I/O, memory pressure, lock contention, vacuum debt, or an unsuitable query plan instead of assuming one cause.",
-            "Compare correctness, performance, resource cost, operational complexity, and failure behavior. Use measurements with units and workload context; avoid universal thresholds."
+            "Inspect long-running and idle-in-transaction sessions, then check dead-tuple and vacuum statistics.",
+            "Ordinary VACUUM generally makes space reusable; VACUUM FULL rewrites the table and takes a stronger lock.",
+            "Check WAL volume, checkpoint activity, blocking chains, and query-plan estimates before changing settings."
           ],
-          "outcome": "Change one evidence-backed factor at a time, then validate the result against a representative workload and correctness requirements."
+          "outcome": "Resolve the transaction or workload preventing cleanup, then verify dead-tuple trends, query latency, and disk growth over a representative interval."
         },
         {
           "type": "callout",
