@@ -271,13 +271,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "For `WHERE tenant_id = 7 ORDER BY created_at DESC LIMIT 20`, compare indexes on `(created_at, tenant_id)` and `(tenant_id, created_at DESC)`.",
+          "problem": "For `WHERE tenant_id = 7 ORDER BY created_at DESC LIMIT 20`, compare `(created_at, tenant_id)` and `(tenant_id, created_at DESC)`.",
           "reasoning": [
-            "The tenant-first index can seek to tenant 7 and read the tenant's rows in timestamp order, often stopping after 20 rows.",
+            "The tenant-first index can seek to tenant 7 and read its rows in timestamp order, often stopping after 20 rows.",
             "The timestamp-first index is ordered globally by time, not by tenant. It may inspect many rows belonging to other tenants before finding 20 matches.",
             "INCLUDE can store projected columns in the index, but increases index size and write work and does not guarantee an index-only scan."
           ],
-          "outcome": "Design around the actual predicates, ordering, LIMIT, and projected columns, then check actual rows and buffers in the plan."
+          "outcome": "Design around actual predicates, ordering, LIMIT, and projected columns, then check actual rows and buffers in the plan."
         },
         {
           "type": "callout",
