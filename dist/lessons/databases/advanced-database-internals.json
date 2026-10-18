@@ -290,11 +290,11 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A PostgreSQL service develops slow writes and rising table size even though request volume has not changed much. The cause may be old row versions, locks, storage I/O, or query plans."
+          "text": "1. Problem and motivation — A service gets slower after a large update even though request volume is steady. Old row versions, a long transaction, lock waits, or WAL pressure may explain the change; each needs different evidence."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — MVCC controls which row versions a transaction can see; VACUUM reclaims obsolete versions; WAL supports crash recovery; locks coordinate conflicting work."
+          "text": "2. Definition and design choice — PostgreSQL uses MVCC so transactions can see a consistent version of rows while other transactions write. Updates create new row versions; VACUUM cleans up versions that are no longer visible to any active snapshot, and WAL records changes for recovery."
         },
         {
           "type": "steps",
@@ -324,13 +324,13 @@
         },
         {
           "type": "worked_example",
-          "problem": "A transaction stays open for 45 minutes while another workload updates 300,000 rows. Dead tuples rise and VACUUM cannot remove versions the old snapshot might still need.",
+          "problem": "A transaction has been open for 45 minutes while another job updates 300,000 rows. Dead tuples rise and VACUUM cannot reclaim some versions.",
           "reasoning": [
-            "Inspect long-running and idle-in-transaction sessions, then check dead-tuple and vacuum statistics.",
-            "Ordinary VACUUM generally makes space reusable; VACUUM FULL rewrites the table and takes a stronger lock.",
-            "Check WAL volume, checkpoint activity, blocking chains, and query-plan estimates before changing settings."
+            "Check pg_stat_activity for long-running and idle-in-transaction sessions, then compare dead-tuple and vacuum statistics. An old snapshot can prevent cleanup.",
+            "Ordinary VACUUM usually makes space reusable inside the table; it does not promise to shrink the file on disk. VACUUM FULL rewrites the table and takes a stronger lock.",
+            "Check WAL volume, checkpoint activity, lock waits, and the earliest plan-estimate mismatch before changing memory or vacuum settings."
           ],
-          "outcome": "Resolve the transaction or workload preventing cleanup, then verify dead-tuple trends, query latency, and disk growth over a representative interval."
+          "outcome": "Remove the cause of the old snapshot or blocking, then verify dead-tuple trends, query latency, and disk growth over time; do not judge success from one instantaneous size reading."
         },
         {
           "type": "callout",
