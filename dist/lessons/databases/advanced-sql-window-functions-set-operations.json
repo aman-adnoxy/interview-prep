@@ -399,7 +399,7 @@
           "problem": "Customer 7 has orders (id 11, 10:00, ₹100), (id 12, 10:00, ₹250), and (id 13, 11:00, ₹300). Return each order, a running total, and exactly one latest order.",
           "reasoning": [
             "SUM(amount) OVER (PARTITION BY customer_id ORDER BY created_at, order_id ROWS UNBOUNDED PRECEDING) returns running totals ₹100, ₹350, and ₹650.",
-            "ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at DESC, order_id DESC) picks id 13 as the latest row. Without a unique tie-breaker, tied rows can be ordered unpredictably.",
+            "ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at DESC, order_id DESC) picks id 13 as latest. Without a unique tie-breaker, tied rows can be ordered unpredictably.",
             "RANK and DENSE_RANK intentionally preserve ties; UNION removes duplicate complete rows, while UNION ALL preserves them."
           ],
           "outcome": "State the output grain, window partition, ordering, frame, tie policy, and duplicate policy before writing the query."
