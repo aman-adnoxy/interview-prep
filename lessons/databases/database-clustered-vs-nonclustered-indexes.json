@@ -74,13 +74,13 @@
         },
         {
           "type": "worked_example",
-          "text": "A query finds 500 product IDs through an index and then needs each product's description.",
           "reasoning": [
             "The index can identify matching heap row locations (TIDs).",
             "If `description` is not stored in the index, PostgreSQL visits the heap to fetch it.",
             "If those rows are scattered across many heap pages, the fetches can dominate the cost even though the index lookup itself is fast."
           ],
-          "outcome": "An index can make finding rows cheap while fetching the requested columns remains expensive. That is one reason index-only scans and physical locality matter."
+          "outcome": "An index can make finding rows cheap while fetching the requested columns remains expensive. That is one reason index-only scans and physical locality matter.",
+          "problem": "A query finds 500 product IDs through an index and then needs each product's description."
         }
       ]
     },
@@ -233,7 +233,7 @@
           "type": "callout",
           "kind": "pitfall",
           "title": "CLUSTER is not permanent ordering",
-          "text": "PostgreSQL's CLUSTER rewrites a table in the order of an index at the time it runs. Later inserts and updates do not guarantee that the table stays in that order. Treat it as a maintenance operation with locking, rewrite, and disk-space implications—not as a permanent clustered-index property."
+          "content": "PostgreSQL's CLUSTER rewrites a table in the order of an index at the time it runs. Later inserts and updates do not guarantee that the table stays in that order. Treat it as a maintenance operation with locking, rewrite, and disk-space implications—not as a permanent clustered-index property."
         }
       ]
     }
