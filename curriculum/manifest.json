@@ -167,7 +167,7 @@
           "prerequisites": [
             "database-index-selection-selectivity-sequential-scans-index-costs"
           ],
-          "status": "upcoming"
+          "status": "published"
         },
         {
           "id": "redis-and-caching",

@@ -150,8 +150,9 @@
           "title": "Advanced Database Internals",
           "difficulty": "advanced",
           "order": 14,
-          "status": "upcoming",
+          "status": "published",
           "lessonPath": "/lessons/databases/advanced-database-internals.json",
+          "questionCount": 12,
           "lessonId": "advanced-database-internals"
         },
         {
