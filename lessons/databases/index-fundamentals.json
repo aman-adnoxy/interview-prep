@@ -235,13 +235,115 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "A sequential scan reads table pages and checks rows. An index scan looks up matching keys and may fetch matching table rows. An index-only scan can avoid many table visits when the index contains the needed values and PostgreSQL can confirm row visibility."
+          "text": "The key idea is simple: an index scan uses an index to find matching rows; a sequential scan reads through the table's pages and checks which rows match. Neither is always better. PostgreSQL chooses based on how much data it expects to read and how expensive each approach will be."
+        },
+        {
+          "type": "paragraph",
+          "text": "## 1. Index scan\n\nSuppose a users table has one million rows and an index on email:"
         },
         {
           "type": "code",
           "language": "sql",
-          "title": "A query that may be covered by an index",
-          "source": "CREATE INDEX idx_users_email_name ON users (email) INCLUDE (name);\n\nSELECT name\nFROM users\nWHERE email = 'sam@example.com';"
+          "title": "Create an email index",
+          "source": "CREATE INDEX idx_users_email\nON users(email);"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Find one user",
+          "source": "SELECT *\nFROM users\nWHERE email = 'aman@example.com';"
+        },
+        {
+          "type": "steps",
+          "title": "What happens during an index scan",
+          "steps": [
+            {
+              "id": "search-index",
+              "title": "Search the index",
+              "description": "PostgreSQL navigates the index to find the email key instead of checking every user row."
+            },
+            {
+              "id": "locate-row",
+              "title": "Locate the table row",
+              "description": "The index entry identifies where the matching row can be found in the table."
+            },
+            {
+              "id": "fetch-row",
+              "title": "Fetch the requested data",
+              "description": "If the index does not contain every column the query needs, PostgreSQL visits the table to read the rest of the row."
+            }
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "The advantage is that PostgreSQL may avoid reading most of the table. For a B-tree index, finding a key takes roughly logarithmic navigation through the index, followed by any necessary row fetches. Actual performance also depends on page reads, caching, and how many rows match."
+        },
+        {
+          "type": "paragraph",
+          "text": "## 2. Sequential scan\n\nNow consider a query that returns most of the users:"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Find active users",
+          "source": "SELECT *\nFROM users\nWHERE is_active = TRUE;"
+        },
+        {
+          "type": "paragraph",
+          "text": "Imagine 900,000 of the one million users are active. An index on is_active could identify those rows, but PostgreSQL might then need to fetch a very large number of table rows. Reading the table's pages in sequence can be cheaper than jumping between many separate row locations."
+        },
+        {
+          "type": "paragraph",
+          "text": "A sequential scan does not mean reading each row individually from disk. PostgreSQL reads table pages and checks the rows in those pages. Some pages may already be cached in memory."
+        },
+        {
+          "type": "table",
+          "title": "When each approach tends to make sense",
+          "columns": [
+            "Situation",
+            "Likely choice",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Find one user by unique email",
+              "Index scan",
+              "Very few rows match."
+            ],
+            [
+              "Find 20 orders out of 2 million",
+              "Index scan",
+              "Only a small subset of the table is needed."
+            ],
+            [
+              "Return 90% of a table",
+              "Sequential scan may win",
+              "Reading pages in sequence can cost less than fetching most rows through an index."
+            ],
+            [
+              "Read every row for a report",
+              "Sequential scan may win",
+              "The query needs nearly all the data anyway."
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "These are common patterns, not guarantees. The planner also considers table size, statistics, available indexes, cache state, and the query itself."
+        },
+        {
+          "type": "paragraph",
+          "text": "## 3. Check the actual plan\n\nIn PostgreSQL, inspect a representative query with EXPLAIN ANALYZE:"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Inspect an email lookup",
+          "source": "EXPLAIN ANALYZE\nSELECT *\nFROM users\nWHERE email = 'aman@example.com';"
+        },
+        {
+          "type": "paragraph",
+          "text": "Look for these plan nodes:\n\n- `Index Scan` — uses an index and may fetch rows from the table.\n- `Seq Scan` — reads table pages sequentially and checks rows.\n- `Index Only Scan` — can return data from the index without fetching the table for every row, when the index contains the requested values and PostgreSQL's visibility information permits it.\n\n`EXPLAIN ANALYZE` actually executes the query. Be careful with expensive queries and statements that modify data; use a safe test environment or transaction when appropriate."
         }
       ]
     },
