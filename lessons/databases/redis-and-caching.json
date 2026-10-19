@@ -347,50 +347,6 @@
       "hint": "Think of the cache as a shortcut, not the source."
     },
     {
-      "id": "ttl-freshness",
-      "type": "single_select",
-      "prompt": "A value has a 60-second TTL. What does this tell you?",
-      "options": [
-        {
-          "id": "a",
-          "text": "The value is always perfectly fresh"
-        },
-        {
-          "id": "b",
-          "text": "The entry is eligible to expire after its TTL, but stale reads can occur before then"
-        },
-        {
-          "id": "c",
-          "text": "The database value cannot change for 60 seconds"
-        }
-      ],
-      "correctOptionId": "b",
-      "explanation": "TTL limits how long an entry lives; it does not guarantee immediate propagation of updates.",
-      "hint": "TTL is not the same as invalidation."
-    },
-    {
-      "id": "stampede",
-      "type": "single_select",
-      "prompt": "What is a cache stampede?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Many requests miss the same expired key and overload the source"
-        },
-        {
-          "id": "b",
-          "text": "A database backup"
-        },
-        {
-          "id": "c",
-          "text": "A Redis key that is always fresh"
-        }
-      ],
-      "correctOptionId": "a",
-      "explanation": "Synchronized misses can trigger a burst of identical source queries.",
-      "hint": "Think about what happens when a popular key expires."
-    },
-    {
       "id": "cache-source",
       "type": "single_select",
       "prompt": "Which data should generally remain the source of truth in a cache-aside design?",
@@ -496,56 +452,6 @@
       "explanation": "Cache-aside treats cache contents as disposable by default; the database or designated source remains authoritative."
     },
     {
-      "id": "ttl-freshness",
-      "type": "single_select",
-      "prompt": "A cache TTL is 60 seconds. What does that guarantee?",
-      "options": [
-        {
-          "id": "a",
-          "text": "The entry cannot be stale for more than 60 seconds under any failure"
-        },
-        {
-          "id": "b",
-          "text": "The key is eligible to expire after its TTL; actual freshness also depends on invalidation, refresh, and failure behavior"
-        },
-        {
-          "id": "c",
-          "text": "The database write and cache update become atomic"
-        },
-        {
-          "id": "d",
-          "text": "The key will always exist for exactly 60 seconds"
-        }
-      ],
-      "correctOptionId": "b",
-      "explanation": "TTL bounds normal residence time but does not make an asynchronous cache update atomic or guarantee freshness during failures."
-    },
-    {
-      "id": "stampede",
-      "type": "single_select",
-      "prompt": "An expired popular key receives 800 requests per second. What reduces a cache stampede?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Let all requests query the database independently"
-        },
-        {
-          "id": "b",
-          "text": "Coordinate refreshes with single-flight/short lock, jittered TTLs, or stale-while-revalidate where acceptable"
-        },
-        {
-          "id": "c",
-          "text": "Increase the database connection limit without a bound"
-        },
-        {
-          "id": "d",
-          "text": "Cache database errors as empty values indefinitely"
-        }
-      ],
-      "correctOptionId": "b",
-      "explanation": "Coordinated refresh, TTL jitter, and carefully permitted stale serving reduce synchronized misses and protect the source."
-    },
-    {
       "id": "redis-eviction",
       "type": "single_select",
       "prompt": "Redis reaches maxmemory and evicts a cached product key. What should the application do?",
@@ -569,6 +475,56 @@
       ],
       "correctOptionId": "a",
       "explanation": "Eviction is a normal cache operating condition; callers must tolerate misses and protect the source against refill surges."
+    },
+    {
+      "id": "redis-unavailable",
+      "type": "single_select",
+      "prompt": "Redis is unavailable during a traffic spike. Which fallback is safest?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Let every request immediately open a new database connection with no bound"
+        },
+        {
+          "id": "b",
+          "text": "Use a bounded source fallback with timeouts, concurrency limits/backpressure, and a clear degraded response when saturated"
+        },
+        {
+          "id": "c",
+          "text": "Treat all cache misses as deleted data"
+        },
+        {
+          "id": "d",
+          "text": "Retry Redis forever in the request path"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "A cache outage can turn into a database outage if every request bypasses cache without limits. Protect the source with deadlines, bounded concurrency, and load shedding when needed."
+    },
+    {
+      "id": "cache-fallback-overload",
+      "type": "single_select",
+      "prompt": "Why might returning a short-lived stale value be safer than refreshing a hot key for every request?",
+      "options": [
+        {
+          "id": "a",
+          "text": "It can reduce synchronized refresh work when the business permits bounded staleness"
+        },
+        {
+          "id": "b",
+          "text": "A stale value is always correct"
+        },
+        {
+          "id": "c",
+          "text": "It removes the need for a source of truth"
+        },
+        {
+          "id": "d",
+          "text": "It guarantees write atomicity across Redis and PostgreSQL"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Stale-while-revalidate is a business-dependent option: it lowers refresh pressure when bounded staleness is acceptable, but must not be used for data where stale decisions are unsafe."
     }
   ],
   "interviewScenarios": [
