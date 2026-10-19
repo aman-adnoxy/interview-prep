@@ -60,7 +60,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Expected output: 0 — no patient ID appears in both partitions. This assumes pandas-like X/y and indexable patient_ids."
+          "text": "Expected output: `0`. No patient identifier appears in both the training and test groups. The example assumes `X` is a pandas DataFrame with a `patient_id` column and `y` is aligned row-for-row with it."
         }
       ]
     },
