@@ -600,35 +600,6 @@
       "hint": "A wait cycle cannot resolve itself."
     },
     {
-      "id": "acid-durability",
-      "type": "single_select",
-      "prompt": "Does ACID consistency mean the database automatically knows every business rule?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Yes"
-        },
-        {
-          "id": "b",
-          "text": "No; constraints and correct transaction logic define the rules"
-        },
-        {
-          "id": "c",
-          "text": "Only when there is one connection"
-        }
-      ],
-      "correctOptionId": "b",
-      "explanation": "ACID consistency means transactions preserve defined invariants; the schema and application still need to encode those invariants.",
-      "hint": "Who defines valid business states?"
-    },
-    {
-      "id": "locks-protect-rows",
-      "type": "true_false",
-      "prompt": "A row-level lock on one inventory row automatically protects a business rule involving every row in the table.",
-      "correctAnswer": false,
-      "explanation": "A row lock coordinates access to the locked row. Rules spanning multiple rows may require constraints, a broader locking strategy, or an appropriate isolation level."
-    },
-    {
       "id": "rollback-email",
       "type": "true_false",
       "prompt": "Rolling back a database transaction can undo an email already sent to a customer.",
