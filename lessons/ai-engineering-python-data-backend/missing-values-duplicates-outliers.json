@@ -30,7 +30,11 @@
           "type": "code",
           "language": "python",
           "title": "Measure missingness before choosing a rule",
-          "source": "missing_rate = df.isna().mean().sort_values(ascending=False)\nprint(missing_rate)"
+          "source": "import pandas as pd\n\ndf = pd.DataFrame({\n    \"age\": [25, None, 40, 30, 35],\n    \"amount\": [100, 200, None, 300, None],\n    \"note\": [None, \"paid\", \"paid\", \"paid\", \"paid\"],\n})\nmissing_rate = df.isna().mean().sort_values(ascending=False)\nprint(missing_rate.to_dict())"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected values in the dictionary are `amount: 0.4`, `age: 0.2`, and `note: 0.2` (the ordering of tied values may vary). There are five rows: `amount` is missing twice, while `age` and `note` are each missing once. `isna()` marks missing cells, `mean()` treats True as 1 and False as 0, so the column mean is the missing fraction. This is a small, reproducible example; for real data, group missingness by source, date, tenant, and target label."
         },
         {
           "type": "paragraph",
@@ -81,7 +85,11 @@
           "type": "code",
           "language": "python",
           "title": "Check duplicate keys before dropping anything",
-          "source": "duplicate_mask = df.duplicated(subset=[\"provider_event_id\"], keep=False)\nduplicates = df.loc[duplicate_mask].sort_values(\"provider_event_id\")\nprint(duplicates.head())"
+          "source": "import pandas as pd\n\ndf = pd.DataFrame({\n    \"provider_event_id\": [\"evt-1\", \"evt-2\", \"evt-1\"],\n    \"payload\": [\"approved\", \"declined\", \"approved\"],\n})\nduplicate_mask = df.duplicated(subset=[\"provider_event_id\"], keep=False)\nduplicates = df.loc[duplicate_mask].sort_values(\"provider_event_id\")\nprint(duplicates.to_string(index=False))"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output has both rows for `evt-1`; `keep=False` marks every member of a duplicate-key group, not just the later occurrence. Here the payloads agree, which is consistent with redelivery but does not prove it. If the same event ID had conflicting payloads, quarantine and investigate rather than choosing a winner silently."
         },
         {
           "type": "paragraph",
@@ -107,7 +115,11 @@
           "type": "code",
           "language": "python",
           "title": "Use IQR as a screening signal, not an automatic deletion rule",
-          "source": "q1 = df[\"amount\"].quantile(0.25)\nq3 = df[\"amount\"].quantile(0.75)\niqr = q3 - q1\nflag = (df[\"amount\"] < q1 - 1.5 * iqr) | (df[\"amount\"] > q3 + 1.5 * iqr)\noutliers = df.loc[flag, [\"amount\"]]"
+          "source": "import pandas as pd\n\ndf = pd.DataFrame({\"amount\": [10, 12, 13, 12, 100]})\nq1 = df[\"amount\"].quantile(0.25)\nq3 = df[\"amount\"].quantile(0.75)\niqr = q3 - q1\nflag = (df[\"amount\"] < q1 - 1.5 * iqr) | (df[\"amount\"] > q3 + 1.5 * iqr)\noutliers = df.loc[flag, [\"amount\"]]\nprint(f\"Q1={q1}, Q3={q3}, IQR={iqr}\")\nprint(outliers.to_string(index=False))"
+        },
+        {
+          "type": "paragraph",
+          "text": "For this sample, Q1=12, Q3=13, and IQR=1. The upper fence is `13 + 1.5×1 = 14.5`, so the example flags only `100`. The calculation identifies a statistical extreme, not a corrupt record; the value could still be a legitimate large transaction."
         },
         {
           "type": "paragraph",
@@ -137,7 +149,11 @@
           "type": "code",
           "language": "python",
           "title": "Fit on training rows; reuse on held-out rows",
-          "source": "from sklearn.impute import SimpleImputer\n\nimputer = SimpleImputer(strategy=\"median\")\nX_train_clean = imputer.fit_transform(X_train)\nX_test_clean = imputer.transform(X_test)"
+          "source": "import numpy as np\nfrom sklearn.impute import SimpleImputer\n\nX_train = np.array([[1.0], [np.nan], [5.0]])\nX_test = np.array([[np.nan], [9.0]])\n\nimputer = SimpleImputer(strategy=\"median\")\nX_train_clean = imputer.fit_transform(X_train)\nX_test_clean = imputer.transform(X_test)\nprint(X_train_clean.ravel().tolist())\nprint(X_test_clean.ravel().tolist())"
+        },
+        {
+          "type": "paragraph",
+          "text": "Requires NumPy and scikit-learn. Expected output: `[1.0, 3.0, 5.0]` and `[3.0, 9.0]`. The training values 1 and 5 have median 3, which fills the training null. The held-out null is filled with that same learned median; the test value 9 is left untouched. The test set never participates in fitting."
         },
         {
           "type": "paragraph",
