@@ -115,11 +115,11 @@
           "type": "code",
           "language": "python",
           "title": "Use IQR as a screening signal, not an automatic deletion rule",
-          "source": "import pandas as pd\n\ndf = pd.DataFrame({\"amount\": [10, 12, 13, 12, 100]})\nq1 = df[\"amount\"].quantile(0.25)\nq3 = df[\"amount\"].quantile(0.75)\niqr = q3 - q1\nflag = (df[\"amount\"] < q1 - 1.5 * iqr) | (df[\"amount\"] > q3 + 1.5 * iqr)\noutliers = df.loc[flag, [\"amount\"]]\nprint(f\"Q1={q1}, Q3={q3}, IQR={iqr}\")\nprint(outliers.to_string(index=False))"
+          "source": "import pandas as pd\n\ndf = pd.DataFrame({\"amount\": [11, 12, 13, 12, 100]})\nq1 = df[\"amount\"].quantile(0.25)\nq3 = df[\"amount\"].quantile(0.75)\niqr = q3 - q1\nflag = (df[\"amount\"] < q1 - 1.5 * iqr) | (df[\"amount\"] > q3 + 1.5 * iqr)\noutliers = df.loc[flag, [\"amount\"]]\nprint(f\"Q1={q1}, Q3={q3}, IQR={iqr}\")\nprint(outliers.to_string(index=False))"
         },
         {
           "type": "paragraph",
-          "text": "For this sample, Q1=12, Q3=13, and IQR=1. The upper fence is `13 + 1.5×1 = 14.5`, so the example flags only `100`. The calculation identifies a statistical extreme, not a corrupt record; the value could still be a legitimate large transaction."
+          "text": "For this sample, Q1=12, Q3=13, and IQR=1. The lower fence is `12 - 1.5×1 = 10.5` and the upper fence is `13 + 1.5×1 = 14.5`, so only `100` is flagged; `11` is above the lower fence. The calculation identifies a statistical extreme, not a corrupt record; the value could still be a legitimate large transaction."
         },
         {
           "type": "paragraph",
