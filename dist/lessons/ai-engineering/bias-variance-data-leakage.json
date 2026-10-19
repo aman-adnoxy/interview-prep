@@ -1,0 +1,319 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "bias-variance-data-leakage",
+  "topicId": "ai-engineering",
+  "sectionId": "bias-variance-data-leakage",
+  "title": "Bias–Variance Trade-off and Data Leakage",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 35,
+  "learningObjectives": [
+    "Explain bias and variance as different generalization problems.",
+    "Recognize leakage paths and distinguish them from overfitting.",
+    "Design experiments that avoid contaminating evaluation."
+  ],
+  "mentalModel": {
+    "type": "paragraph",
+    "text": "Bias is error from a model that misses important structure. Variance is how much a fitted model changes when the training sample changes. Leakage is different: the model or evaluation gets information that would not legitimately be available."
+  },
+  "concepts": [
+    {
+      "id": "motivation",
+      "title": "Problem and motivation",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A model may look suspiciously strong offline or fail across regions. Before tuning model capacity, inspect the information boundary, split strategy, and data population."
+        },
+        {
+          "type": "paragraph",
+          "text": "Bias is error from a model that misses important structure. Variance is how much a fitted model changes when the training sample changes. Leakage is different: the model or evaluation gets information that would not legitimately be available."
+        }
+      ]
+    },
+    {
+      "id": "technical-deep-dive",
+      "title": "Technical deep dive and worked example",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "High bias often appears as poor training and validation performance. High variance often appears as a large train-validation gap or unstable results across samples. Leakage can come from future events, target-derived features, preprocessing on all rows, duplicate entities, or repeated test-driven tuning."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A loan-default model uses collections activity that begins only after a customer defaults.",
+          "reasoning": [
+            "The feature is predictive because it occurs after the outcome.",
+            "It is unavailable at the intended prediction time and makes offline performance misleading.",
+            "Remove it or rebuild it from information available at underwriting time.",
+            "Re-evaluate using a time-appropriate holdout."
+          ],
+          "outcome": "Fix invalid information flow before tuning model capacity."
+        },
+        {
+          "type": "code",
+          "language": "python",
+          "source": "prediction_time = \"loan approval timestamp\"\nfeature_allowed = event_timestamp <= prediction_time\n\n# Schematic: use only events available at the decision time.\nfeatures_at_decision = events[events[\"timestamp\"] <= prediction_time]",
+          "title": "Prediction-time feature boundary"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output: This is schematic pandas-style code. Real code should use timezone-aware timestamps and the actual decision timestamp for each record."
+        }
+      ]
+    },
+    {
+      "id": "tradeoffs-production",
+      "title": "Trade-offs and production behavior",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Cross-validation gives more stable estimates but costs additional training runs. Group/time splits may reduce sample size while improving realism. Small test sets produce wider uncertainty."
+        },
+        {
+          "type": "paragraph",
+          "text": "Production check: Check for feature leakage, distribution changes, label delay, and performance variation by region or customer group."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Anti-pattern to avoid",
+          "content": "Calling every performance gap variance; random splits for future predictions; choosing the best of many experiments on the same test set."
+        }
+      ]
+    },
+    {
+      "id": "six-layer-interview-synthesis",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — A model may look suspiciously strong offline or fail across regions. Before tuning model capacity, inspect the information boundary, split strategy, and data population."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — High bias often appears as poor training and validation performance. High variance often appears as a large train-validation gap or unstable results across samples. Leakage can come from future events, target-derived features, preprocessing on all rows, duplicate entities, or repeated test-driven tuning."
+        },
+        {
+          "type": "paragraph",
+          "text": "3. Internal mechanism — Use learning curves and repeated evaluation to inspect fit and sensitivity; audit feature timestamps, entity overlap, preprocessing, and human use of test results."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A loan-default model uses collections activity that begins only after a customer defaults.",
+          "reasoning": [
+            "The feature is predictive because it occurs after the outcome.",
+            "It is unavailable at the intended prediction time and makes offline performance misleading.",
+            "Remove it or rebuild it from information available at underwriting time.",
+            "Re-evaluate using a time-appropriate holdout."
+          ],
+          "outcome": "Fix invalid information flow before tuning model capacity."
+        },
+        {
+          "type": "paragraph",
+          "text": "4. Trade-offs and scale — Cross-validation gives more stable estimates but costs additional training runs. Group/time splits may reduce sample size while improving realism. Small test sets produce wider uncertainty."
+        },
+        {
+          "type": "paragraph",
+          "text": "5. Anti-patterns — Calling every performance gap variance; random splits for future predictions; choosing the best of many experiments on the same test set."
+        },
+        {
+          "type": "paragraph",
+          "text": "6. Interview probes — What information exists at decision time? Does performance vary by split? Is the gap systematic or sample-sensitive? How large is the difference relative to uncertainty?"
+        }
+      ]
+    }
+  ],
+  "tradeoffsAndPitfalls": [
+    {
+      "type": "callout",
+      "kind": "tip",
+      "title": "Engineering rule of thumb",
+      "content": "Fix invalid information flow before adjusting model complexity."
+    },
+    {
+      "type": "paragraph",
+      "text": "Cross-validation gives more stable estimates but costs additional training runs. Group/time splits may reduce sample size while improving realism. Small test sets produce wider uncertainty."
+    }
+  ],
+  "revisionSheet": [
+    {
+      "type": "paragraph",
+      "text": "Bias is error from a model that misses important structure. Variance is how much a fitted model changes when the training sample changes. Leakage is different: the model or evaluation gets information that would not legitimately be available."
+    },
+    {
+      "type": "paragraph",
+      "text": "High bias often appears as poor training and validation performance. High variance often appears as a large train-validation gap or unstable results across samples. Leakage can come from future events, target-derived features, preprocessing on all rows, duplicate entities, or repeated test-driven tuning."
+    },
+    {
+      "type": "paragraph",
+      "text": "Mechanism: Use learning curves and repeated evaluation to inspect fit and sensitivity; audit feature timestamps, entity overlap, preprocessing, and human use of test results."
+    },
+    {
+      "type": "paragraph",
+      "text": "Trade-off: Cross-validation gives more stable estimates but costs additional training runs. Group/time splits may reduce sample size while improving realism. Small test sets produce wider uncertainty."
+    },
+    {
+      "type": "paragraph",
+      "text": "Avoid: Calling every performance gap variance; random splits for future predictions; choosing the best of many experiments on the same test set."
+    },
+    {
+      "type": "paragraph",
+      "text": "Interview probes: What information exists at decision time? Does performance vary by split? Is the gap systematic or sample-sensitive? How large is the difference relative to uncertainty?"
+    }
+  ],
+  "questions": [
+    {
+      "id": "bias",
+      "type": "single_select",
+      "prompt": "A model consistently misses a nonlinear relationship because it is too simple. Which concept fits?",
+      "options": [
+        {
+          "id": "a",
+          "text": "High bias"
+        },
+        {
+          "id": "b",
+          "text": "High variance only"
+        },
+        {
+          "id": "c",
+          "text": "Prompt injection"
+        },
+        {
+          "id": "d",
+          "text": "Normalization"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A model that systematically misses the underlying relationship has high bias."
+    },
+    {
+      "id": "variance",
+      "type": "single_select",
+      "prompt": "A flexible model changes substantially across training samples. What does this suggest?",
+      "options": [
+        {
+          "id": "a",
+          "text": "High variance"
+        },
+        {
+          "id": "b",
+          "text": "No variance"
+        },
+        {
+          "id": "c",
+          "text": "Guaranteed calibration"
+        },
+        {
+          "id": "d",
+          "text": "A correct split"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "High sensitivity to the sampled data is the intuition behind variance."
+    },
+    {
+      "id": "leakage",
+      "type": "single_select",
+      "prompt": "A feature records an action that happens after a loan defaults. What is the main issue?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Only high bias"
+        },
+        {
+          "id": "b",
+          "text": "Temporal or target leakage"
+        },
+        {
+          "id": "c",
+          "text": "Only slow inference"
+        },
+        {
+          "id": "d",
+          "text": "Clustering"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The feature is not available at the intended prediction time."
+    },
+    {
+      "id": "tiny-difference",
+      "type": "single_select",
+      "prompt": "Two models differ by 0.2 percentage points on one small validation set. What is the best next step?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Declare the higher score universally better"
+        },
+        {
+          "id": "b",
+          "text": "Compare uncertainty and per-example errors under a fixed protocol"
+        },
+        {
+          "id": "c",
+          "text": "Tune on the test set until the gap grows"
+        },
+        {
+          "id": "d",
+          "text": "Ignore all other metrics"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Small differences may be sampling noise and require careful comparison."
+    },
+    {
+      "id": "leakage-regularization",
+      "type": "true_false",
+      "prompt": "Regularization alone fixes a feature that directly contains future target information.",
+      "correctAnswer": false,
+      "explanation": "Leakage requires fixing the information boundary; regularization cannot make invalid features legitimate."
+    },
+    {
+      "id": "bias-variance-exclusive",
+      "type": "true_false",
+      "prompt": "A model can only suffer from either bias or variance, never both.",
+      "correctAnswer": false,
+      "explanation": "Real systems can have both systematic limitations and sample sensitivity."
+    }
+  ],
+  "interviewScenarios": [
+    {
+      "id": "too-good-to-be-true",
+      "prompt": "A churn model reports 100% validation accuracy. What checks do you perform?",
+      "skillsTested": [
+        "leakage audit",
+        "evaluation design",
+        "data quality"
+      ],
+      "strongAnswerPoints": [
+        "Inspect target-derived or future features.",
+        "Check duplicates and entities crossing partitions.",
+        "Verify labels, timestamps, and preprocessing scope.",
+        "Compare with a simple baseline and realistic holdout."
+      ],
+      "pitfalls": [
+        "Assuming perfect accuracy means the problem is solved"
+      ],
+      "referenceAnswer": "I would treat perfect performance as a reason to audit target leakage, duplicates, label construction, split strategy, and preprocessing, then test on a time-appropriate holdout."
+    },
+    {
+      "id": "variance-vs-shift",
+      "prompt": "A model works well in one region but poorly in a new region. Is this necessarily high variance?",
+      "skillsTested": [
+        "distribution shift",
+        "diagnosis",
+        "generalization"
+      ],
+      "strongAnswerPoints": [
+        "Compare feature and label distributions by region.",
+        "Check collection and label differences.",
+        "Use region-held-out evaluation and separate shift from instability across training samples."
+      ],
+      "pitfalls": [
+        "Calling any subgroup failure high variance without evidence"
+      ],
+      "referenceAnswer": "Not necessarily. It may be distribution shift or data-quality differences. I would compare regions and evaluate with a region-held-out split; repeated runs help assess variance."
+    }
+  ]
+}
