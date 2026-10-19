@@ -56,6 +56,10 @@
           "title": "How regularization changes the objective"
         },
         {
+          "type": "paragraph",
+          "text": "Walkthrough: `data_loss` is the penalty measured on training examples. The added term penalizes weight magnitude. `lambda` controls its strength: at zero there is no such penalty; larger values constrain weights more. L1 uses absolute values and can encourage exact zeros, while L2 squares weights and usually shrinks them smoothly. This is a mathematical illustration, not an executable training program."
+        },
+        {
           "type": "paragraph"
         },
         {
