@@ -127,7 +127,11 @@
           "type": "code",
           "language": "python",
           "title": "Catch the failure you can handle",
-          "source": "def parse_limit(raw: str) -> int:\n    try:\n        limit = int(raw)\n    except ValueError as exc:\n        raise ValueError(\"limit must be an integer\") from exc\n\n    if limit < 1:\n        raise ValueError(\"limit must be positive\")\n    return limit"
+          "source": "def parse_limit(raw: str) -> int:\n    try:\n        limit = int(raw)\n    except ValueError as exc:\n        raise ValueError(\"limit must be an integer\") from exc\n\n    if limit < 1:\n        raise ValueError(\"limit must be positive\")\n    return limit\n\n\nprint(parse_limit(\"12\"))\ntry:\n    parse_limit(\"abc\")\nexcept ValueError as exc:\n    print(type(exc).__name__, str(exc))"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output: `12`, followed by `ValueError limit must be an integer`. Execution trace: `int('12')` succeeds and the positive-value check passes. For `'abc'`, conversion raises `ValueError`; the handler raises a clearer `ValueError` while preserving the original as the exception cause. `parse_limit('0')` reaches the separate positivity check and raises `limit must be positive`."
         },
         {
           "type": "paragraph",
