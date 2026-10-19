@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — Recall may improve at the cost of more false alarms. PR curves help when positives are rare. Calibration and subgroup behavior can drift."
+          "text": "4. Trade-offs and scale — If positives are only 0.5% of 10,000 cases, there are about 50 positives. An always-negative baseline reaches 99.5% accuracy but has zero positive recall. Threshold changes must also be evaluated against real workload—for example, whether the review team can process the number of alerts produced per day."
         },
         {
           "type": "paragraph",
