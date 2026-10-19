@@ -132,7 +132,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — Classification balances false positives and false negatives; regression needs errors in target units and tail checks; clustering requires stability and domain interpretation."
+          "text": "4. Trade-offs and scale — With 1,000 transactions and a 0.5% fraud rate, only about 5 are fraudulent. Predicting “not fraud” for every row achieves 99.5% accuracy but 0% fraud recall. This simple calculation shows why class prevalence and error costs matter more than accuracy alone."
         },
         {
           "type": "paragraph",
