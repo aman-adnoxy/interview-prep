@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — Time/group splits may reduce training data but better reflect deployment. Cross-validation costs more compute and reduces dependence on a single split."
+          "text": "4. Trade-offs and scale — On a holdout of 500 examples, one additional correct prediction changes accuracy by 1/500 = 0.2 percentage points. So a 0.2-point difference between models may be a single example, not a reliable improvement; inspect uncertainty and disagreements before paying extra compute or latency."
         },
         {
           "type": "paragraph",
