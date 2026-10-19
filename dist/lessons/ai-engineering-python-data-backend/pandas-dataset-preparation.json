@@ -26,7 +26,11 @@
           "type": "code",
           "language": "python",
           "title": "Read and inspect a CSV",
-          "source": "import pandas as pd\n\ndf = pd.read_csv(\"tickets.csv\")\nprint(df.shape)\nprint(df.dtypes)\nprint(df.head(3))"
+          "source": "from io import StringIO\nimport pandas as pd\n\ncsv_text = \"\"\"ticket_id,status,priority\nT-101,open,high\nT-102,closed,low\nT-103,open,medium\n\"\"\"\ndf = pd.read_csv(StringIO(csv_text))\nprint(df.shape)\nprint(df.dtypes)\nprint(df.head(3).to_string(index=False))"
+        },
+        {
+          "type": "paragraph",
+          "text": "This is a self-contained example: `StringIO` makes the sample text behave like a CSV file. Expected output begins with `(3, 3)`, then shows the inferred dtype for each column, followed by T-101, T-102, and T-103. The exact dtype labels can vary by pandas version and dtype configuration; the row/column shape and IDs are deterministic. Trace: `read_csv` parses the header into column names, infers types, and loads three rows; `shape`, `dtypes`, and `head` inspect it without changing it."
         },
         {
           "type": "paragraph",
@@ -37,6 +41,10 @@
           "language": "python",
           "title": "Select and filter with an explicit condition",
           "source": "open_tickets = df.loc[df[\"status\"].eq(\"open\"), [\"ticket_id\", \"priority\"]]\nprint(open_tickets.head())"
+        },
+        {
+          "type": "paragraph",
+          "text": "Using the `df` built in the preceding example, the result contains exactly two rows: `T-101 high` and `T-103 medium`. `.eq('open')` creates a Boolean condition, `.loc` keeps only matching rows, and the column list selects `ticket_id` and `priority`. The output depends on the input data; this preceding sample makes it reproducible."
         },
         {
           "type": "paragraph",
@@ -52,7 +60,11 @@
           "type": "code",
           "language": "python",
           "title": "Join tickets to one row per customer",
-          "source": "result = tickets.merge(\n    customers,\n    on=\"customer_id\",\n    how=\"left\",\n    validate=\"many_to_one\",\n)\nprint(len(tickets), len(result))"
+          "source": "import pandas as pd\n\ntickets = pd.DataFrame({\n    \"ticket_id\": [\"T-101\", \"T-102\", \"T-103\"],\n    \"customer_id\": [\"C1\", \"C2\", \"C1\"],\n})\ncustomers = pd.DataFrame({\n    \"customer_id\": [\"C1\", \"C2\"],\n    \"plan\": [\"pro\", \"starter\"],\n})\n\nresult = tickets.merge(\n    customers,\n    on=\"customer_id\",\n    how=\"left\",\n    validate=\"many_to_one\",\n)\nprint(len(tickets), len(result))\nprint(result.to_string(index=False))"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected first line: `3 3`. The output has three tickets, each joined to exactly one customer: T-101→C1/pro, T-102→C2/starter, and T-103→C1/pro. `many_to_one` validates that the customer side has at most one row per customer ID. If a duplicate `C1` row is added to `customers`, pandas raises a `MergeError` rather than silently multiplying ticket rows."
         },
         {
           "type": "paragraph",
@@ -78,7 +90,11 @@
           "type": "code",
           "language": "python",
           "title": "Aggregate to customer level",
-          "source": "summary = (\n    events.groupby(\"customer_id\", as_index=False)\n          .agg(event_count=(\"event_id\", \"count\"),\n               spend_total=(\"amount\", \"sum\"))\n)\nprint(summary.head())"
+          "source": "import pandas as pd\n\nevents = pd.DataFrame({\n    \"event_id\": [\"e1\", \"e2\", \"e3\"],\n    \"customer_id\": [\"C1\", \"C1\", \"C2\"],\n    \"amount\": [10, 15, 7],\n})\nsummary = (\n    events.groupby(\"customer_id\", as_index=False)\n          .agg(event_count=(\"event_id\", \"count\"),\n               spend_total=(\"amount\", \"sum\"))\n)\nprint(summary.to_string(index=False))"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output is two rows: customer C1 has `event_count=2` and `spend_total=25`; C2 has `event_count=1` and `spend_total=7`. The input has three event rows, but `agg` returns one row per customer group. The amounts are summed within each group."
         },
         {
           "type": "paragraph",
@@ -88,7 +104,11 @@
           "type": "code",
           "language": "python",
           "title": "Add a group statistic while preserving event rows",
-          "source": "events = events.copy()\nevents[\"customer_total\"] = events.groupby(\"customer_id\")[\"amount\"].transform(\"sum\")"
+          "source": "import pandas as pd\n\nevents = pd.DataFrame({\n    \"event_id\": [\"e1\", \"e2\", \"e3\"],\n    \"customer_id\": [\"C1\", \"C1\", \"C2\"],\n    \"amount\": [10, 15, 7],\n})\nevents = events.copy()\nevents[\"customer_total\"] = events.groupby(\"customer_id\")[\"amount\"].transform(\"sum\")\nprint(events.to_string(index=False))"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output preserves all three events and adds `customer_total`: e1/C1/10/25, e2/C1/15/25, and e3/C2/7/7. `transform('sum')` computes a sum per customer and aligns it back to each original row; it does not reduce the table's grain."
         },
         {
           "type": "paragraph",
