@@ -138,33 +138,33 @@
           "rows": [
             [
               "1. Before the spike",
-              "The database pool has 40 available connections and about 20 are usually busy.",
-              "Some requests can run immediately; pool wait is low."
+              "The pool permits at most 40 active DB calls; typical traffic has about 20 active.",
+              "Some work starts immediately; pool wait is low."
             ],
             [
               "2. A burst arrives",
-              "200 requests need a database call at once. At most 40 calls can use the pool; the rest wait for a slot.",
-              "The queue forms in the application pool. Request latency now includes pool wait, not just SQL execution."
+              "200 requests need a DB call. Assume each call holds one connection for 100 ms and there is no extra contention. They complete in five waves of 40: around 100, 200, 300, 400, and 500 ms.",
+              "The last wave waits roughly 400 ms before its query starts. Real times depend on query duration, scheduling, and database load."
             ],
             [
               "3. Deadlines expire",
-              "Some requests exceed their request deadline and clients or services retry immediately.",
-              "The original work may still be running. Retries add more attempts to an already saturated dependency and increase queueing."
+              "With a 250 ms end-to-end deadline, requests in waves three through five cannot complete under these assumptions. A caller timeout does not prove the database operation was cancelled.",
+              "Without cancellation and retry control, timed-out work can continue holding connections."
             ],
             [
               "4. Put bounds around the work",
-              "Limit in-flight database calls to a measured capacity budget, cap the queue, and reject/defer excess work before waiting becomes unbounded.",
-              "A finite queue protects memory and gives the service a way to fail fast instead of allowing every caller to wait indefinitely."
+              "Reserve capacity for other application/admin work, cap this service's active queries below the full pool where appropriate, and use a finite queue. At queue capacity, reject quickly or enqueue durable work if the operation can run asynchronously.",
+              "A finite queue protects memory and makes overload visible instead of allowing unbounded waiting."
             ],
             [
               "5. Make retries safe",
-              "Use one overall deadline, bounded attempts with backoff and jitter, and retry only safe/idempotent operations.",
-              "Retries stop consuming capacity after the useful deadline; idempotency prevents duplicate effects when a write outcome is uncertain."
+              "Use one overall deadline, bounded attempts with backoff+jitter, and retry only explicitly transient failures. Writes need idempotency or reconciliation when the outcome is uncertain.",
+              "Retries stop after their deadline and do not create unlimited duplicate attempts."
             ],
             [
               "6. Recover gradually",
-              "Watch pool wait, active queries, queue depth/age, timeouts and retry rate; let the queue drain as downstream capacity recovers.",
-              "Increasing pool size blindly can move the queue into the database and increase contention."
+              "Track pool wait, active queries, queue depth/age, timeouts and retries. Allow the queue to drain as the dependency recovers; do not increase pools blindly.",
+              "Moving the queue into the database can increase contention and make recovery slower."
             ]
           ]
         },
@@ -172,13 +172,13 @@
           "type": "worked_example",
           "problem": "A service uses a pool of 40 database connections. A traffic burst creates 200 simultaneous requests; after requests start timing out, each caller immediately retries up to three times.",
           "reasoning": [
-            "The connection pool can run no more than 40 queries at once, so the other requests wait for a free connection. The exact wait depends on query duration and database capacity; it is not fixed by the pool size alone.",
-            "If a caller times out, the original query may still be executing. An immediate retry can create another queued attempt for the same logical request and amplify the backlog.",
-            "Add a concurrency limit aligned to measured database capacity and a bounded queue. Give each request one overall deadline and make excess requests fail fast or be deferred through a durable queue when the operation supports it.",
-            "Use bounded exponential backoff with jitter for explicitly transient errors. Retry writes only with idempotency keys or another safe deduplication mechanism; do not assume a timeout means rollback.",
-            "Compare pool-wait and query-time distributions before changing the pool size. Monitor queue age and retry rate while traffic recovers."
+            "Assume, only for this calculation, that every query holds a connection for 100 ms, all 200 requests arrive together, and the database can complete the 40 active queries without their durations increasing. The five waves finish at approximately 100, 200, 300, 400 and 500 ms.",
+            "Under a 250 ms overall deadline, the first two waves can finish, while waves three through five are too late. That is approximately 120 requests whose callers may time out; the exact behavior of their DB operations depends on client cancellation and driver/server behavior.",
+            "If callers retry immediately, they add more attempts to an already full queue. First cap active calls and queue depth so overload cannot grow without bound. Use a fast, documented rejection or durable queue for excess demand.",
+            "Apply a total deadline with a small, bounded retry budget and backoff with jitter; stop once the remaining deadline is insufficient. Retry writes only when idempotency/reconciliation makes an uncertain outcome safe.",
+            "Monitor connection-pool wait separately from SQL execution time. Reduce concurrent work or optimize the actual expensive queries before deciding to increase the connection limit."
           ],
-          "outcome": "Backpressure controls how much work enters the bottleneck; deadlines cap how long it consumes resources; bounded retries avoid turning a temporary slowdown into a retry storm."
+          "outcome": "With the assumptions stated, 40 connections × five 100 ms waves means roughly 500 ms for the burst to drain. A 250 ms deadline cannot serve the last three waves. Backpressure limits how much work enters the bottleneck; deadlines and bounded retries prevent the backlog from feeding itself."
         }
       ]
     }
