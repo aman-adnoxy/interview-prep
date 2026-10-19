@@ -53,7 +53,7 @@ test('all published database lessons keep a consistent assessment contract', () 
     for (const concept of item.concepts) {
       for (const block of concept.blocks) {
         if (block.type === 'code' && typeof block.source === 'string') {
-          assert.ok(!block.source.includes('\\\\n'), section.id + '/' + concept.id + ' contains a literal escaped newline in a code sample');
+          assert.ok(!block.source.includes('\\n'), section.id + '/' + concept.id + ' contains a literal escaped newline in a code sample');
         }
       }
     }
