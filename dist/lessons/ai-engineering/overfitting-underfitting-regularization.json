@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — More regularization can reduce overfitting but excessive strength underfits. Larger models cost more compute and often need more representative data."
+          "text": "4. Trade-offs and scale — In the example, training accuracy rises 7 percentage points (92% to 99%) while validation accuracy falls 6 points (90% to 84%). That growing disagreement is evidence to investigate, not proof by itself: leakage, a bad split, and distribution mismatch can produce misleading curves too."
         },
         {
           "type": "paragraph",
