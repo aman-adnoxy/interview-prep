@@ -525,77 +525,77 @@
     {
       "id": "database-index-selection-selectivity-sequential-scans-index-costs-q6",
       "type": "single_select",
-      "prompt": "Safest way to investigate an unused index?",
+      "prompt": "A production team needs to replace an index on a busy table. Which approach best limits write blocking?",
       "options": [
         {
           "id": "a",
-          "text": "Read actual plan and buffers, compare estimates, verify query shape"
+          "text": "Build the replacement with CREATE INDEX CONCURRENTLY, verify validity and plans, then remove the old non-constraint-backed index concurrently"
         },
         {
           "id": "b",
-          "text": "Disable sequential scans globally"
+          "text": "Drop the old index first and hope the query remains fast"
         },
         {
           "id": "c",
-          "text": "Create duplicate indexes"
+          "text": "Run CREATE INDEX CONCURRENTLY inside a transaction block"
         },
         {
           "id": "d",
-          "text": "Drop table statistics"
+          "text": "Create an index on every column in the table"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Plan evidence distinguishes rational sequential scans from design/estimate issues."
+      "explanation": "A staged concurrent build keeps ordinary writes available during much of the build. Verify the result and workload before removing the old index."
     },
     {
       "id": "database-index-selection-selectivity-sequential-scans-index-costs-q7",
       "type": "single_select",
-      "prompt": "Why can a low-cardinality status index be unhelpful for a broad predicate?",
+      "prompt": "A 900 MB B-tree index is large. Which conclusion is justified by `pg_relation_size` alone?",
       "options": [
         {
           "id": "a",
-          "text": "Many rows may match and require many heap visits"
+          "text": "It occupies about 900 MB on disk; this alone does not prove bloat"
         },
         {
           "id": "b",
-          "text": "Low cardinality means no index entries"
+          "text": "Exactly 900 MB is wasted space"
         },
         {
           "id": "c",
-          "text": "B-tree cannot store repeated values"
+          "text": "The index should be dropped immediately"
         },
         {
           "id": "d",
-          "text": "PostgreSQL refuses text indexes"
+          "text": "The cache holds the entire index in RAM"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Broad results may make a table scan cheaper."
+      "explanation": "Relation size reports on-disk size, not the portion that could be reclaimed. Diagnose bloat and value using more evidence."
     },
     {
       "id": "database-index-selection-selectivity-sequential-scans-index-costs-q8",
       "type": "single_select",
-      "prompt": "Why not drop an index based only on idx_scan?",
+      "prompt": "`idx_scan = 0` for an index in the current statistics view. What should you check before considering removal?",
       "options": [
         {
           "id": "a",
-          "text": "Stats may reset and rare critical queries or constraints may rely on it"
+          "text": "Stats reset time, a representative workload window, dependencies/constraints, and query plans"
         },
         {
           "id": "b",
-          "text": "idx_scan measures latency exactly"
+          "text": "Only whether the index name looks old"
         },
         {
           "id": "c",
-          "text": "Unused indexes use no storage"
+          "text": "Whether the database has a replica"
         },
         {
           "id": "d",
-          "text": "PostgreSQL has no index stats"
+          "text": "Whether all queries use SELECT *"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Use a representative observation window and account for constraints and rare paths."
+      "explanation": "Zero observed scans can reflect a statistics reset or workloads that run infrequently. Constraint-backed indexes require special care."
     },
     {
       "id": "database-index-selection-selectivity-sequential-scans-index-costs-q9",
@@ -665,109 +665,9 @@
     {
       "id": "database-index-selection-selectivity-sequential-scans-index-costs-q12",
       "type": "true_false",
-      "prompt": "Every additional index has zero write cost if it speeds reads.",
-      "correctAnswer": false,
-      "explanation": "Indexes add write maintenance, storage, cache, WAL, and operational cost."
-    },
-    {
-      "id": "index-bloat-vs-size",
-      "type": "single_select",
-      "prompt": "A 900 MB index is large. What does `pg_relation_size` tell you?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Its on-disk size, but not by itself whether it is bloated"
-        },
-        {
-          "id": "b",
-          "text": "The exact amount of wasted bytes"
-        },
-        {
-          "id": "c",
-          "text": "How many milliseconds a query takes"
-        },
-        {
-          "id": "d",
-          "text": "That the index should immediately be dropped"
-        }
-      ],
-      "correctOptionId": "a",
-      "explanation": "Size is a measurement, not a diagnosis. Use workload evidence and, when appropriate, tools such as pgstattuple to investigate structure and fragmentation."
-    },
-    {
-      "id": "unused-index-safety",
-      "type": "single_select",
-      "prompt": "`idx_scan` is zero in the current statistics view. What should you do before dropping the index?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Drop it immediately"
-        },
-        {
-          "id": "b",
-          "text": "Check stats-reset time, a representative workload window, constraints/dependencies, and query plans"
-        },
-        {
-          "id": "c",
-          "text": "Assume the primary key is also unused"
-        },
-        {
-          "id": "d",
-          "text": "Disable autovacuum"
-        }
-      ],
-      "correctOptionId": "b",
-      "explanation": "A zero count can reflect reset statistics or a workload period that misses infrequent jobs; constraint-backed indexes need special treatment."
-    },
-    {
-      "id": "create-index-concurrently",
-      "type": "single_select",
-      "prompt": "Why use `CREATE INDEX CONCURRENTLY` on a busy PostgreSQL table?",
-      "options": [
-        {
-          "id": "a",
-          "text": "It allows ordinary writes during much of the build, at the cost of extra work and a longer/more complex build"
-        },
-        {
-          "id": "b",
-          "text": "It has no I/O cost"
-        },
-        {
-          "id": "c",
-          "text": "It guarantees no invalid index can be left behind"
-        },
-        {
-          "id": "d",
-          "text": "It can run inside any explicit transaction"
-        }
-      ],
-      "correctOptionId": "a",
-      "explanation": "Concurrent builds reduce blocking of writes but use multiple phases, can take longer, and cannot run inside an explicit transaction block."
-    },
-    {
-      "id": "drop-index-concurrently",
-      "type": "single_select",
-      "prompt": "Which removal is normally appropriate for a confirmed unneeded, non-constraint-backed production index?",
-      "options": [
-        {
-          "id": "a",
-          "text": "`DROP INDEX CONCURRENTLY ...` outside an explicit transaction, with monitoring and a rollback plan"
-        },
-        {
-          "id": "b",
-          "text": "Drop every index whose name is unfamiliar"
-        },
-        {
-          "id": "c",
-          "text": "Drop an index used by a UNIQUE constraint without changing the constraint"
-        },
-        {
-          "id": "d",
-          "text": "Drop the table and restore it"
-        }
-      ],
-      "correctOptionId": "a",
-      "explanation": "Concurrent removal reduces blocking, but dependency checks and workload verification must come first."
+      "prompt": "A failed concurrent unique-index build can still enforce uniqueness in some failure states, even while the index is marked invalid.",
+      "correctAnswer": true,
+      "explanation": "PostgreSQL documents failure states where an invalid index left by CREATE UNIQUE INDEX CONCURRENTLY continues to enforce uniqueness. Inspect the build phase, logs, and catalog flags before cleanup."
     }
   ],
   "interviewScenarios": [
