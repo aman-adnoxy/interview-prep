@@ -75,6 +75,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Expected output: `['loaded:d1', 'loaded:d2', 'loaded:d3']`. This fast demo shows the return shape, not a speedup: `load_document` returns immediately. A real blocking download/database call is where overlapping waits can improve elapsed time; the thread pool still needs a bounded worker count and timeouts."
+        },
+        {
+          "type": "paragraph",
           "text": "The pool reuses a bounded number of threads rather than creating a new thread for every item. The example is schematic about latency because the function returns immediately; the reason to use threads is a real blocking operation with meaningful wait time."
         }
       ]
@@ -122,6 +126,59 @@
           "kind": "pitfall",
           "title": "Never retry unboundedly inside a saturated pool",
           "content": "Immediate retries can take worker capacity away from new work and amplify an outage. Use bounded attempts, backoff with jitter, deadlines, idempotency, and a way to shed load."
+        },
+        {
+          "type": "table",
+          "title": "Worked saturation trace (illustrative numbers)",
+          "columns": [
+            "Stage",
+            "What happens",
+            "Why it matters"
+          ],
+          "rows": [
+            [
+              "1. Before the spike",
+              "The database pool has 40 available connections and about 20 are usually busy.",
+              "Some requests can run immediately; pool wait is low."
+            ],
+            [
+              "2. A burst arrives",
+              "200 requests need a database call at once. At most 40 calls can use the pool; the rest wait for a slot.",
+              "The queue forms in the application pool. Request latency now includes pool wait, not just SQL execution."
+            ],
+            [
+              "3. Deadlines expire",
+              "Some requests exceed their request deadline and clients or services retry immediately.",
+              "The original work may still be running. Retries add more attempts to an already saturated dependency and increase queueing."
+            ],
+            [
+              "4. Put bounds around the work",
+              "Limit in-flight database calls to a measured capacity budget, cap the queue, and reject/defer excess work before waiting becomes unbounded.",
+              "A finite queue protects memory and gives the service a way to fail fast instead of allowing every caller to wait indefinitely."
+            ],
+            [
+              "5. Make retries safe",
+              "Use one overall deadline, bounded attempts with backoff and jitter, and retry only safe/idempotent operations.",
+              "Retries stop consuming capacity after the useful deadline; idempotency prevents duplicate effects when a write outcome is uncertain."
+            ],
+            [
+              "6. Recover gradually",
+              "Watch pool wait, active queries, queue depth/age, timeouts and retry rate; let the queue drain as downstream capacity recovers.",
+              "Increasing pool size blindly can move the queue into the database and increase contention."
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A service uses a pool of 40 database connections. A traffic burst creates 200 simultaneous requests; after requests start timing out, each caller immediately retries up to three times.",
+          "reasoning": [
+            "The connection pool can run no more than 40 queries at once, so the other requests wait for a free connection. The exact wait depends on query duration and database capacity; it is not fixed by the pool size alone.",
+            "If a caller times out, the original query may still be executing. An immediate retry can create another queued attempt for the same logical request and amplify the backlog.",
+            "Add a concurrency limit aligned to measured database capacity and a bounded queue. Give each request one overall deadline and make excess requests fail fast or be deferred through a durable queue when the operation supports it.",
+            "Use bounded exponential backoff with jitter for explicitly transient errors. Retry writes only with idempotency keys or another safe deduplication mechanism; do not assume a timeout means rollback.",
+            "Compare pool-wait and query-time distributions before changing the pool size. Monitor queue age and retry rate while traffic recovers."
+          ],
+          "outcome": "Backpressure controls how much work enters the bottleneck; deadlines cap how long it consumes resources; bounded retries avoid turning a temporary slowdown into a retry storm."
         }
       ]
     }
