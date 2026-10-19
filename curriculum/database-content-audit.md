@@ -47,6 +47,12 @@ These topics can be extended later if the target roles need a dedicated deep div
 - **Index lifecycle:** Added index-size and observed-usage inspection, the distinction between size and bloat, optional `pgstattuple` B-tree diagnostics, checks for redundant definitions and constraint dependencies, and a staged replacement/removal checklist.
 - Existing PostgreSQL 17 checkpoint views, write-skew/idempotency examples, concurrent unique-index rollout, and replica-failover timeline on current `main` were retained. This follow-up should not replace those newer, more complete versions with the older copies from stale branches.
 
+
+## Redis cache-key isolation follow-up (PR #8)
+
+- Added an explicit multi-tenant cache-key lesson with an example of two tenants sharing the same local product ID, a table of response dimensions that affect cache keys, and a warning that key design does not replace authorization.
+- Replaced one redundant cache-loss quiz item with the tenant-isolation question, keeping the Redis lesson at 12 assessment questions and preserving the existing, newer lesson instead of re-importing the stale PR's older full version.
+
 ## Teaching and publishing acceptance checklist
 
 - Plain-language motivation before formal vocabulary.
