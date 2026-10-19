@@ -57,6 +57,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Walkthrough: `numeric` and `categorical` identify columns by meaning. The numeric pipeline fills missing spend/age values with training medians, then standardizes using training statistics. The categorical pipeline fills missing values with the most frequent category and one-hot encodes categories. `handle_unknown=\"ignore\"` prevents inference from crashing on a previously unseen category. `fit` learns these transformations and then fits logistic regression; it does not print output by itself."
+        },
+        {
+          "type": "paragraph",
           "text": "Expected output: The pipeline learns medians, category vocabulary, and scaling statistics during fit and reuses them for later inputs. X_train must contain the named columns."
         }
       ]
@@ -87,38 +91,27 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — Raw data often contains categories, missing values, skew, duplicates, and numeric scales unsuitable for a particular model. Cleaning without understanding why values are missing can destroy signal."
+          "text": "1. Problem — Raw data contains categories, missingness, skew, duplicates, and scales that may distort a model's input representation."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — One-hot encoding represents unordered categories without inventing rank. Scaling can help distance-based and many gradient-based methods. Imputation fills missing values but should reflect why they are missing. Pipelines prevent fitting transformation statistics on test data."
+          "text": "2. Choice — Use encoding for categories, scaling when the estimator benefits from it, and imputation only after understanding missingness."
         },
         {
           "type": "paragraph",
-          "text": "3. Internal mechanism — Fit learned transformations on training data, save their statistics and vocabulary, then apply the same fitted transformations to every later partition and production request."
-        },
-        {
-          "type": "worked_example",
-          "problem": "A model uses annual spend, account age, region, and plan; some spend values are missing.",
-          "reasoning": [
-            "Impute numeric values using a statistic learned on training rows; consider a missingness indicator.",
-            "Standardize numeric features when the estimator benefits from comparable scales.",
-            "One-hot encode nominal categories and define behavior for unseen categories.",
-            "Package transformations with the model so training and inference use the same fitted steps."
-          ],
-          "outcome": "A reproducible preprocessing pipeline is safer than separate ad hoc cleaning in notebooks and production."
+          "text": "3. Mechanism — Fit each learned transformation on training data; save its statistics/vocabulary; reuse the same fitted pipeline at inference."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — Richer preprocessing can improve signal but adds latency, memory, and versioning complexity. One-hot encoding high-cardinality fields can create wide matrices. Imputation may hide informative missingness."
+          "text": "4. Trade-offs — More complex transformations can improve signal but increase latency, memory, dimensionality, and versioning burden."
         },
         {
           "type": "paragraph",
-          "text": "5. Anti-patterns — Fitting scaling before splitting; encoding nominal categories as arbitrary ordered integers; clipping outliers without checking; rebuilding transformations differently in production."
+          "text": "5. Avoid — Fitting transforms on all data, inventing order for nominal categories, or clipping outliers without domain checks."
         },
         {
           "type": "paragraph",
-          "text": "6. Interview probes — Which models need scaling? What happens to unseen categories? What does missing mean? How do you prevent leakage and ensure parity?"
+          "text": "6. Interview probes — Does this model need scaling? What happens to unseen categories? Why is the value missing? Can production reproduce training transformations?"
         }
       ]
     }
@@ -138,27 +131,15 @@
   "revisionSheet": [
     {
       "type": "paragraph",
-      "text": "Preprocessing defines the representation the model sees. Every transformation makes assumptions about meaning, scale, missingness, and availability. Fit learned transformations on training data and reuse them in validation, test, and production."
+      "text": "Treat preprocessing as a versioned part of the model pipeline."
     },
     {
       "type": "paragraph",
-      "text": "One-hot encoding represents unordered categories without inventing rank. Scaling can help distance-based and many gradient-based methods. Imputation fills missing values but should reflect why they are missing. Pipelines prevent fitting transformation statistics on test data."
+      "text": "Fit medians, scalers, category vocabulary, and feature selectors on training data only."
     },
     {
       "type": "paragraph",
-      "text": "Mechanism: Fit learned transformations on training data, save their statistics and vocabulary, then apply the same fitted transformations to every later partition and production request."
-    },
-    {
-      "type": "paragraph",
-      "text": "Trade-off: Richer preprocessing can improve signal but adds latency, memory, and versioning complexity. One-hot encoding high-cardinality fields can create wide matrices. Imputation may hide informative missingness."
-    },
-    {
-      "type": "paragraph",
-      "text": "Avoid: Fitting scaling before splitting; encoding nominal categories as arbitrary ordered integers; clipping outliers without checking; rebuilding transformations differently in production."
-    },
-    {
-      "type": "paragraph",
-      "text": "Interview probes: Which models need scaling? What happens to unseen categories? What does missing mean? How do you prevent leakage and ensure parity?"
+      "text": "Define behavior for missing values, unseen categories, duplicate records, and extreme values."
     }
   ],
   "questions": [
@@ -190,52 +171,52 @@
     {
       "id": "scaling",
       "type": "single_select",
-      "prompt": "Which model family is often sensitive to feature scaling?",
+      "prompt": "A nearest-neighbor model compares annual spend up to ₹500,000 with age between 0 and 20 years. Spend dominates distances even when age matters. What would you try first?",
       "options": [
         {
           "id": "a",
-          "text": "Distance-based nearest-neighbor methods"
+          "text": "Standardize numeric features using training-set statistics and reevaluate"
         },
         {
           "id": "b",
-          "text": "A database constraint"
+          "text": "Encode age as a target label"
         },
         {
           "id": "c",
-          "text": "A hand-written access policy"
+          "text": "Fit the scaler on the test set only"
         },
         {
           "id": "d",
-          "text": "Every tree model equally"
+          "text": "Remove all records with high spend"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Distance calculations can be dominated by features with larger numeric ranges."
+      "explanation": "Distance calculations are sensitive to feature scales. Standardization is a reasonable experiment; fit it on training data and verify whether it helps the task rather than assuming it must."
     },
     {
       "id": "fit-transform",
       "type": "single_select",
-      "prompt": "Where should a scaler learn its mean and standard deviation?",
+      "prompt": "A developer calculates the mean and standard deviation using the full dataset, then splits into train and test. Why is that still leakage if labels were not used?",
       "options": [
         {
           "id": "a",
-          "text": "All data before splitting"
+          "text": "The preprocessing learned from the held-out test feature distribution"
         },
         {
           "id": "b",
-          "text": "Training data only"
+          "text": "Scaling automatically exposes the test labels"
         },
         {
           "id": "c",
-          "text": "Each live request independently"
+          "text": "All scaling is invalid for ML"
         },
         {
           "id": "d",
-          "text": "Only the test set"
+          "text": "The test set must be used to fit logistic regression"
         }
       ],
-      "correctOptionId": "b",
-      "explanation": "Learned transformations must not use test-set information."
+      "correctOptionId": "a",
+      "explanation": "The held-out test distribution influenced the learned transformation statistics. Split first and fit the scaler only on training data; apply the stored parameters unchanged to validation/test data."
     },
     {
       "id": "missingness",
