@@ -86,6 +86,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Walkthrough: `fraud_probability >= review_threshold` compares 0.82 with 0.75, so `send_to_review` becomes `True`. The f-strings print the numeric delivery estimate and cluster ID. `cluster_id = 2` is only a group identifier; it does not mean twice the value or risk of cluster 1."
+        },
+        {
+          "type": "paragraph",
           "text": "Expected output:\nTrue\nEstimated delivery: 47 minutes\nDiscovered segment: 2\nThe threshold 0.75 is illustrative, not universal. Choose it from error costs and operational capacity."
         }
       ]
@@ -116,37 +120,27 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A product manager asks for a “prediction” without defining whether the answer should be a category, number, or discovered grouping."
+          "text": "1. Problem — “Predict” is ambiguous until the desired output is stated: category, number, or exploratory group."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — Classification predicts a category, regression predicts a number, and clustering discovers groups without predefined target labels."
+          "text": "2. Choice — Classification predicts categories, regression estimates numeric targets, and clustering discovers groups without target labels."
         },
         {
           "type": "paragraph",
-          "text": "3. Internal mechanism — Classification learns class boundaries/scores; regression fits a numeric target; clustering groups rows using a distance or similarity criterion."
-        },
-        {
-          "type": "worked_example",
-          "problem": "Choose a task type for three requirements.",
-          "reasoning": [
-            "Will this transaction be fraudulent? → classification.",
-            "How many minutes until delivery? → regression.",
-            "Which patterns exist in unlabeled customers? → clustering."
-          ],
-          "outcome": "Write down the target/output before selecting an algorithm."
+          "text": "3. Mechanism — Classification scores are converted into actions by a threshold or policy. Regression is judged against numeric outcomes. Cluster IDs identify groups and have no inherent ordering."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — Thresholds affect false alarms and missed positives. Regression errors need units and tail analysis. Clustering depends on feature scaling and distance; a cluster ID has no inherent order."
+          "text": "4. Trade-offs — Classification balances false positives and false negatives; regression needs errors in target units and tail checks; clustering requires stability and domain interpretation."
         },
         {
           "type": "paragraph",
-          "text": "5. Anti-patterns — Using accuracy alone for rare classes, comparing regression errors without units, or interpreting cluster numbers as ranked categories."
+          "text": "5. Avoid — Using accuracy alone for rare classes, reporting error without units, and treating cluster IDs as rankings."
         },
         {
           "type": "paragraph",
-          "text": "6. Interview probes — What is the target? What metric matches business cost? What threshold triggers action? How will rare cases and subgroup failures be evaluated?"
+          "text": "6. Interview probes — What is the target? What metric fits the cost of error? What threshold is operationally feasible? Are groups stable and useful?"
         }
       ]
     }
@@ -166,19 +160,15 @@
   "revisionSheet": [
     {
       "type": "paragraph",
-      "text": "Ask what kind of answer the system must produce. A class or category is classification. A numeric quantity is regression. A grouping discovered without predefined labels is clustering. The product's decision policy sits on top of the model output."
+      "text": "Classification → category; regression → numeric value; clustering → group discovered without predefined labels."
     },
     {
       "type": "paragraph",
-      "text": "Classification → categories; regression → numeric target; clustering → discovered groups."
+      "text": "Use task-aligned metrics: precision/recall for classification, MAE/RMSE for regression, and stability/interpretability checks for clustering."
     },
     {
       "type": "paragraph",
-      "text": "Choose metrics appropriate to the output and error cost."
-    },
-    {
-      "type": "paragraph",
-      "text": "Separate model score, threshold/policy, and final action."
+      "text": "A model score is not automatically a business decision; thresholds reflect error cost and operational capacity."
     }
   ],
   "questions": [
@@ -235,52 +225,52 @@
     {
       "id": "cluster-id",
       "type": "single_select",
-      "prompt": "What can you conclude from assigning a customer to cluster 3?",
+      "prompt": "A clustering job assigns two customers IDs 2 and 7. A manager says customer 7 must be more valuable because 7 is larger. What is the correct response?",
       "options": [
         {
           "id": "a",
-          "text": "They are three times more valuable than cluster 1"
+          "text": "Agree; cluster IDs are always ranked"
         },
         {
           "id": "b",
-          "text": "They belong to the group assigned identifier 3"
+          "text": "Reject the inference and profile the groups before assigning meaning"
         },
         {
           "id": "c",
-          "text": "A human labeled them class 3"
+          "text": "Interpret the difference as a 5% value increase"
         },
         {
           "id": "d",
-          "text": "The model has 3% error"
+          "text": "Treat the cluster IDs as supervised labels"
         }
       ],
       "correctOptionId": "b",
-      "explanation": "Cluster IDs are identifiers and do not inherently encode rank or meaning."
+      "explanation": "Cluster IDs are arbitrary identifiers. Their numeric values do not encode order or business value; group characteristics and downstream usefulness must be assessed."
     },
     {
       "id": "mae",
       "type": "single_select",
-      "prompt": "What does MAE measure for a delivery-time regressor?",
+      "prompt": "Delivery predictions average 8 minutes of absolute error, but errors reach 70 minutes for rural deliveries. What should the team do next?",
       "options": [
         {
           "id": "a",
-          "text": "Average absolute error in minutes"
+          "text": "Report only overall MAE and ignore location"
         },
         {
           "id": "b",
-          "text": "Fraction correctly classified"
+          "text": "Inspect the error distribution and subgroup MAE by delivery region"
         },
         {
           "id": "c",
-          "text": "Number of clusters"
+          "text": "Switch to clustering and assume the issue is fixed"
         },
         {
           "id": "d",
-          "text": "Probability calibration only"
+          "text": "Convert minutes to classes without checking requirements"
         }
       ],
-      "correctOptionId": "a",
-      "explanation": "MAE averages absolute differences in the numeric target's units."
+      "correctOptionId": "b",
+      "explanation": "Aggregate MAE hides the worse subgroup. Inspect errors by region and investigate data coverage or distribution shift before choosing a remedy."
     },
     {
       "id": "threshold-universal",
