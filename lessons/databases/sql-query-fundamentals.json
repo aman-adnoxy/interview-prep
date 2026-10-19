@@ -147,13 +147,56 @@
         },
         {
           "type": "paragraph",
+          "text": "For the pagination example only, assume a separate orders feed contains the ten unique order IDs 101 through 110. The smaller four-row Orders table earlier in the lesson was used for filtering and should not be mistaken for this feed."
+        },
+        {
+          "type": "table",
+          "title": "Pagination example input",
+          "columns": [
+            "order_id"
+          ],
+          "rows": [
+            [
+              "101"
+            ],
+            [
+              "102"
+            ],
+            [
+              "103"
+            ],
+            [
+              "104"
+            ],
+            [
+              "105"
+            ],
+            [
+              "106"
+            ],
+            [
+              "107"
+            ],
+            [
+              "108"
+            ],
+            [
+              "109"
+            ],
+            [
+              "110"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
           "text": "### Offset pagination versus keyset pagination"
         },
         {
           "type": "code",
           "language": "sql",
           "title": "Two ways to fetch the next page",
-          "source": "-- Page 3 by a stable, unique key (simple illustrative ID order)\nSELECT order_id, amount\nFROM orders\nORDER BY order_id\nLIMIT 2 OFFSET 4;\n\n-- Keyset pagination: pass the last order_id from the previous page\nSELECT order_id, amount\nFROM orders\nWHERE order_id > 104\nORDER BY order_id\nLIMIT 2;"
+          "source": "-- Page 3 with page size 2: skip the first four rows\nSELECT order_id\nFROM orders\nORDER BY order_id\nLIMIT 2 OFFSET 4;\n\n-- Keyset pagination: pass the last ID from the previous page\nSELECT order_id\nFROM orders\nWHERE order_id > 104\nORDER BY order_id\nLIMIT 2;"
         },
         {
           "type": "table",
