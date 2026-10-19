@@ -36,8 +36,16 @@ The database curriculum retains 20 published lessons across the existing modules
 These topics can be extended later if the target roles need a dedicated deep dive; they are not blockers for the fixes in this pass:
 
 1. Full Redis/replication operational runbooks for deployment-specific durability, failover, and recovery settings.
-2. More advanced transaction labs around optimistic concurrency and deferred constraints beyond the new lost-update, write-skew, atomic-upsert, and bounded-retry examples.
-3. Database-specific index maintenance procedures and recovery exercises for particular managed PostgreSQL providers and workload sizes.
+2. The follow-up adds optimistic version checks and deferred-constraint examples. Deeper transaction labs can still explore application-specific multi-row invariants and provider-specific retry behavior.
+3. The follow-up adds general PostgreSQL index size/usage inspection, optional B-tree diagnostics, and a safe replacement/removal workflow. Provider-specific maintenance and recovery drills remain a useful specialization.
+
+
+## Additional production and concurrency depth (PR #18 follow-up)
+
+- **Optimistic concurrency:** Added a version-column compare-and-swap example, explained zero-row updates as conflict signals, and separated row-version checks from multi-row invariant protection.
+- **Deferred constraints:** Added a worked example where a foreign key is checked at commit, clarifying that the rule is delayed—not disabled.
+- **Index lifecycle:** Added index-size and observed-usage inspection, the distinction between size and bloat, optional `pgstattuple` B-tree diagnostics, checks for redundant definitions and constraint dependencies, and a staged replacement/removal checklist.
+- Existing PostgreSQL 17 checkpoint views, write-skew/idempotency examples, concurrent unique-index rollout, and replica-failover timeline on current `main` were retained. This follow-up should not replace those newer, more complete versions with the older copies from stale branches.
 
 ## Teaching and publishing acceptance checklist
 
