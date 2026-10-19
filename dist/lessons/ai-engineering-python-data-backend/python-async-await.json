@@ -91,8 +91,33 @@
         {
           "type": "table",
           "title": "Workload",
-          "columns": "Useful default",
-          "rows": "Reason and caveat"
+          "columns": [
+            "Workload",
+            "Useful default",
+            "Reason and caveat"
+          ],
+          "rows": [
+            [
+              "Many network/database calls waiting on I/O",
+              "Async I/O with async-compatible clients",
+              "Can overlap waiting; still needs bounded concurrency."
+            ],
+            [
+              "CPU-heavy Python calculation",
+              "Process pool or separate worker",
+              "Async alone does not run Python CPU work in parallel."
+            ],
+            [
+              "A blocking legacy I/O SDK",
+              "Native async client or `asyncio.to_thread`",
+              "Thread offloading has scheduling overhead and uses a thread pool."
+            ],
+            [
+              "One tiny sequential script",
+              "Ordinary synchronous code may be clearer",
+              "Async adds lifecycle and cancellation complexity."
+            ]
+          ]
         },
         {
           "type": "worked_example",
