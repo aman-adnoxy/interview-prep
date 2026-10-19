@@ -53,52 +53,52 @@
       "questionCount": 6
     },
     "authentication-authorization-tenant-isolation": {
-      "path": "/lessons/ai-engineering-python-data-backend/authentication-authorization-tenant-isolation.json",
+      "path": "/lessons/ai-engineering/authentication-authorization-tenant-isolation.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "background-jobs-long-running-operations": {
-      "path": "/lessons/ai-engineering-python-data-backend/background-jobs-long-running-operations.json",
+      "path": "/lessons/ai-engineering/background-jobs-long-running-operations.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "concurrency-parallelism": {
-      "path": "/lessons/ai-engineering-python-data-backend/concurrency-parallelism.json",
+      "path": "/lessons/ai-engineering/concurrency-parallelism.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "data-structures-algorithmic-complexity": {
-      "path": "/lessons/ai-engineering-python-data-backend/data-structures-algorithmic-complexity.json",
+      "path": "/lessons/ai-engineering/data-structures-algorithmic-complexity.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "http-rest-apis-contracts": {
-      "path": "/lessons/ai-engineering-python-data-backend/http-rest-apis-contracts.json",
+      "path": "/lessons/ai-engineering/http-rest-apis-contracts.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "missing-values-duplicates-outliers": {
-      "path": "/lessons/ai-engineering-python-data-backend/missing-values-duplicates-outliers.json",
+      "path": "/lessons/ai-engineering/missing-values-duplicates-outliers.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "numpy-vectorized-computation": {
-      "path": "/lessons/ai-engineering-python-data-backend/numpy-vectorized-computation.json",
+      "path": "/lessons/ai-engineering/numpy-vectorized-computation.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "pandas-dataset-preparation": {
-      "path": "/lessons/ai-engineering-python-data-backend/pandas-dataset-preparation.json",
+      "path": "/lessons/ai-engineering/pandas-dataset-preparation.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "python-async-await": {
-      "path": "/lessons/ai-engineering-python-data-backend/python-async-await.json",
+      "path": "/lessons/ai-engineering/python-async-await.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
     "python-for-ai-engineering": {
-      "path": "/lessons/ai-engineering-python-data-backend/python-for-ai-engineering.json",
+      "path": "/lessons/ai-engineering/python-for-ai-engineering.json",
       "contentVersion": "2.0.0",
       "questionCount": 6
     },
