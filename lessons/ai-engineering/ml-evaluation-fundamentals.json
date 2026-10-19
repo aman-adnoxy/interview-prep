@@ -1,0 +1,304 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "ml-evaluation-fundamentals",
+  "topicId": "ai-engineering",
+  "sectionId": "ml-evaluation-fundamentals",
+  "title": "ML Evaluation Fundamentals: Baselines, Precision, Recall, F1, Thresholds, and Calibration",
+  "difficulty": "intermediate",
+  "estimatedMinutes": 42,
+  "learningObjectives": [
+    "Build a baseline and read a confusion matrix.",
+    "Calculate precision, recall, and F1 from counts.",
+    "Explain class imbalance, threshold trade-offs, and calibration."
+  ],
+  "mentalModel": {
+    "type": "paragraph",
+    "text": "Evaluation turns model outputs into evidence. Start with a baseline, define what counts as a correct outcome, inspect the confusion matrix, and choose metrics that reflect the cost of mistakes. A score is not a decision until a threshold converts it into action."
+  },
+  "concepts": [
+    {
+      "id": "motivation",
+      "title": "Problem and motivation",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A classifier can report 96% accuracy and still miss too much fraud when positive cases are rare. Counts of true positives, false positives, false negatives, and true negatives expose the actual errors."
+        },
+        {
+          "type": "paragraph",
+          "text": "Evaluation turns model outputs into evidence. Start with a baseline, define what counts as a correct outcome, inspect the confusion matrix, and choose metrics that reflect the cost of mistakes. A score is not a decision until a threshold converts it into action."
+        }
+      ]
+    },
+    {
+      "id": "technical-deep-dive",
+      "title": "Technical deep dive and worked example",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Precision = TP/(TP+FP). Recall = TP/(TP+FN). F1 is the harmonic mean of precision and recall. Accuracy can hide failures on rare classes. Thresholds trade precision against recall; calibration asks whether predicted probabilities match observed frequencies."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A fraud detector has TP=40, FP=30, FN=10, TN=920.",
+          "reasoning": [
+            "Precision = 40/(40+30) ≈ 57.1%.",
+            "Recall = 40/(40+10) = 80%.",
+            "F1 = 2PR/(P+R) ≈ 66.7%.",
+            "Accuracy = (40+920)/1000 = 96%, but this hides missed fraud and false alerts."
+          ],
+          "outcome": "A confusion matrix makes error types visible; the right threshold depends on business cost and operational capacity."
+        },
+        {
+          "type": "code",
+          "language": "python",
+          "source": "tp, fp, fn, tn = 40, 30, 10, 920\nprecision = tp / (tp + fp)\nrecall = tp / (tp + fn)\nf1 = 2 * precision * recall / (precision + recall)\naccuracy = (tp + tn) / (tp + fp + fn + tn)\nprint(round(precision, 3), round(recall, 3), round(f1, 3), round(accuracy, 3))",
+          "title": "Calculate classification metrics"
+        },
+        {
+          "type": "paragraph",
+          "text": "Walkthrough: `precision` divides true positives by all flagged cases (40+30), giving 0.571. `recall` divides true positives by all actual fraud cases (40+10), giving 0.8. F1 combines precision and recall; accuracy divides correct predictions by all 1,000 examples and reaches 0.96 because true negatives dominate. The printed values are rounded only for display."
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output: 0.571 0.8 0.667 0.96"
+        }
+      ]
+    },
+    {
+      "id": "tradeoffs-production",
+      "title": "Trade-offs and production behavior",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Threshold choice affects review workload and error costs. PR curves are often informative for rare positives. Calibration needs enough data and can drift as the population changes."
+        },
+        {
+          "type": "paragraph",
+          "text": "Production check: Track class prevalence, threshold volume, precision/recall when labels arrive, calibration, and subgroup performance."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Anti-pattern to avoid",
+          "content": "Reporting accuracy alone on imbalanced data; assuming a score of 0.8 is calibrated; choosing a threshold without considering capacity."
+        }
+      ]
+    },
+    {
+      "id": "six-layer-interview-synthesis",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem — High accuracy can hide costly misses when positive examples are rare."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Choice — Precision measures correctness among predicted positives; recall measures coverage of actual positives; F1 balances them; calibration checks probability reliability."
+        },
+        {
+          "type": "paragraph",
+          "text": "3. Mechanism — Use TP/FP/FN/TN counts, compare a baseline, and inspect how changing the threshold alters errors and review volume."
+        },
+        {
+          "type": "paragraph",
+          "text": "4. Trade-offs and scale — If positives are only 0.5% of 10,000 cases, there are about 50 positives. An always-negative baseline reaches 99.5% accuracy but has zero positive recall. Threshold changes must also be evaluated against real workload—for example, whether the review team can process the number of alerts produced per day."
+        },
+        {
+          "type": "paragraph",
+          "text": "5. Avoid — Reporting accuracy alone, treating a score as a guarantee, or selecting a threshold without its operational cost."
+        },
+        {
+          "type": "paragraph",
+          "text": "6. Interview probes — Which error is most costly? What volume can operations review? Does the score represent a reliable probability? What happens to rare subgroups?"
+        }
+      ]
+    }
+  ],
+  "tradeoffsAndPitfalls": [
+    {
+      "type": "callout",
+      "kind": "tip",
+      "title": "Engineering rule of thumb",
+      "content": "Pick metrics and thresholds based on the actual cost of mistakes, not habit."
+    },
+    {
+      "type": "paragraph",
+      "text": "Threshold choice affects review workload and error costs. PR curves are often informative for rare positives. Calibration needs enough data and can drift as the population changes."
+    }
+  ],
+  "revisionSheet": [
+    {
+      "type": "paragraph",
+      "text": "Precision = TP/(TP+FP); recall = TP/(TP+FN); F1 is their harmonic mean."
+    },
+    {
+      "type": "paragraph",
+      "text": "Accuracy can mislead on imbalanced classes; always inspect the confusion matrix."
+    },
+    {
+      "type": "paragraph",
+      "text": "Thresholds convert scores to actions and should reflect error costs and capacity."
+    },
+    {
+      "type": "paragraph",
+      "text": "Calibration compares predicted probabilities with observed frequencies."
+    }
+  ],
+  "questions": [
+    {
+      "id": "precision",
+      "type": "single_select",
+      "prompt": "A fraud model flags 70 transactions and 42 are genuinely fraudulent. What is its precision?",
+      "options": [
+        {
+          "id": "a",
+          "text": "42/70 = 60%"
+        },
+        {
+          "id": "b",
+          "text": "42/50 = 84%"
+        },
+        {
+          "id": "c",
+          "text": "920/1,000 = 92%"
+        },
+        {
+          "id": "d",
+          "text": "28/70 = 40%"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Precision is the fraction of predicted positives that are actually positive: 42 divided by all 70 flagged transactions. It answers how noisy the alert queue is."
+    },
+    {
+      "id": "recall",
+      "type": "single_select",
+      "prompt": "Out of 50 fraudulent transactions, a model catches 40 and misses 10. What is recall?",
+      "options": [
+        {
+          "id": "a",
+          "text": "40/50 = 80%"
+        },
+        {
+          "id": "b",
+          "text": "40/70 ≈ 57%"
+        },
+        {
+          "id": "c",
+          "text": "10/50 = 20%"
+        },
+        {
+          "id": "d",
+          "text": "A value determined by true negatives only"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Recall is TP/(TP+FN), so 40/(40+10)=80%. It measures coverage of actual positive cases, not the fraction of alerts that are correct."
+    },
+    {
+      "id": "imbalance",
+      "type": "single_select",
+      "prompt": "Fraud is 0.5% of transactions. A model predicts “not fraud” for every transaction and gets 99.5% accuracy. What should the team conclude?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The model is production-ready because accuracy is high"
+        },
+        {
+          "id": "b",
+          "text": "The baseline catches no fraud, so evaluate recall/precision and compare better models"
+        },
+        {
+          "id": "c",
+          "text": "Calibration is automatically perfect"
+        },
+        {
+          "id": "d",
+          "text": "F1 must be 99.5%"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The majority class dominates accuracy, while fraud recall is zero. Report a confusion matrix and positive-class metrics; compare against this baseline before claiming model value."
+    },
+    {
+      "id": "calibration",
+      "type": "single_select",
+      "prompt": "A risk model assigns probability 0.8 to 100 comparable cases, but only 50 turn positive. What issue should be investigated?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The model is well calibrated because 0.8 is a high score"
+        },
+        {
+          "id": "b",
+          "text": "The model may be overconfident or miscalibrated for this group"
+        },
+        {
+          "id": "c",
+          "text": "Recall must equal 80%"
+        },
+        {
+          "id": "d",
+          "text": "The model should always use 0.8 as its decision threshold"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Calibration asks whether groups assigned probability 0.8 are positive about 80% of the time. An observed rate near 50% suggests overprediction, subject to sample uncertainty and correct label timing."
+    },
+    {
+      "id": "threshold-fixed",
+      "type": "true_false",
+      "prompt": "A threshold of 0.5 is always optimal for every classifier and business task.",
+      "correctAnswer": false,
+      "explanation": "The best threshold depends on calibration, costs, prevalence, and operational constraints."
+    },
+    {
+      "id": "f1-context-free",
+      "type": "true_false",
+      "prompt": "F1 captures every relevant cost of a classifier.",
+      "correctAnswer": false,
+      "explanation": "F1 balances precision and recall but does not directly encode review capacity, error severity, or calibration."
+    }
+  ],
+  "interviewScenarios": [
+    {
+      "id": "rare-positive-evaluation",
+      "prompt": "A defect detector has 99.5% accuracy but misses many defects. What metrics and experiments do you use?",
+      "skillsTested": [
+        "class imbalance",
+        "metric selection",
+        "thresholding"
+      ],
+      "strongAnswerPoints": [
+        "Build the confusion matrix and report defect precision and recall.",
+        "Compare with a majority-class baseline.",
+        "Inspect precision-recall behavior and review volume across thresholds.",
+        "Choose threshold based on missed-defect cost and inspection capacity."
+      ],
+      "pitfalls": [
+        "Presenting accuracy as sufficient evidence"
+      ],
+      "referenceAnswer": "I would inspect defect recall and precision first. With rare defects, a majority-class baseline can have excellent accuracy. I would examine precision-recall trade-offs and select a threshold based on missed-defect cost and review capacity."
+    },
+    {
+      "id": "probability-quality",
+      "prompt": "A risk model ranks cases well, but predicted probabilities are systematically too high. Why does that matter?",
+      "skillsTested": [
+        "calibration",
+        "decision impact",
+        "monitoring"
+      ],
+      "strongAnswerPoints": [
+        "Ranking and calibration measure different properties.",
+        "Compare predicted risk bands with observed outcomes.",
+        "Consider calibration on held-out data and monitor population drift."
+      ],
+      "pitfalls": [
+        "Assuming high AUC proves probabilities are accurate"
+      ],
+      "referenceAnswer": "AUC can be good even when probabilities are overconfident. If decisions depend on risk magnitude, compare predicted and observed rates by band and monitor calibration drift."
+    }
+  ]
+}

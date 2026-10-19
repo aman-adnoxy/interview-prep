@@ -248,9 +248,110 @@
     {
       "id": "ai-engineering",
       "title": "AI Engineering",
-      "description": "RAG, agents, evaluation and production AI systems.",
+      "description": "Core AI and machine-learning foundations: choose learning approaches, prepare data, understand training, and evaluate models reliably.",
       "order": 6,
-      "sections": []
+      "sections": [
+        {
+          "id": "ai-vs-ml-deep-learning-generative-ai",
+          "title": "AI vs Machine Learning vs Deep Learning vs Generative AI",
+          "difficulty": "beginner",
+          "order": 1,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/ai-vs-ml-deep-learning-generative-ai.json",
+          "questionCount": 6,
+          "lessonId": "ai-vs-ml-deep-learning-generative-ai"
+        },
+        {
+          "id": "machine-learning-types",
+          "title": "Types of Machine Learning: Supervised, Unsupervised, Self-Supervised, and Reinforcement Learning",
+          "difficulty": "beginner",
+          "order": 2,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/machine-learning-types.json",
+          "questionCount": 6,
+          "lessonId": "machine-learning-types"
+        },
+        {
+          "id": "classification-regression-clustering",
+          "title": "Classification, Regression, and Clustering",
+          "difficulty": "beginner",
+          "order": 3,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/classification-regression-clustering.json",
+          "questionCount": 6,
+          "lessonId": "classification-regression-clustering"
+        },
+        {
+          "id": "training-validation-test-splits",
+          "title": "Training, Validation, and Test Datasets",
+          "difficulty": "beginner",
+          "order": 4,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/training-validation-test-splits.json",
+          "questionCount": 6,
+          "lessonId": "training-validation-test-splits"
+        },
+        {
+          "id": "features-labels-parameters-hyperparameters",
+          "title": "Features, Labels, Parameters, and Hyperparameters",
+          "difficulty": "beginner",
+          "order": 5,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/features-labels-parameters-hyperparameters.json",
+          "questionCount": 6,
+          "lessonId": "features-labels-parameters-hyperparameters"
+        },
+        {
+          "id": "feature-engineering-preprocessing",
+          "title": "Feature Engineering and Data Preprocessing",
+          "difficulty": "intermediate",
+          "order": 6,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/feature-engineering-preprocessing.json",
+          "questionCount": 6,
+          "lessonId": "feature-engineering-preprocessing"
+        },
+        {
+          "id": "loss-optimization-gradient-descent",
+          "title": "Loss Functions, Optimization, and Gradient Descent",
+          "difficulty": "intermediate",
+          "order": 7,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/loss-optimization-gradient-descent.json",
+          "questionCount": 6,
+          "lessonId": "loss-optimization-gradient-descent"
+        },
+        {
+          "id": "overfitting-underfitting-regularization",
+          "title": "Overfitting, Underfitting, and Regularization",
+          "difficulty": "intermediate",
+          "order": 8,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/overfitting-underfitting-regularization.json",
+          "questionCount": 6,
+          "lessonId": "overfitting-underfitting-regularization"
+        },
+        {
+          "id": "bias-variance-data-leakage",
+          "title": "Bias–Variance Trade-off and Data Leakage",
+          "difficulty": "intermediate",
+          "order": 9,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/bias-variance-data-leakage.json",
+          "questionCount": 6,
+          "lessonId": "bias-variance-data-leakage"
+        },
+        {
+          "id": "ml-evaluation-fundamentals",
+          "title": "ML Evaluation Fundamentals: Baselines, Precision, Recall, F1, Thresholds, and Calibration",
+          "difficulty": "intermediate",
+          "order": 10,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering/ml-evaluation-fundamentals.json",
+          "questionCount": 6,
+          "lessonId": "ml-evaluation-fundamentals"
+        }
+      ]
     }
   ]
 }

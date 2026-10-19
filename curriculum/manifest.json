@@ -269,9 +269,118 @@
     {
       "id": "ai-engineering",
       "title": "AI Engineering",
-      "description": "RAG, agents, evaluation and production AI systems.",
+      "description": "Core AI and machine-learning foundations: choose learning approaches, prepare data, understand training, and evaluate models reliably.",
       "order": 6,
-      "sections": []
+      "sections": [
+        {
+          "id": "ai-vs-ml-deep-learning-generative-ai",
+          "title": "AI vs Machine Learning vs Deep Learning vs Generative AI",
+          "lessonId": "ai-vs-ml-deep-learning-generative-ai",
+          "difficulty": "beginner",
+          "order": 1,
+          "prerequisites": [],
+          "status": "published"
+        },
+        {
+          "id": "machine-learning-types",
+          "title": "Types of Machine Learning: Supervised, Unsupervised, Self-Supervised, and Reinforcement Learning",
+          "lessonId": "machine-learning-types",
+          "difficulty": "beginner",
+          "order": 2,
+          "prerequisites": [
+            "ai-vs-ml-deep-learning-generative-ai"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "classification-regression-clustering",
+          "title": "Classification, Regression, and Clustering",
+          "lessonId": "classification-regression-clustering",
+          "difficulty": "beginner",
+          "order": 3,
+          "prerequisites": [
+            "machine-learning-types"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "training-validation-test-splits",
+          "title": "Training, Validation, and Test Datasets",
+          "lessonId": "training-validation-test-splits",
+          "difficulty": "beginner",
+          "order": 4,
+          "prerequisites": [
+            "classification-regression-clustering"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "features-labels-parameters-hyperparameters",
+          "title": "Features, Labels, Parameters, and Hyperparameters",
+          "lessonId": "features-labels-parameters-hyperparameters",
+          "difficulty": "beginner",
+          "order": 5,
+          "prerequisites": [
+            "training-validation-test-splits"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "feature-engineering-preprocessing",
+          "title": "Feature Engineering and Data Preprocessing",
+          "lessonId": "feature-engineering-preprocessing",
+          "difficulty": "intermediate",
+          "order": 6,
+          "prerequisites": [
+            "features-labels-parameters-hyperparameters"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "loss-optimization-gradient-descent",
+          "title": "Loss Functions, Optimization, and Gradient Descent",
+          "lessonId": "loss-optimization-gradient-descent",
+          "difficulty": "intermediate",
+          "order": 7,
+          "prerequisites": [
+            "feature-engineering-preprocessing"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "overfitting-underfitting-regularization",
+          "title": "Overfitting, Underfitting, and Regularization",
+          "lessonId": "overfitting-underfitting-regularization",
+          "difficulty": "intermediate",
+          "order": 8,
+          "prerequisites": [
+            "loss-optimization-gradient-descent"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "bias-variance-data-leakage",
+          "title": "Bias–Variance Trade-off and Data Leakage",
+          "lessonId": "bias-variance-data-leakage",
+          "difficulty": "intermediate",
+          "order": 9,
+          "prerequisites": [
+            "overfitting-underfitting-regularization"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "ml-evaluation-fundamentals",
+          "title": "ML Evaluation Fundamentals: Baselines, Precision, Recall, F1, Thresholds, and Calibration",
+          "lessonId": "ml-evaluation-fundamentals",
+          "difficulty": "intermediate",
+          "order": 10,
+          "prerequisites": [
+            "bias-variance-data-leakage"
+          ],
+          "status": "published"
+        }
+      ]
     }
   ]
 }

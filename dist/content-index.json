@@ -2,6 +2,56 @@
   "indexVersion": "1.0.0",
   "schemaVersion": "2.0.0",
   "lessons": {
+    "ai-vs-ml-deep-learning-generative-ai": {
+      "path": "/lessons/ai-engineering/ai-vs-ml-deep-learning-generative-ai.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "bias-variance-data-leakage": {
+      "path": "/lessons/ai-engineering/bias-variance-data-leakage.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "classification-regression-clustering": {
+      "path": "/lessons/ai-engineering/classification-regression-clustering.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "feature-engineering-preprocessing": {
+      "path": "/lessons/ai-engineering/feature-engineering-preprocessing.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "features-labels-parameters-hyperparameters": {
+      "path": "/lessons/ai-engineering/features-labels-parameters-hyperparameters.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "loss-optimization-gradient-descent": {
+      "path": "/lessons/ai-engineering/loss-optimization-gradient-descent.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "machine-learning-types": {
+      "path": "/lessons/ai-engineering/machine-learning-types.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "ml-evaluation-fundamentals": {
+      "path": "/lessons/ai-engineering/ml-evaluation-fundamentals.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "overfitting-underfitting-regularization": {
+      "path": "/lessons/ai-engineering/overfitting-underfitting-regularization.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
+    "training-validation-test-splits": {
+      "path": "/lessons/ai-engineering/training-validation-test-splits.json",
+      "contentVersion": "2.0.0",
+      "questionCount": 6
+    },
     "advanced-database-internals": {
       "path": "/lessons/databases/advanced-database-internals.json",
       "contentVersion": "2.0.0",
