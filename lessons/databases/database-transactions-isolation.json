@@ -316,13 +316,19 @@
         },
         {
           "type": "code",
+          "language": "sql",
+          "title": "Tables assumed by the retry example",
+          "source": "CREATE TABLE inventory (\n  product_id bigint PRIMARY KEY,\n  stock integer NOT NULL CHECK (stock >= 0)\n);\n\nCREATE TABLE inventory_requests (\n  request_id text PRIMARY KEY,\n  product_id bigint NOT NULL REFERENCES inventory(product_id),\n  outcome text NOT NULL CHECK (outcome IN ('processing', 'reserved', 'out_of_stock'))\n);"
+        },
+        {
+          "type": "code",
           "language": "python",
-          "source": "import random\nimport time\nfrom psycopg.errors import SerializationFailure, DeadlockDetected\n\ndef reserve_one_unit(conn, product_id, request_id):\n    max_attempts = 3\n    for attempt in range(max_attempts):\n        try:\n            # A fresh transaction on every attempt; retry the whole unit of work.\n            with conn.transaction():\n                with conn.cursor() as cur:\n                    cur.execute(\n                        \"INSERT INTO processed_requests(request_id) VALUES (%s) \"\n                        \"ON CONFLICT (request_id) DO NOTHING RETURNING request_id\",\n                        (request_id,),\n                    )\n                    if cur.fetchone() is None:\n                        return \"already_processed\"\n                    cur.execute(\n                        \"UPDATE inventory SET stock = stock - 1 \"\n                        \"WHERE product_id = %s AND stock > 0 RETURNING stock\",\n                        (product_id,),\n                    )\n                    row = cur.fetchone()\n                    if row is None:\n                        # This request's result is recorded as unavailable.\n                        return \"out_of_stock\"\n            return \"reserved\"\n        except (SerializationFailure, DeadlockDetected):\n            if attempt == max_attempts - 1:\n                raise\n            # Exponential backoff plus jitter; do not retry forever.\n            time.sleep(0.05 * (2 ** attempt) + random.uniform(0, 0.025))\n",
+          "source": "import random\nimport time\nfrom psycopg.errors import SerializationFailure, DeadlockDetected\n\ndef reserve_one_unit(conn, product_id, request_id):\n    max_attempts = 3\n    for attempt in range(max_attempts):\n        try:\n            with conn.transaction():  # fresh transaction on each attempt\n                with conn.cursor() as cur:\n                    cur.execute(\n                        \"INSERT INTO inventory_requests(request_id, product_id, outcome) \"\n                        \"VALUES (%s, %s, 'processing') \"\n                        \"ON CONFLICT (request_id) DO NOTHING RETURNING request_id\",\n                        (request_id, product_id),\n                    )\n                    inserted = cur.fetchone()\n                    if inserted is None:\n                        cur.execute(\n                            \"SELECT product_id, outcome FROM inventory_requests \"\n                            \"WHERE request_id = %s FOR SHARE\",\n                            (request_id,),\n                        )\n                        previous = cur.fetchone()\n                        if previous is None:\n                            raise RuntimeError(\"request record disappeared; retry at service boundary\")\n                        if previous[0] != product_id:\n                            raise ValueError(\"idempotency key reused for a different product\")\n                        return previous[1]  # return the original outcome, not a second reservation\n                    cur.execute(\n                        \"UPDATE inventory SET stock = stock - 1 \"\n                        \"WHERE product_id = %s AND stock > 0 RETURNING stock\",\n                        (product_id,),\n                    )\n                    outcome = \"reserved\" if cur.fetchone() is not None else \"out_of_stock\"\n                    cur.execute(\n                        \"UPDATE inventory_requests SET outcome = %s WHERE request_id = %s\",\n                        (outcome, request_id),\n                    )\n            return outcome  # commit the request result and stock change together\n        except (SerializationFailure, DeadlockDetected):\n            if attempt == max_attempts - 1:\n                raise\n            time.sleep(0.05 * (2 ** attempt) + random.uniform(0, 0.025))\n",
           "title": "Bounded retry around a complete psycopg transaction"
         },
         {
           "type": "paragraph",
-          "text": "Code walkthrough: each attempt opens a new transaction; the first insert claims the request ID, and `ON CONFLICT DO NOTHING` makes duplicate requests stop before decrementing stock. The conditional `UPDATE ... stock > 0 RETURNING` is the atomic inventory check. Serialization and deadlock errors roll back the transaction, after which the whole unit of work retries at most three times with increasing delay and jitter. This example assumes a `processed_requests(request_id PRIMARY KEY)` table and a `psycopg` connection. It records an out-of-stock result under the request ID, so a later retry with that same ID returns the original outcome; use a new request ID for a genuinely new attempt."
+          "text": "Code walkthrough: each attempt opens a new transaction. The first insert claims the request ID; a concurrent duplicate waits for the unique-key conflict to resolve and then returns the stored outcome. Reusing one idempotency key for a different product is rejected. The conditional inventory `UPDATE ... stock > 0 RETURNING` is the atomic stock check, and the final outcome is committed with the stock change. Serialization and deadlock errors roll back the transaction, after which the entire unit retries at most three times with increasing delay and jitter. This example assumes `psycopg` 3 and the two tables shown. It does not make an external payment or email atomic; pass the same idempotency key to external providers and reconcile uncertain outcomes."
         }
       ]
     },
@@ -589,20 +595,24 @@
       "prompt": "Two transactions use PostgreSQL REPEATABLE READ to turn different doctors off call after both read that two doctors are available. What can happen?",
       "options": [
         {
+          "id": "a",
           "text": "Both may commit and leave zero doctors on call"
         },
         {
+          "id": "b",
           "text": "PostgreSQL always locks every row read"
         },
         {
+          "id": "c",
           "text": "REPEATABLE READ automatically enforces the cross-row rule"
         },
         {
+          "id": "d",
           "text": "No transaction can update a row it has read"
         }
       ],
-      "correctOptionIndex": 0,
-      "explanation": "The transactions update separate rows, so a stable snapshot alone does not enforce the cross-row invariant. SERIALIZABLE, a suitable shared lock, or a schema redesign can protect it."
+      "explanation": "The transactions update separate rows, so a stable snapshot alone does not enforce the cross-row invariant. SERIALIZABLE, a suitable shared lock, or a schema redesign can protect it.",
+      "correctOptionId": "a"
     },
     {
       "id": "lost-update-fix",
@@ -610,20 +620,24 @@
       "prompt": "Two requests increment a counter. Both read 10 and both later write 11. Which change directly fixes this simple lost-update pattern?",
       "options": [
         {
+          "id": "a",
           "text": "Read the value in the application and add a longer delay"
         },
         {
+          "id": "b",
           "text": "Use `UPDATE counters SET value = value + 1 WHERE id = 1`"
         },
         {
+          "id": "c",
           "text": "Raise connection pool size"
         },
         {
+          "id": "d",
           "text": "Switch to a read replica"
         }
       ],
-      "correctOptionIndex": 1,
-      "explanation": "The arithmetic happens against the row value when PostgreSQL performs the update, preventing the stale application-side overwrite for this single-row increment."
+      "explanation": "The arithmetic happens against the row value when PostgreSQL performs the update, preventing the stale application-side overwrite for this single-row increment.",
+      "correctOptionId": "b"
     },
     {
       "id": "retry-unit",
@@ -631,20 +645,24 @@
       "prompt": "A transaction fails with SQLSTATE 40001 after several reads and writes. Which is the safest retry plan?",
       "options": [
         {
+          "id": "a",
           "text": "Retry only the last UPDATE"
         },
         {
+          "id": "b",
           "text": "Retry the full transaction in a fresh transaction, with a bounded attempt count and backoff"
         },
         {
+          "id": "c",
           "text": "Retry forever with no delay"
         },
         {
+          "id": "d",
           "text": "Ignore the error and report success"
         }
       ],
-      "correctOptionIndex": 1,
-      "explanation": "Earlier reads informed later decisions, so retry the whole unit of work. Bound attempts and use backoff to avoid amplifying contention."
+      "explanation": "Earlier reads informed later decisions, so retry the whole unit of work. Bound attempts and use backoff to avoid amplifying contention.",
+      "correctOptionId": "b"
     },
     {
       "id": "idempotency",
@@ -652,20 +670,24 @@
       "prompt": "A webhook provider can deliver the same event more than once. What makes the database handling idempotent?",
       "options": [
         {
+          "id": "a",
           "text": "A unique event/request ID enforced in the database and duplicate handling in the same transaction"
         },
         {
+          "id": "b",
           "text": "Sleeping one second before every insert"
         },
         {
+          "id": "c",
           "text": "Checking for the event ID in the app without a constraint"
         },
         {
+          "id": "d",
           "text": "Using a replica for inserts"
         }
       ],
-      "correctOptionIndex": 0,
-      "explanation": "A database uniqueness rule handles concurrent duplicates. The request key and database effects must share a transaction; external side effects need their own idempotency contract."
+      "explanation": "A database uniqueness rule handles concurrent duplicates. The request key and database effects must share a transaction; external side effects need their own idempotency contract.",
+      "correctOptionId": "a"
     }
   ],
   "interviewScenarios": [
