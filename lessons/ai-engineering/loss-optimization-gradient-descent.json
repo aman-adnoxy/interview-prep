@@ -61,7 +61,7 @@
         },
         {
           "type": "paragraph",
-          "text": "Expected output: The loop prints updated w and the loss measured before that update. At step 1, w becomes 0.6 and the printed loss is 9.0."
+          "text": "Expected output:\n1 0.0 9.0\n2 0.6 5.76\n3 1.08 3.686\n4 1.464 2.359\n5 1.771 1.51\nfinal 2.017 0.966\nThe loop prints the current weight and its matching loss before applying each update, then prints the final weight and loss after five updates."
         }
       ]
     },
