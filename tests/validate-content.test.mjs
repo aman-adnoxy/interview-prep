@@ -59,3 +59,20 @@ test('all published database lessons keep a consistent assessment contract', () 
     }
   }
 });
+
+test('Database and AI Engineering are single tracks with valid stage membership', () => {
+  const curriculum = JSON.parse(fs.readFileSync(path.join(root, 'curriculum/manifest.json'), 'utf8'));
+  const db = curriculum.modules.find(module => module.id === 'databases');
+  const ai = curriculum.modules.find(module => module.id === 'ai-engineering');
+  assert.ok(db && ai);
+  assert.equal(db.sections.length, 20);
+  assert.equal(db.stages.length, 7);
+  assert.equal(ai.sections.length, 20);
+  assert.equal(ai.stages.length, 2);
+  assert.equal(curriculum.modules.some(module => module.id === 'ai-engineering-python-data-backend'), false);
+  for (const module of [db, ai]) {
+    const stageIds = new Set(module.stages.map(stage => stage.id));
+    assert.equal(stageIds.size, module.stages.length);
+    for (const section of module.sections) assert.ok(stageIds.has(section.stageId), section.id + ' must reference a stage');
+  }
+});
