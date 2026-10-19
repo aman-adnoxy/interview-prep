@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "features-labels-parameters-hyperparameters",
+  "topicId": "ai-engineering",
+  "sectionId": "features-labels-parameters-hyperparameters",
+  "title": "Features, Labels, Parameters, and Hyperparameters",
+  "difficulty": "beginner",
+  "estimatedMinutes": 31,
+  "learningObjectives": [
+    "Distinguish inputs, targets, learned parameters, and chosen settings.",
+    "Trace a supervised example from row to score.",
+    "Identify target leakage and train-serving mismatch."
+  ],
+  "mentalModel": {
+    "type": "paragraph",
+    "text": "Features are inputs, labels are the answers in supervised training, parameters are values learned during fitting, and hyperparameters are settings chosen by engineers. Their roles differ, and confusing them can create leakage or invalid experiments."
+  },
+  "concepts": [
+    {
+      "id": "motivation",
+      "title": "Problem and motivation",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A churn model may score well because it accidentally sees a field created after churn. Clear feature and label definitions prevent learning from the answer."
+        },
+        {
+          "type": "paragraph",
+          "text": "Features are inputs, labels are the answers in supervised training, parameters are values learned during fitting, and hyperparameters are settings chosen by engineers. Their roles differ, and confusing them can create leakage or invalid experiments."
+        }
+      ]
+    },
+    {
+      "id": "technical-deep-dive",
+      "title": "Technical deep dive and worked example",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The training algorithm adjusts parameters to reduce loss over feature-label examples. Hyperparameter search compares configurations such as regularization strength or learning rate using validation data. Features must be available at the real prediction time."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Predict whether a customer will cancel next month using last month's behavior.",
+          "reasoning": [
+            "Define the label as cancellation during the following month.",
+            "Use prior-30-day logins and tickets as candidate features.",
+            "Fitted coefficients are parameters; regularization strength and learning rate are hyperparameters.",
+            "Exclude cancellation date if it is only known after the prediction time."
+          ],
+          "outcome": "The prediction is valid only when features are available before the label window begins."
+        },
+        {
+          "type": "code",
+          "language": "python",
+          "source": "features = {\"logins_last_30_days\": 3, \"support_tickets_last_30_days\": 4}\nlabel = 1  # churned in the following month\nparameters = {\"logins\": -0.4, \"support_tickets\": 0.7}\nscore = (features[\"logins_last_30_days\"] * parameters[\"logins\"] +\n         features[\"support_tickets_last_30_days\"] * parameters[\"support_tickets\"])\nprint(score)",
+          "title": "A hand-worked linear score"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output: 1.6 — an illustrative raw score, not a calibrated probability or a trained model."
+        }
+      ]
+    },
+    {
+      "id": "tradeoffs-production",
+      "title": "Trade-offs and production behavior",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "More features can add signal but also collection cost, missingness, leakage risk, and serving complexity. Hyperparameter searches consume compute and can overfit validation."
+        },
+        {
+          "type": "paragraph",
+          "text": "Production check: Version feature definitions and test training-serving parity for units, time windows, null handling, and event freshness."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Anti-pattern to avoid",
+          "content": "Including post-outcome fields; calling learned weights hyperparameters; silently changing feature windows between training and serving."
+        }
+      ]
+    },
+    {
+      "id": "six-layer-interview-synthesis",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — A churn model may score well because it accidentally sees a field created after churn. Clear feature and label definitions prevent learning from the answer."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — The training algorithm adjusts parameters to reduce loss over feature-label examples. Hyperparameter search compares configurations such as regularization strength or learning rate using validation data. Features must be available at the real prediction time."
+        },
+        {
+          "type": "paragraph",
+          "text": "3. Internal mechanism — The training algorithm updates parameters to reduce a loss across feature-label examples. Hyperparameters configure that fitting process and are selected with validation data."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Predict whether a customer will cancel next month using last month's behavior.",
+          "reasoning": [
+            "Define the label as cancellation during the following month.",
+            "Use prior-30-day logins and tickets as candidate features.",
+            "Fitted coefficients are parameters; regularization strength and learning rate are hyperparameters.",
+            "Exclude cancellation date if it is only known after the prediction time."
+          ],
+          "outcome": "The prediction is valid only when features are available before the label window begins."
+        },
+        {
+          "type": "paragraph",
+          "text": "4. Trade-offs and scale — More features can add signal but also collection cost, missingness, leakage risk, and serving complexity. Hyperparameter searches consume compute and can overfit validation."
+        },
+        {
+          "type": "paragraph",
+          "text": "5. Anti-patterns — Including post-outcome fields; calling learned weights hyperparameters; silently changing feature windows between training and serving."
+        },
+        {
+          "type": "paragraph",
+          "text": "6. Interview probes — When is a feature available? Who defines the label window? Which values are learned? How do you compare hyperparameters without contaminating test?"
+        }
+      ]
+    }
+  ],
+  "tradeoffsAndPitfalls": [
+    {
+      "type": "callout",
+      "kind": "tip",
+      "title": "Engineering rule of thumb",
+      "content": "Define the prediction timestamp and label window before building features."
+    },
+    {
+      "type": "paragraph",
+      "text": "More features can add signal but also collection cost, missingness, leakage risk, and serving complexity. Hyperparameter searches consume compute and can overfit validation."
+    }
+  ],
+  "revisionSheet": [
+    {
+      "type": "paragraph",
+      "text": "Features are inputs, labels are the answers in supervised training, parameters are values learned during fitting, and hyperparameters are settings chosen by engineers. Their roles differ, and confusing them can create leakage or invalid experiments."
+    },
+    {
+      "type": "paragraph",
+      "text": "The training algorithm adjusts parameters to reduce loss over feature-label examples. Hyperparameter search compares configurations such as regularization strength or learning rate using validation data. Features must be available at the real prediction time."
+    },
+    {
+      "type": "paragraph",
+      "text": "Mechanism: The training algorithm updates parameters to reduce a loss across feature-label examples. Hyperparameters configure that fitting process and are selected with validation data."
+    },
+    {
+      "type": "paragraph",
+      "text": "Trade-off: More features can add signal but also collection cost, missingness, leakage risk, and serving complexity. Hyperparameter searches consume compute and can overfit validation."
+    },
+    {
+      "type": "paragraph",
+      "text": "Avoid: Including post-outcome fields; calling learned weights hyperparameters; silently changing feature windows between training and serving."
+    },
+    {
+      "type": "paragraph",
+      "text": "Interview probes: When is a feature available? Who defines the label window? Which values are learned? How do you compare hyperparameters without contaminating test?"
+    }
+  ],
+  "questions": [
+    {
+      "id": "feature",
+      "type": "single_select",
+      "prompt": "Which is a feature in a churn model?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Whether the customer churned next month"
+        },
+        {
+          "id": "b",
+          "text": "Number of logins in the prior 30 days"
+        },
+        {
+          "id": "c",
+          "text": "Validation score"
+        },
+        {
+          "id": "d",
+          "text": "Learning rate"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Prior logins are an input signal used to predict a future outcome."
+    },
+    {
+      "id": "label",
+      "type": "single_select",
+      "prompt": "What is the label in supervised churn prediction?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The target outcome, such as churn next month"
+        },
+        {
+          "id": "b",
+          "text": "A neural-network weight"
+        },
+        {
+          "id": "c",
+          "text": "An optimizer setting"
+        },
+        {
+          "id": "d",
+          "text": "A pipeline version"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "The label is the target the model learns to predict."
+    },
+    {
+      "id": "parameter",
+      "type": "single_select",
+      "prompt": "Which is usually a model parameter?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Validation split ratio"
+        },
+        {
+          "id": "b",
+          "text": "A coefficient learned during fitting"
+        },
+        {
+          "id": "c",
+          "text": "Chosen maximum tree depth"
+        },
+        {
+          "id": "d",
+          "text": "Business threshold"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Parameters are adjusted by the training algorithm."
+    },
+    {
+      "id": "hyperparameter",
+      "type": "single_select",
+      "prompt": "Which is a typical hyperparameter?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A learned weight"
+        },
+        {
+          "id": "b",
+          "text": "A customer feature value"
+        },
+        {
+          "id": "c",
+          "text": "Learning rate"
+        },
+        {
+          "id": "d",
+          "text": "The true label"
+        }
+      ],
+      "correctOptionId": "c",
+      "explanation": "Learning rate is chosen to control optimizer updates."
+    },
+    {
+      "id": "feature-correlation",
+      "type": "true_false",
+      "prompt": "A feature highly correlated with the target is always safe and useful.",
+      "correctAnswer": false,
+      "explanation": "It may leak future information or fail to generalize; availability and honest evaluation matter."
+    },
+    {
+      "id": "same-name-same-feature",
+      "type": "true_false",
+      "prompt": "If training and production features have the same name, their definitions must be identical.",
+      "correctAnswer": false,
+      "explanation": "The same name can hide different windows, units, null policies, or event availability."
+    }
+  ],
+  "interviewScenarios": [
+    {
+      "id": "leaky-feature",
+      "prompt": "A churn model uses account_closed_date to predict churn one month before it happens. What is wrong?",
+      "skillsTested": [
+        "feature availability",
+        "label design",
+        "leakage"
+      ],
+      "strongAnswerPoints": [
+        "The feature contains future or target-derived information.",
+        "Define the prediction timestamp and label horizon.",
+        "Remove or reconstruct the feature using information available at prediction time."
+      ],
+      "pitfalls": [
+        "Treating high offline accuracy as proof of a good feature"
+      ],
+      "referenceAnswer": "The field is unavailable at prediction time and may directly reveal the target. I would define the timestamp and label horizon, remove or reconstruct the feature from prior events, and rerun evaluation with a time-respecting split."
+    },
+    {
+      "id": "train-serving-skew",
+      "prompt": "An online model underperforms after a feature pipeline change. How do you debug it?",
+      "skillsTested": [
+        "feature contracts",
+        "monitoring",
+        "reproducibility"
+      ],
+      "strongAnswerPoints": [
+        "Compare training and serving definitions and units.",
+        "Replay known examples through both pipelines.",
+        "Check missingness, freshness, timezone, and window boundaries."
+      ],
+      "pitfalls": [
+        "Retraining before checking whether inputs changed meaning"
+      ],
+      "referenceAnswer": "I would diff training and serving features for the same records, inspect windows, units, null handling, and event delays, then add versioned feature contracts and parity tests."
+    }
+  ]
+}
