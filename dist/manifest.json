@@ -42,7 +42,7 @@
           "order": 3,
           "status": "published",
           "lessonPath": "/lessons/databases/database-transactions-isolation.json",
-          "questionCount": 12,
+          "questionCount": 14,
           "lessonId": "database-transactions-isolation"
         },
         {
@@ -212,7 +212,7 @@
           "order": 20,
           "status": "published",
           "lessonPath": "/lessons/databases/database-production-operations.json",
-          "questionCount": 12,
+          "questionCount": 14,
           "lessonId": "database-production-operations"
         }
       ]
