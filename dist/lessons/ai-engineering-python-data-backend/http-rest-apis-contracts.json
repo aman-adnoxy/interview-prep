@@ -186,19 +186,11 @@
         },
         {
           "type": "paragraph",
-          "text": "The function rejects `max_attempts < 1` rather than silently doing no work. In this demo the second call succeeds deterministically, so the printed result is `created on attempt 2`; jitter only changes the short wait, not which call succeeds. The function is runnable, but a real API client must supply its own transport, timeout/remaining-deadline handling, provider-specific transient-error classification, and idempotency key for writes."
+          "text": "Expected output: `created on attempt 2`. `demo_sender()` raises `TransientNetworkError` on its first call, then returns successfully on the second. The function rejects `max_attempts < 1`, so its loop cannot silently perform zero attempts. The jitter changes only the short wait, not which demo attempt succeeds."
         },
         {
           "type": "paragraph",
-          "text": "Expected output: `created on attempt 2`. The first demonstration call raises a known transient error; the bounded wrapper waits briefly and tries again. This makes the retry control flow executable instead of placing `return` at top level. The demo delay is intentionally tiny and does not implement a real request deadline."
-        },
-        {
-          "type": "paragraph",
-          "text": "For production, the injected `send` function must use the remaining end-to-end deadline, classify only explicitly retryable failures, and make duplicate execution safe (for example, by using an idempotency key for a create operation). Use a capped backoff with jitter, stop when the deadline is exhausted, and do not retry validation/authentication errors."
-        },
-        {
-          "type": "paragraph",
-          "text": "This is schematic, not a drop-in implementation: the client needs a real deadline calculation, transient-error classification, cancellation, and retry policy. Record request IDs, latency, status code, retry count, and a redacted dependency name so failures can be diagnosed across services."
+          "text": "This is an executable retry-control-flow demo, not a complete HTTP client. In production, the injected `send` must use the remaining end-to-end deadline; only explicitly transient failures should be retried; writes need an idempotency key or reconciliation; backoff/jitter and attempts must be bounded; and retries must stop when the deadline is exhausted. Do not retry validation/authentication errors. Record request IDs, latency, status, retry count and a redacted dependency name for diagnosis."
         }
       ]
     }
