@@ -158,6 +158,177 @@
             "Use uniqueness constraints for uniqueness, and consider transaction isolation for rules involving multiple rows."
           ],
           "outcome": "Pick the smallest database mechanism that actually protects the invariant, then handle conflict errors explicitly."
+        },
+        {
+          "type": "paragraph",
+          "text": "### Lost update: two increments become one"
+        },
+        {
+          "type": "table",
+          "title": "Two transactions read and overwrite the same counter",
+          "columns": [
+            "Step",
+            "Transaction A",
+            "Transaction B",
+            "Stored value"
+          ],
+          "rows": [
+            [
+              "Initial value",
+              "—",
+              "—",
+              "10"
+            ],
+            [
+              "1",
+              "SELECT value → 10",
+              "—",
+              "10"
+            ],
+            [
+              "2",
+              "—",
+              "SELECT value → 10",
+              "10"
+            ],
+            [
+              "3",
+              "UPDATE counters SET value = 11",
+              "—",
+              "11"
+            ],
+            [
+              "4",
+              "—",
+              "UPDATE counters SET value = 11",
+              "11"
+            ],
+            [
+              "Result",
+              "A intended +1",
+              "B intended +1",
+              "11 (one increment was lost)"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Each application computed the new value from a stale read, then overwrote the other transaction's change. For a simple increment, avoid read-modify-write in application code: issue `UPDATE counters SET value = value + 1 WHERE id = 1 RETURNING value;`. PostgreSQL serializes conflicting row updates, so two successful increments produce 12. If the rule depends on multiple rows or conditions, an atomic single-row update may not be sufficient; use constraints, deliberate locks, or a suitable isolation level."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "-- Safe atomic increment: let the database apply the change to the current row value\nUPDATE counters\nSET value = value + 1\nWHERE id = 1\nRETURNING value;",
+          "title": "Replace a read-modify-write sequence"
+        },
+        {
+          "type": "paragraph",
+          "text": "### Write skew: two individually valid updates break a shared rule"
+        },
+        {
+          "type": "table",
+          "title": "Invariant: at least one doctor must remain on call",
+          "columns": [
+            "Time",
+            "Transaction A",
+            "Transaction B"
+          ],
+          "rows": [
+            [
+              "1",
+              "BEGIN ISOLATION LEVEL REPEATABLE READ;",
+              "BEGIN ISOLATION LEVEL REPEATABLE READ;"
+            ],
+            [
+              "2",
+              "SELECT count(*) FROM doctors WHERE on_call; -- 2",
+              "SELECT count(*) FROM doctors WHERE on_call; -- 2"
+            ],
+            [
+              "3",
+              "UPDATE doctors SET on_call = false WHERE id = 1;",
+              "—"
+            ],
+            [
+              "4",
+              "—",
+              "UPDATE doctors SET on_call = false WHERE id = 2;"
+            ],
+            [
+              "5",
+              "COMMIT;",
+              "COMMIT;"
+            ],
+            [
+              "Outcome",
+              "Doctor 1 off call",
+              "Doctor 2 off call; invariant violated"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "Under PostgreSQL REPEATABLE READ, both transactions can commit because they update different rows based on the same snapshot. Each saw another doctor on call and made a locally reasonable decision, but together they violate the rule. Use `SERIALIZABLE` and retry serialization failures, or redesign the invariant so the database can enforce it with a constraint or a lockable shared row. The correct choice depends on the exact business rule."
+        },
+        {
+          "type": "table",
+          "title": "What changes across PostgreSQL isolation levels?",
+          "columns": [
+            "Level",
+            "Snapshot behavior",
+            "What the example demonstrates",
+            "Application consequence"
+          ],
+          "rows": [
+            [
+              "READ COMMITTED",
+              "Each statement gets a fresh snapshot",
+              "A second query may see a committed change made after the first query",
+              "Multi-statement decisions can change between reads; use atomic SQL/constraints/locks where required"
+            ],
+            [
+              "REPEATABLE READ",
+              "Reads in the transaction use a stable snapshot",
+              "Prevents non-repeatable reads, but write skew across different rows can still violate a cross-row invariant",
+              "Do not assume a stable snapshot protects every business rule"
+            ],
+            [
+              "SERIALIZABLE",
+              "Detects executions that cannot be equivalent to a serial order",
+              "One transaction in a dangerous write-skew pattern can be aborted",
+              "Handle SQLSTATE 40001 by retrying the complete transaction safely"
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "### Idempotent state changes and bounded retries"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "CREATE TABLE webhook_receipts (\n  provider_event_id text PRIMARY KEY,\n  payload jsonb NOT NULL,\n  received_at timestamptz NOT NULL DEFAULT now()\n);\n\n-- Re-delivery of the same event ID does not create duplicate rows.\n-- The provider contract should guarantee that the same ID means the same event.\nINSERT INTO webhook_receipts (provider_event_id, payload)\nVALUES ('evt_123', '{\"type\":\"invoice.paid\"}'::jsonb)\nON CONFLICT (provider_event_id)\nDO UPDATE SET payload = EXCLUDED.payload\nRETURNING provider_event_id;",
+          "title": "Idempotent upsert keyed by the provider event ID"
+        },
+        {
+          "type": "paragraph",
+          "text": "A stable unique key makes repeated delivery converge on one row. For side effects such as creating an order or charging a card, store the idempotency key and result in the same transaction as the database changes; a database upsert alone cannot make an external provider call atomic. If the same key can arrive with a different payload, compare a stored request hash and reject the conflict instead of silently overwriting a different request."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Tables assumed by the retry example",
+          "source": "CREATE TABLE inventory (\n  product_id bigint PRIMARY KEY,\n  stock integer NOT NULL CHECK (stock >= 0)\n);\n\nCREATE TABLE inventory_requests (\n  request_id text PRIMARY KEY,\n  product_id bigint NOT NULL REFERENCES inventory(product_id),\n  outcome text NOT NULL CHECK (outcome IN ('processing', 'reserved', 'out_of_stock'))\n);"
+        },
+        {
+          "type": "code",
+          "language": "python",
+          "source": "import random\nimport time\nfrom psycopg.errors import SerializationFailure, DeadlockDetected\n\ndef reserve_one_unit(conn, product_id, request_id):\n    max_attempts = 3\n    for attempt in range(max_attempts):\n        try:\n            with conn.transaction():  # fresh transaction on each attempt\n                with conn.cursor() as cur:\n                    cur.execute(\n                        \"INSERT INTO inventory_requests(request_id, product_id, outcome) \"\n                        \"VALUES (%s, %s, 'processing') \"\n                        \"ON CONFLICT (request_id) DO NOTHING RETURNING request_id\",\n                        (request_id, product_id),\n                    )\n                    inserted = cur.fetchone()\n                    if inserted is None:\n                        cur.execute(\n                            \"SELECT product_id, outcome FROM inventory_requests \"\n                            \"WHERE request_id = %s FOR SHARE\",\n                            (request_id,),\n                        )\n                        previous = cur.fetchone()\n                        if previous is None:\n                            raise RuntimeError(\"request record disappeared; retry at service boundary\")\n                        if previous[0] != product_id:\n                            raise ValueError(\"idempotency key reused for a different product\")\n                        return previous[1]  # return the original outcome, not a second reservation\n                    cur.execute(\n                        \"UPDATE inventory SET stock = stock - 1 \"\n                        \"WHERE product_id = %s AND stock > 0 RETURNING stock\",\n                        (product_id,),\n                    )\n                    outcome = \"reserved\" if cur.fetchone() is not None else \"out_of_stock\"\n                    cur.execute(\n                        \"UPDATE inventory_requests SET outcome = %s WHERE request_id = %s\",\n                        (outcome, request_id),\n                    )\n            return outcome  # commit the request result and stock change together\n        except (SerializationFailure, DeadlockDetected):\n            if attempt == max_attempts - 1:\n                raise\n            time.sleep(0.05 * (2 ** attempt) + random.uniform(0, 0.025))\n",
+          "title": "Bounded retry around a complete psycopg transaction"
+        },
+        {
+          "type": "paragraph",
+          "text": "Code walkthrough: each attempt opens a new transaction. The first insert claims the request ID; a concurrent duplicate waits for the unique-key conflict to resolve and then returns the stored outcome. Reusing one idempotency key for a different product is rejected. The conditional inventory `UPDATE ... stock > 0 RETURNING` is the atomic stock check, and the final outcome is committed with the stock change. Serialization and deadlock errors roll back the transaction, after which the entire unit retries at most three times with increasing delay and jitter. This example assumes `psycopg` 3 and the two tables shown. It does not make an external payment or email atomic; pass the same idempotency key to external providers and reconcile uncertain outcomes."
         }
       ]
     },
@@ -203,7 +374,7 @@
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — A transaction groups database writes; atomic updates, constraints, row locks, and isolation levels protect different kinds of invariants."
+          "text": "2. Definition and design choice — Isolation determines what concurrent transactions can observe; atomic updates protect simple row-level changes; constraints enforce invariants; locks or SERIALIZABLE may be needed for cross-row rules."
         },
         {
           "type": "worked_example",
@@ -213,19 +384,26 @@
             "One request changes stock from 1 to 0 and affects one row; the other no longer matches stock > 0 and affects zero rows.",
             "If an order row must be created only when the decrement succeeds, put the update and order insert in one transaction and roll back if the update affects zero rows."
           ],
-          "outcome": "One successful decrement corresponds to one accepted order. The application must treat zero affected rows as sold out, not as success."
+          "outcome": "One successful decrement corresponds to one accepted order. The application must treat zero affected rows as sold out, not as success.",
+          "text": "3. Internal mechanism — A read-modify-write can overwrite a concurrent change; write skew can occur when transactions update different rows after reading the same invariant. PostgreSQL SERIALIZABLE detects dangerous dependency patterns and may abort a transaction."
+        },
+        {
+          "type": "worked_example",
+          "problem": "Two on-call doctors both see that two doctors are available and each turns themselves off call. How would you prevent both from committing?",
+          "reasoning": [
+            "The two transactions update different rows, so a stable REPEATABLE READ snapshot alone can permit both updates.",
+            "Use SERIALIZABLE and handle SQLSTATE 40001 by retrying the complete transaction, or encode the rule using a common lockable row/constraint.",
+            "Keep the transaction short and make the operation idempotent so a retry does not duplicate side effects."
+          ],
+          "outcome": "Choose concurrency control based on the invariant, not simply on the number of statements. Always plan for retryable transaction failures."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — Locks can serialize conflicting writes and reduce throughput on hot rows. Use atomic updates for simple invariants; reserve broader serializable transactions for rules that need them, and handle aborts with bounded retries."
+          "text": "5. Anti-patterns — Check-then-write without an atomic update/constraint, assuming REPEATABLE READ prevents write skew, retrying only the last statement, or treating an upsert as atomic with an external API call."
         },
         {
           "type": "paragraph",
-          "text": "5. Anti-patterns — Check-then-write without a constraint or atomic update; holding a transaction open during network calls; retrying only part of a failed transaction; assuming rollback undoes external side effects."
-        },
-        {
-          "type": "paragraph",
-          "text": "6. Interview probes — What happens if two transactions update the same row? Why can SERIALIZABLE abort? What must be retried after a deadlock? Which invariant belongs in a UNIQUE constraint?"
+          "text": "6. Interview probes — Show a lost update. What is write skew? Why can SERIALIZABLE abort? Which SQLSTATEs should be retried? How do idempotency keys and unique constraints make retries safe?"
         }
       ]
     }
@@ -410,6 +588,106 @@
       "prompt": "Rolling back a database transaction can undo an email already sent to a customer.",
       "correctAnswer": false,
       "explanation": "A database rollback cannot reverse an external side effect. Use idempotency and durable workflow patterns to coordinate external work."
+    },
+    {
+      "id": "write-skew-invariant",
+      "type": "single_select",
+      "prompt": "Two transactions use PostgreSQL REPEATABLE READ to turn different doctors off call after both read that two doctors are available. What can happen?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Both may commit and leave zero doctors on call"
+        },
+        {
+          "id": "b",
+          "text": "PostgreSQL always locks every row read"
+        },
+        {
+          "id": "c",
+          "text": "REPEATABLE READ automatically enforces the cross-row rule"
+        },
+        {
+          "id": "d",
+          "text": "No transaction can update a row it has read"
+        }
+      ],
+      "explanation": "The transactions update separate rows, so a stable snapshot alone does not enforce the cross-row invariant. SERIALIZABLE, a suitable shared lock, or a schema redesign can protect it.",
+      "correctOptionId": "a"
+    },
+    {
+      "id": "lost-update-fix",
+      "type": "single_select",
+      "prompt": "Two requests increment a counter. Both read 10 and both later write 11. Which change directly fixes this simple lost-update pattern?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Read the value in the application and add a longer delay"
+        },
+        {
+          "id": "b",
+          "text": "Use `UPDATE counters SET value = value + 1 WHERE id = 1`"
+        },
+        {
+          "id": "c",
+          "text": "Raise connection pool size"
+        },
+        {
+          "id": "d",
+          "text": "Switch to a read replica"
+        }
+      ],
+      "explanation": "The arithmetic happens against the row value when PostgreSQL performs the update, preventing the stale application-side overwrite for this single-row increment.",
+      "correctOptionId": "b"
+    },
+    {
+      "id": "retry-unit",
+      "type": "single_select",
+      "prompt": "A transaction fails with SQLSTATE 40001 after several reads and writes. Which is the safest retry plan?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Retry only the last UPDATE"
+        },
+        {
+          "id": "b",
+          "text": "Retry the full transaction in a fresh transaction, with a bounded attempt count and backoff"
+        },
+        {
+          "id": "c",
+          "text": "Retry forever with no delay"
+        },
+        {
+          "id": "d",
+          "text": "Ignore the error and report success"
+        }
+      ],
+      "explanation": "Earlier reads informed later decisions, so retry the whole unit of work. Bound attempts and use backoff to avoid amplifying contention.",
+      "correctOptionId": "b"
+    },
+    {
+      "id": "idempotency",
+      "type": "single_select",
+      "prompt": "A webhook provider can deliver the same event more than once. What makes the database handling idempotent?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A unique event/request ID enforced in the database and duplicate handling in the same transaction"
+        },
+        {
+          "id": "b",
+          "text": "Sleeping one second before every insert"
+        },
+        {
+          "id": "c",
+          "text": "Checking for the event ID in the app without a constraint"
+        },
+        {
+          "id": "d",
+          "text": "Using a replica for inserts"
+        }
+      ],
+      "explanation": "A database uniqueness rule handles concurrent duplicates. The request key and database effects must share a transaction; external side effects need their own idempotency contract.",
+      "correctOptionId": "a"
     }
   ],
   "interviewScenarios": [
