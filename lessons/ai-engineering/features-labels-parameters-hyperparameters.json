@@ -57,6 +57,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Walkthrough: the feature values are 3 logins and 4 tickets. The illustrative coefficient contribution is 3 × -0.4 = -1.2 for logins and 4 × 0.7 = 2.8 for tickets. Their sum is 1.6. The label is shown to clarify the training target but is not used to compute this example's score. The coefficients are hypothetical, and 1.6 is not a probability."
+        },
+        {
+          "type": "paragraph",
           "text": "Expected output: 1.6 — an illustrative raw score, not a calibrated probability or a trained model."
         }
       ]
@@ -87,38 +91,27 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A churn model may score well because it accidentally sees a field created after churn. Clear feature and label definitions prevent learning from the answer."
+          "text": "1. Problem — A model may appear accurate because it uses a field created after the outcome or because train/serving feature meanings differ."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — The training algorithm adjusts parameters to reduce loss over feature-label examples. Hyperparameter search compares configurations such as regularization strength or learning rate using validation data. Features must be available at the real prediction time."
+          "text": "2. Choice — Features are inputs; labels are targets; parameters are learned by fitting; hyperparameters configure the model/training process."
         },
         {
           "type": "paragraph",
-          "text": "3. Internal mechanism — The training algorithm updates parameters to reduce a loss across feature-label examples. Hyperparameters configure that fitting process and are selected with validation data."
-        },
-        {
-          "type": "worked_example",
-          "problem": "Predict whether a customer will cancel next month using last month's behavior.",
-          "reasoning": [
-            "Define the label as cancellation during the following month.",
-            "Use prior-30-day logins and tickets as candidate features.",
-            "Fitted coefficients are parameters; regularization strength and learning rate are hyperparameters.",
-            "Exclude cancellation date if it is only known after the prediction time."
-          ],
-          "outcome": "The prediction is valid only when features are available before the label window begins."
+          "text": "3. Mechanism — Training combines features and learned parameters to produce a prediction and compares it with labels through a loss. Validation data is used to choose hyperparameters."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — More features can add signal but also collection cost, missingness, leakage risk, and serving complexity. Hyperparameter searches consume compute and can overfit validation."
+          "text": "4. Trade-offs — Adding features may help but adds missingness, leakage, collection, and serving costs. Larger hyperparameter searches consume compute and can overfit validation."
         },
         {
           "type": "paragraph",
-          "text": "5. Anti-patterns — Including post-outcome fields; calling learned weights hyperparameters; silently changing feature windows between training and serving."
+          "text": "5. Avoid — Using future-derived features, confusing weights with hyperparameters, or changing windows/units between training and serving."
         },
         {
           "type": "paragraph",
-          "text": "6. Interview probes — When is a feature available? Who defines the label window? Which values are learned? How do you compare hyperparameters without contaminating test?"
+          "text": "6. Interview probes — What was known at prediction time? What exactly is the label window? Which values are learned? Which settings are selected externally?"
         }
       ]
     }
@@ -138,27 +131,15 @@
   "revisionSheet": [
     {
       "type": "paragraph",
-      "text": "Features are inputs, labels are the answers in supervised training, parameters are values learned during fitting, and hyperparameters are settings chosen by engineers. Their roles differ, and confusing them can create leakage or invalid experiments."
+      "text": "Feature = input; label = target; parameter = learned value; hyperparameter = chosen model/training setting."
     },
     {
       "type": "paragraph",
-      "text": "The training algorithm adjusts parameters to reduce loss over feature-label examples. Hyperparameter search compares configurations such as regularization strength or learning rate using validation data. Features must be available at the real prediction time."
+      "text": "Define the prediction timestamp and label horizon before building features."
     },
     {
       "type": "paragraph",
-      "text": "Mechanism: The training algorithm updates parameters to reduce a loss across feature-label examples. Hyperparameters configure that fitting process and are selected with validation data."
-    },
-    {
-      "type": "paragraph",
-      "text": "Trade-off: More features can add signal but also collection cost, missingness, leakage risk, and serving complexity. Hyperparameter searches consume compute and can overfit validation."
-    },
-    {
-      "type": "paragraph",
-      "text": "Avoid: Including post-outcome fields; calling learned weights hyperparameters; silently changing feature windows between training and serving."
-    },
-    {
-      "type": "paragraph",
-      "text": "Interview probes: When is a feature available? Who defines the label window? Which values are learned? How do you compare hyperparameters without contaminating test?"
+      "text": "Test training-serving parity for windows, units, null handling, and event freshness."
     }
   ],
   "questions": [
@@ -215,52 +196,52 @@
     {
       "id": "parameter",
       "type": "single_select",
-      "prompt": "Which is usually a model parameter?",
+      "prompt": "During training, a linear model learns the coefficient 0.7 for support-ticket count by minimizing a loss. What role does 0.7 play?",
       "options": [
         {
           "id": "a",
-          "text": "Validation split ratio"
+          "text": "A feature value from one customer"
         },
         {
           "id": "b",
-          "text": "A coefficient learned during fitting"
+          "text": "A learned model parameter"
         },
         {
           "id": "c",
-          "text": "Chosen maximum tree depth"
+          "text": "A hyperparameter chosen before fitting"
         },
         {
           "id": "d",
-          "text": "Business threshold"
+          "text": "The validation label"
         }
       ],
       "correctOptionId": "b",
-      "explanation": "Parameters are adjusted by the training algorithm."
+      "explanation": "The coefficient is adjusted during fitting to reduce the training objective, so it is a parameter. A setting such as regularization strength is a hyperparameter."
     },
     {
       "id": "hyperparameter",
       "type": "single_select",
-      "prompt": "Which is a typical hyperparameter?",
+      "prompt": "A team compares tree depths 3, 6, and 12 on a validation set, then freezes the best choice before final testing. What is tree depth in this process?",
       "options": [
         {
           "id": "a",
-          "text": "A learned weight"
+          "text": "A label"
         },
         {
           "id": "b",
-          "text": "A customer feature value"
+          "text": "A feature value"
         },
         {
           "id": "c",
-          "text": "Learning rate"
+          "text": "A hyperparameter"
         },
         {
           "id": "d",
-          "text": "The true label"
+          "text": "A fitted prediction"
         }
       ],
       "correctOptionId": "c",
-      "explanation": "Learning rate is chosen to control optimizer updates."
+      "explanation": "Maximum depth is chosen outside ordinary parameter fitting and compared with validation data, so it is a hyperparameter. The final test should not guide this selection."
     },
     {
       "id": "feature-correlation",
