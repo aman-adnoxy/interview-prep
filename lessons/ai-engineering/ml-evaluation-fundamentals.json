@@ -82,6 +82,18 @@
           "kind": "pitfall",
           "title": "Anti-pattern to avoid",
           "content": "Reporting accuracy alone on imbalanced data; assuming a score of 0.8 is calibrated; choosing a threshold without considering capacity."
+        },
+        {
+          "type": "worked_example",
+          "problem": "A defect detector looks strong on a random offline split, but misses cases after launch. Walk through how you would investigate the gap and pick a threshold.",
+          "reasoning": [
+            "First verify the information boundary: remove features created after the prediction timestamp and fit imputers/scalers only on training data. Split by time or entity when the production task requires generalizing to future periods or unseen customers, then rerun the evaluation.",
+            "On a time-based validation set of 10,000 cases with 100 actual defects, threshold A produces TP=72, FP=428, FN=28, TN=9,472. Precision is 72/500=14.4%, recall is 72/100=72%, and 500/10,000=5% of cases are sent for review.",
+            "Threshold B produces TP=55, FP=145, FN=45, TN=9,755. Precision is 55/200=27.5%, recall is 55%, and review volume is 200/10,000=2%. Threshold A catches more defects but requires reviewing 2.5 times as many flagged cases in this example.",
+            "Choose using the cost of missed defects, false alarms, and the actual inspection capacity—not a universal best threshold. If each review costs $2, those validation volumes correspond to $1,000 versus $400 per 10,000 cases, before the cost of missed defects.",
+            "After launch, check whether defect prevalence or score distributions changed. For example, if positives fall from 1% to 0.4%, precision can fall even if the false-positive rate is similar. Track delayed labels, precision/recall by relevant subgroup, calibration, review volume, latency and cost per correctly handled case."
+          ],
+          "outcome": "A credible offline score depends on valid time/entity splits and leakage-free preprocessing; a production threshold must balance error cost and capacity and be monitored as the population changes."
         }
       ]
     },
@@ -284,21 +296,27 @@
     },
     {
       "id": "probability-quality",
-      "prompt": "A risk model ranks cases well, but predicted probabilities are systematically too high. Why does that matter?",
+      "prompt": "A model performs well on a random offline split but poorly after launch. How do you investigate leakage and split strategy, then choose and monitor a production threshold?",
       "skillsTested": [
-        "calibration",
-        "decision impact",
-        "monitoring"
+        "prediction-time data availability",
+        "time/entity split design",
+        "precision and recall",
+        "threshold and review capacity",
+        "population drift",
+        "cost per successful decision"
       ],
       "strongAnswerPoints": [
-        "Ranking and calibration measure different properties.",
-        "Compare predicted risk bands with observed outcomes.",
-        "Consider calibration on held-out data and monitor population drift."
+        "Check whether any features use information created after the prediction timestamp and fit preprocessing only on training data.",
+        "Use a time-based or group/entity split if it better represents production; rerun baselines and the confusion matrix on held-out data.",
+        "Compare threshold options with precision, recall, false-positive/false-negative cost and expected review volume.",
+        "Monitor prevalence, calibration, subgroup performance, delayed labels, latency and cost after launch; revisit the threshold when the population or capacity changes."
       ],
       "pitfalls": [
-        "Assuming high AUC proves probabilities are accurate"
+        "Tuning a threshold on the final test set and repeatedly reusing it",
+        "Using accuracy alone on imbalanced outcomes",
+        "Assuming a high AUC proves calibrated probabilities or immunity to drift"
       ],
-      "referenceAnswer": "AUC can be good even when probabilities are overconfident. If decisions depend on risk magnitude, compare predicted and observed rates by band and monitor calibration drift."
+      "referenceAnswer": "I would first check the prediction-time boundary, remove post-outcome features and fit preprocessing on training data only. I would choose a time-based or entity-based holdout that matches deployment, compare a baseline and inspect precision/recall at multiple thresholds, and choose according to miss costs and review capacity. After release I would monitor prevalence, calibration, subgroup errors, latency and cost, then reevaluate when the population or workflow changes."
     }
   ]
 }
