@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — Compare quality, latency, cost per successful task, maintainability, and failure impact—not model size alone."
+          "text": "4. Trade-offs and scale — A hybrid router can cut model calls: if it routes 9 of every 10 tickets with trustworthy rules and sends only ambiguous cases to an LLM, it makes about 90% fewer LLM calls than an all-LLM design at the same ticket volume. That is a call-volume estimate, not a quality guarantee; measure routing misses and p95 latency."
         },
         {
           "type": "paragraph",
