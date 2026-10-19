@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — Large learning rates can overshoot; tiny rates can make training slow. Batch size affects memory and update frequency. Training loss is not necessarily the business metric."
+          "text": "4. Trade-offs and scale — In the worked example, the first update moves w from 0 to 0.6 and reduces loss from 9 to 5.76. After five updates at learning rate 0.1, w is about 2.017 and loss about 0.966. The loss is still not zero; step size and objective shape determine how updates progress."
         },
         {
           "type": "paragraph",
