@@ -319,27 +319,6 @@
       "explanation": "RTO describes the target duration to restore service."
     },
     {
-      "id": "restore-drill",
-      "type": "single_select",
-      "prompt": "Why run restore drills if backups report success?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Prove the backup can be restored and data is usable"
-        },
-        {
-          "id": "b",
-          "text": "Increase production traffic"
-        },
-        {
-          "id": "c",
-          "text": "Remove need for monitoring"
-        }
-      ],
-      "correctOptionId": "a",
-      "explanation": "A backup can be incomplete, inaccessible, or too slow to restore."
-    },
-    {
       "id": "wal-pitr",
       "type": "single_select",
       "prompt": "What does WAL do in a PITR workflow?",
@@ -417,31 +396,6 @@
       "explanation": "Backfills affect storage, replicas, locks, and latency; bounded batches and monitoring reduce risk."
     },
     {
-      "id": "restore-drill",
-      "type": "single_select",
-      "prompt": "A nightly backup completed successfully, but no restore has ever been tested. What is still unknown?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Whether a usable database can be restored within the required RTO and data-loss window"
-        },
-        {
-          "id": "b",
-          "text": "Only the database hostname"
-        },
-        {
-          "id": "c",
-          "text": "Nothing; successful backups prove recovery"
-        },
-        {
-          "id": "d",
-          "text": "Whether SQL supports foreign keys"
-        }
-      ],
-      "correctOptionId": "a",
-      "explanation": "A restore drill validates the artifact, credentials/keys, integrity and recovery time. The backup job alone does not prove recoverability."
-    },
-    {
       "id": "pitr-requirements",
       "type": "single_select",
       "prompt": "What does PostgreSQL point-in-time recovery normally require?",
@@ -515,6 +469,56 @@
       ],
       "correctOptionId": "a",
       "explanation": "An invalid index may consume storage/write overhead, and a failed unique concurrent build can have special enforcement behavior. Investigate first."
+    },
+    {
+      "id": "pool-budget",
+      "type": "single_select",
+      "prompt": "A database allows 120 client connections. Three services each configure pools of 50, before migrations and admin sessions. What is the main problem?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Their combined possible demand (150) already exceeds the whole server budget, leaving no headroom for other clients"
+        },
+        {
+          "id": "b",
+          "text": "Each service will automatically share one pool"
+        },
+        {
+          "id": "c",
+          "text": "Connection count does not affect resource use"
+        },
+        {
+          "id": "d",
+          "text": "Set every pool to 120"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Plan a global connection budget across replicas/services, reserve operational headroom, and cap concurrency. More connections can increase contention."
+    },
+    {
+      "id": "incident-diagnosis",
+      "type": "single_select",
+      "prompt": "API p95 jumps from 100 ms to 1.4 seconds, while pool wait time rises and the database shows many active sessions. What should you do first?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Increase every pool and retry without limits"
+        },
+        {
+          "id": "b",
+          "text": "Measure pool wait, active/idle-in-transaction sessions, lock waits, and query plans; then reduce or queue concurrency at the actual bottleneck"
+        },
+        {
+          "id": "c",
+          "text": "Drop indexes"
+        },
+        {
+          "id": "d",
+          "text": "Disable statement timeouts"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Break the latency into queueing, query execution, locks, I/O, and application time. Increasing concurrency without evidence can worsen saturation."
     }
   ],
   "interviewScenarios": [
