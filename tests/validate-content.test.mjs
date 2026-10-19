@@ -28,3 +28,34 @@ test('Module 1 SQL lessons validate against the canonical lesson schema', () => 
   }
   assert.ok(loaded.find(item => item.sectionId === 'advanced-sql-window-functions-set-operations').concepts.some(concept => concept.id === 'module-cumulative-challenge'));
 });
+
+test('all published database lessons keep a consistent assessment contract', () => {
+  const curriculum = JSON.parse(fs.readFileSync(path.join(root, 'curriculum/manifest.json'), 'utf8'));
+  const databaseModule = curriculum.modules.find(module => module.id === 'databases');
+  assert.ok(databaseModule, 'database module must exist');
+  const directory = path.join(root, 'lessons/databases');
+  const byId = new Map();
+  for (const filename of fs.readdirSync(directory).filter(name => name.endsWith('.json'))) {
+    const item = JSON.parse(fs.readFileSync(path.join(directory, filename), 'utf8'));
+    byId.set(item.id, { item, filename });
+  }
+  const published = databaseModule.sections.filter(section => section.status === 'published');
+  assert.equal(published.length, 20, 'the published database curriculum should retain its 20 sections');
+  for (const section of published) {
+    const entry = byId.get(section.lessonId);
+    assert.ok(entry, 'missing source for section ' + section.id);
+    const { item, filename } = entry;
+    assert.equal(validateLesson(item, filename), true);
+    assert.equal(item.questions.length, 12, section.id + ' should have 12 assessment questions');
+    assert.equal(new Set(item.questions.map(question => question.id)).size, 12, section.id + ' should have unique question IDs');
+    assert.equal(item.interviewScenarios.length, 2, section.id + ' should have two interview scenarios');
+    assert.equal(new Set(item.interviewScenarios.map(scenario => scenario.id)).size, 2, section.id + ' should have unique scenario IDs');
+    for (const concept of item.concepts) {
+      for (const block of concept.blocks) {
+        if (block.type === 'code' && typeof block.source === 'string') {
+          assert.ok(!block.source.includes('\\n'), section.id + '/' + concept.id + ' contains a literal escaped newline in a code sample');
+        }
+      }
+    }
+  }
+});

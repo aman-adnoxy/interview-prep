@@ -1,41 +1,52 @@
 # Database Curriculum Content Audit
 
-Audit date: 2026-10-18
+Audit date: 2026-10-19
 
 ## Summary
 
-The audit reviewed all published database lessons for teaching quality, not just JSON validity. The six-layer interview synthesis is now topic-specific across the 16 original published lessons. Two new lessons have been added: SQL Query Fundamentals and Database Transactions and Isolation. The existing Redis/Caching section has been completed and moved from upcoming to published. A production operations lesson covering backups, PITR/WAL, RPO/RTO, safe migrations, connection pools, and diagnosis has also been added. The database curriculum now has 20 sections, all published.
+The database curriculum retains 20 published lessons across the existing modules. This pass implements the identified teaching and compatibility fixes in the canonical lesson sources. Existing strong material—such as join multiplication, foreign-key delete behavior, `DISTINCT` semantics, cache-aside, retry storms, backup-versus-replica differences, and the six-layer interview framework—was preserved rather than rewritten redundantly.
 
-## Fixes applied in this branch
+## Fixes applied in this pass
 
-- **SQL join multiplication:** Added input tables, the exact join query, all six joined rows, and before/after totals. Explains why the total doubles from ₹600 to ₹1,200, why COUNT(DISTINCT order_id) does not repair an inflated SUM, and why AVG only appears correct in this evenly duplicated example.
-- **B-tree traversal:** Replaced a generic query-plan checklist with root → internal page → leaf → optional heap fetch. Clarified fan-out-based height, page visits, cache state, and end-to-end latency.
-- **Query-plan analysis:** Fixed escaped newlines in the EXPLAIN output and added a concrete estimate mismatch (900 estimated rows vs 120,000 actual) and a sort spill. Clarifies planner cost units and the risk of raising work_mem without considering concurrency.
-- **All 16 original published lessons:** Replaced generic six-layer synthesis introductions and template scale prompts with topic-specific problem statements, explanations, and worked examples. Removed redundant learning objectives that merely announced use of the framework.
-- **New SQL fundamentals lesson:** Covers SELECT/WHERE, expressions, CASE, DISTINCT, ORDER BY/LIMIT, NULL basics, logical query order, expected outputs, and deterministic top-N queries.
-- **New transactions/isolation lesson:** Covers ACID, atomic inventory updates, check-then-write races, isolation and locks, deadlocks/serialization retries, transaction boundaries, and external side-effect/idempotency pitfalls.
-- **Redis/caching lesson:** Added cache-aside, TTL and invalidation, stale data, cache stampedes, hot keys, memory/eviction, persistence, replication lag, and failure handling. Updated the manifest from upcoming to published and retained its prerequisite relationship to index fundamentals.
-- **Production operations lesson:** Added restore drills, RPO/RTO, WAL-based point-in-time recovery, expand-and-contract migrations, connection-pool/backpressure guidance, and incident diagnosis.
-- **Curriculum ordering:** Added SQL fundamentals first and transactions after relational keys/constraints, then shifted existing section order without changing existing lesson IDs. The manifest now has 20 sections, all published.
+- **PostgreSQL version compatibility:** Checkpoint monitoring now uses `pg_stat_checkpointer` and its PostgreSQL 17+ column names. Foreground relation-write inspection is a separate `pg_stat_io` query. The lesson warns that checkpoint counters are cumulative and version-dependent.
+- **Transaction-ID wraparound:** Added database/table XID-age diagnostic queries, guidance for comparing values with live freeze settings, and a clear distinction between ordinary dead-tuple bloat and anti-wraparound risk.
+- **Concurrency correctness:** Added row-by-row lost-update and write-skew timelines, explained why PostgreSQL REPEATABLE READ does not protect every cross-row invariant, and compared READ COMMITTED, REPEATABLE READ, and SERIALIZABLE. Added an atomic increment example.
+- **Safe retries and idempotency:** Added a worked PostgreSQL upsert and a bounded `psycopg` transaction retry example with a stable request ID, stored outcome, conditional stock update, full-transaction retries, exponential backoff, jitter, and the limitation that a database transaction cannot make an external side effect atomic.
+- **Production index operations:** Added index size/usage/validity inventory, optional `pgstattuple`/B-tree inspection, concurrent build progress, validity checks, and a staged replacement/removal runbook. The lesson explains that index size alone does not prove bloat, zero `idx_scan` alone does not prove an index is unused, and a failed concurrent unique build can still enforce uniqueness in some failure states.
+- **Live constraint rollout:** Added a duplicate precheck and a staged `CREATE UNIQUE INDEX CONCURRENTLY` → verify → attach-constraint walkthrough, including the transaction-block restriction and invalid-index failure handling.
+- **SQL fundamentals:** Added `IN`, `BETWEEN`, PostgreSQL `ILIKE`, pattern-matching trade-offs, plus offset versus keyset pagination with a distinct sample input and matching expected IDs. Existing teaching that `DISTINCT` applies to the complete selected tuple was retained.
+- **Aggregation and normalization:** The CTE example now shows its exact expected result. The normalization lesson adds before/after sample rows and states the business-rule assumption behind the decomposition.
+- **NULL and window-function edge cases:** Added `NOT UNKNOWN`, a fully calculated NULL-safe join showing 2 × 2 = 4 matches, and a running-total example showing how tied sort keys behave with the default window frame versus an explicit `ROWS` frame and deterministic tie-breaker.
+- **Index-family fit:** Added a JSONB operator-class comparison showing that `jsonb_path_ops` does not support key-existence operators such as `?`, plus an SP-GiST point-in-box example. The lesson cautions that operator class and query operator must match.
+- **Query-plan interpretation:** Added an `actual rows` plus `loops` explanation, distinguishes millisecond execution time from arbitrary planner cost units, and describes what buffer hits/reads can and cannot establish about physical I/O.
+- **Composite indexes:** Added a second query shape contrasting a tenant-scoped feed with a global newest-first feed, including when a second index may be worth its write and storage cost.
+- **B-tree mechanism and scale:** Removed a duplicate learning objective and added an illustrative warm/cold page-access comparison, while clarifying that B-tree height is not a fixed end-to-end latency guarantee.
+- **Failover and distribution:** Added an asynchronous-replica promotion timeline, fencing/split-brain implications, request reconciliation, and a concrete hot-tenant example distinguishing partitioning on one server from distributing writes across shards.
+- **Repetition and assessment consistency:** Merged repeated introductory definitions in Index Fundamentals. Published database lessons are standardized at 12 questions and two interview scenarios, with a repository test to prevent accidental drift.
 
-## Remaining coverage gaps
+## Deliberately not duplicated
 
-These are follow-up priorities rather than claims that every item needs a separate lesson:
+- The relational constraints lesson already teaches `ON DELETE RESTRICT`, `CASCADE`, `SET NULL`, and `SET DEFAULT` with consequences.
+- SQL fundamentals already explains that `DISTINCT` compares complete selected output rows.
+- Scaling/reliability already covers read-after-write routing, replica lag, bounded retries/backoff, retry amplification, failover basics, and why a replica is not a backup. This pass adds deeper timelines and hotspot failures rather than repeating those definitions.
+- Transaction and operations material on retries, external side effects, backup/PITR, and rolling migrations has been extended where a worked example was missing instead of replaced wholesale.
 
-1. **Deeper index operations:** concurrent index builds, index size and bloat measurement, unused/redundant indexes, and safe index replacement. Existing lessons explain index costs but do not fully teach operational procedures.
-2. **Replication and distribution:** deeper failure cases for replica lag, failover, read-after-write guarantees, partitioning versus sharding, hot partitions, and recovery after promotion.
-3. **Redis durability choices:** the new lesson covers RDB/AOF and replication at interview level; deeper production configuration and failover runbooks can be a separate operations module if needed.
-4. **Advanced transaction cases:** add more hands-on exercises for write skew, optimistic concurrency, deferred constraints, and idempotent upserts where relevant to target interviews.
+## Remaining specialist depth
 
-## Acceptance checklist used
+These topics can be extended later if the target roles need a dedicated deep dive; they are not blockers for the fixes in this pass:
+
+1. Full Redis/replication operational runbooks for deployment-specific durability, failover, and recovery settings.
+2. More advanced transaction labs around optimistic concurrency and deferred constraints beyond the new lost-update, write-skew, atomic-upsert, and bounded-retry examples.
+3. Database-specific index maintenance procedures and recovery exercises for particular managed PostgreSQL providers and workload sizes.
+
+## Teaching and publishing acceptance checklist
 
 - Plain-language motivation before formal vocabulary.
-- A small concrete example that can be traced line by line.
-- SQL/code that is runnable or clearly labelled as schematic.
-- Expected output and explanation of important rows/values.
-- Internal mechanism: what the database does, in order.
+- SQL/code that is runnable or clearly labelled as schematic, with required tables/assumptions stated.
+- Expected output and explanation of important rows or values.
+- Internal mechanism traced in order, including what the database does.
 - Quantitative scale with units, assumptions, and caveats where relevant.
-- Trade-offs and failure modes with a practical decision rule.
+- Trade-offs, failure modes, and an actionable decision rule.
 - Interview probes with explained answers and edge cases.
-- Canonical lesson source and generated dist copy stay in sync.
-- Schema validation and publishing tests pass; structural validation is not a substitute for pedagogical review.
+- Canonical source and generated `dist/` copies match byte-for-byte.
+- Schema validation, semantic checks, test suite, build, and generated-output freshness check pass in CI.

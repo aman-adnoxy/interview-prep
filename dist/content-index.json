@@ -90,7 +90,7 @@
     "database-production-operations": {
       "path": "/lessons/databases/database-production-operations.json",
       "contentVersion": "2.0.0",
-      "questionCount": 8
+      "questionCount": 12
     },
     "database-query-plan-analysis-explain-analyze-joins-sorts-spills": {
       "path": "/lessons/databases/database-query-plan-analysis-explain-analyze-joins-sorts-spills.json",
@@ -100,12 +100,12 @@
     "database-transactions-isolation": {
       "path": "/lessons/databases/database-transactions-isolation.json",
       "contentVersion": "2.0.0",
-      "questionCount": 8
+      "questionCount": 12
     },
     "database-index-fundamentals": {
       "path": "/lessons/databases/index-fundamentals.json",
       "contentVersion": "2.0.0",
-      "questionCount": 8
+      "questionCount": 12
     },
     "postgresql-vs-mongodb": {
       "path": "/lessons/databases/postgresql-vs-mongodb.json",
@@ -115,7 +115,7 @@
     "redis-and-caching": {
       "path": "/lessons/databases/redis-and-caching.json",
       "contentVersion": "2.0.0",
-      "questionCount": 8
+      "questionCount": 12
     },
     "relational-databases-keys-constraints": {
       "path": "/lessons/databases/relational-databases-keys-constraints.json",
@@ -150,7 +150,7 @@
     "sql-query-fundamentals": {
       "path": "/lessons/databases/sql-query-fundamentals.json",
       "contentVersion": "2.0.0",
-      "questionCount": 8
+      "questionCount": 12
     }
   }
 }

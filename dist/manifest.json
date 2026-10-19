@@ -22,7 +22,7 @@
           "order": 1,
           "status": "published",
           "lessonPath": "/lessons/databases/sql-query-fundamentals.json",
-          "questionCount": 8,
+          "questionCount": 12,
           "lessonId": "sql-query-fundamentals"
         },
         {
@@ -42,7 +42,7 @@
           "order": 3,
           "status": "published",
           "lessonPath": "/lessons/databases/database-transactions-isolation.json",
-          "questionCount": 8,
+          "questionCount": 12,
           "lessonId": "database-transactions-isolation"
         },
         {
@@ -102,7 +102,7 @@
           "order": 9,
           "status": "published",
           "lessonPath": "/lessons/databases/index-fundamentals.json",
-          "questionCount": 8,
+          "questionCount": 12,
           "lessonId": "database-index-fundamentals"
         },
         {
@@ -182,7 +182,7 @@
           "order": 17,
           "status": "published",
           "lessonPath": "/lessons/databases/redis-and-caching.json",
-          "questionCount": 8,
+          "questionCount": 12,
           "lessonId": "redis-and-caching"
         },
         {
@@ -212,7 +212,7 @@
           "order": 20,
           "status": "published",
           "lessonPath": "/lessons/databases/database-production-operations.json",
-          "questionCount": 8,
+          "questionCount": 12,
           "lessonId": "database-production-operations"
         }
       ]
