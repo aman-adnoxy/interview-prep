@@ -525,6 +525,50 @@
       ],
       "correctOptionId": "a",
       "explanation": "Stale-while-revalidate is a business-dependent option: it lowers refresh pressure when bounded staleness is acceptable, but must not be used for data where stale decisions are unsafe."
+    },
+    {
+      "id": "ttl-freshness",
+      "type": "single_select",
+      "prompt": "A value has a 60-second TTL. What does this tell you?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The value is always perfectly fresh"
+        },
+        {
+          "id": "b",
+          "text": "The entry is eligible to expire after its TTL, but stale reads can occur before then"
+        },
+        {
+          "id": "c",
+          "text": "The database value cannot change for 60 seconds"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "TTL limits how long an entry lives; it does not guarantee immediate propagation of updates.",
+      "hint": "TTL is not the same as invalidation."
+    },
+    {
+      "id": "stampede",
+      "type": "single_select",
+      "prompt": "What is a cache stampede?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Many requests miss the same expired key and overload the source"
+        },
+        {
+          "id": "b",
+          "text": "A database backup"
+        },
+        {
+          "id": "c",
+          "text": "A Redis key that is always fresh"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Synchronized misses can trigger a burst of identical source queries.",
+      "hint": "Think about what happens when a popular key expires."
     }
   ],
   "interviewScenarios": [
