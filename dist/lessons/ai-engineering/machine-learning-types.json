@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — Unsupervised groups need interpretation; self-supervision may not directly optimize the product task; RL adds reward-design, exploration, and safety complexity."
+          "text": "4. Trade-offs and scale — Labeling 10,000 examples at an assumed 30 seconds per label takes about 300,000 seconds, or 83 hours, before review and quality control. Self-supervision can use raw text without that per-example labeling, but its objective may not match the business task. RL also needs safe interaction/reward data."
         },
         {
           "type": "paragraph",
