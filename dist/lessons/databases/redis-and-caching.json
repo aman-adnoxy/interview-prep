@@ -5,13 +5,14 @@
   "sectionId": "redis-and-caching",
   "title": "Redis and Caching Architecture: TTLs, Invalidation, and Stampedes",
   "difficulty": "intermediate",
-  "estimatedMinutes": 40,
+  "estimatedMinutes": 44,
   "learningObjectives": [
     "Explain why a cache helps and why it cannot replace the source of truth by default.",
     "Trace a cache-aside read and write, including misses and stale values.",
     "Choose TTL and invalidation behavior based on freshness requirements.",
     "Explain cache stampedes, hot keys, and safe mitigation strategies.",
-    "Describe Redis memory, eviction, persistence, and replication trade-offs."
+    "Describe Redis memory, eviction, persistence, and replication trade-offs.",
+    "Design cache keys so tenant identity, authorization scope, and response-changing inputs cannot collide."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -130,6 +131,70 @@
             "Decide how database errors behave: do not turn a failed database read into a cached 'not found' response."
           ],
           "outcome": "Cache-aside is simple and common, but cache misses, expiry, and source failures are part of the design."
+        }
+      ]
+    },
+    {
+      "id": "cache-key-design-and-tenant-isolation",
+      "title": "Design cache keys without leaking data across tenants",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A cache key identifies the result you are storing. If two requests can legitimately receive different responses, their cache entries must not accidentally share the same key. In a multi-tenant product, a product ID may only be unique inside one tenant, so a key such as `product:901` can collide across companies."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "title": "Example keys that include response identity",
+          "source": "product:v2:tenant-42:product-901:locale-en:policy-v3\nsearch:v2:tenant-42:category-shoes:sort-newest:page-1"
+        },
+        {
+          "type": "table",
+          "title": "Which request details belong in the key?",
+          "columns": [
+            "Response depends on…",
+            "Key design consideration",
+            "Example"
+          ],
+          "rows": [
+            [
+              "Tenant or account",
+              "Include the tenant/account identity",
+              "tenant-42"
+            ],
+            [
+              "Language or format",
+              "Include it if the representation changes",
+              "locale-en"
+            ],
+            [
+              "Filters, sorting, or page",
+              "Use normalized query parameters",
+              "sort-newest:page-1"
+            ],
+            [
+              "Permission scope",
+              "Include a stable scope/version if it changes the cached response, and still authorize the request",
+              "policy-v3"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Company A and Company B both have product ID 901. A cache key is built as `product:901`, and Company A's product contains private pricing.",
+          "reasoning": [
+            "Company A's request fills `product:901` with its product details.",
+            "Company B requests its own product 901 but resolves to the same cache key, so the cache can return Company A's value.",
+            "Include tenant identity and every other input that changes the response in the key. Invalidate or version entries when that response context changes.",
+            "Keep normal authorization checks on every request; a well-designed key reduces accidental collisions but does not grant or deny access on its own."
+          ],
+          "outcome": "A cache key is part of the data-isolation boundary. Build it from the identity and normalized inputs of the response, then enforce authorization independently."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Do not put secrets in cache keys",
+          "content": "Use stable identifiers or versions for tenant and permission context, not raw access tokens or secret values. Cache-key separation prevents some collisions; it is not a substitute for authorization, tenant filtering, or safe invalidation."
         }
       ]
     },
@@ -299,6 +364,12 @@
       "kind": "pitfall",
       "title": "A cache outage can become a database outage",
       "content": "If every request falls back to the database at full concurrency, a Redis outage can overwhelm the source. Use timeouts, bounded fallback concurrency, load shedding, and recovery plans."
+    },
+    {
+      "type": "callout",
+      "kind": "pitfall",
+      "title": "Tenant-aware keys are necessary but not sufficient",
+      "content": "Include tenant and response context in cache keys, but still enforce authorization and tenant scoping in the request path. Never rely on obscurity of a cache key to protect data."
     }
   ],
   "revisionSheet": [
@@ -321,6 +392,10 @@
     {
       "type": "paragraph",
       "text": "Monitor hit ratio, miss rate, evictions, hot keys, latency, memory, source load, and replica lag."
+    },
+    {
+      "type": "paragraph",
+      "text": "Cache keys must distinguish tenants and every input that changes the response; a key is not an authorization check."
     }
   ],
   "questions": [
@@ -425,31 +500,6 @@
       "prompt": "A Redis cache should normally tolerate losing or evicting cache entries by reloading them from the authoritative source.",
       "correctAnswer": true,
       "explanation": "A cache is generally a rebuildable performance layer; if Redis is the durable source of truth, that is a different architecture and needs explicit durability guarantees."
-    },
-    {
-      "id": "cache-source-of-truth",
-      "type": "single_select",
-      "prompt": "A cache is lost after a restart. What should a cache-aside application normally do?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Treat it as a miss and reload from the source of truth"
-        },
-        {
-          "id": "b",
-          "text": "Assume the data is permanently lost"
-        },
-        {
-          "id": "c",
-          "text": "Write an empty value back to the database"
-        },
-        {
-          "id": "d",
-          "text": "Route all writes to the cache forever"
-        }
-      ],
-      "correctOptionId": "a",
-      "explanation": "Cache-aside treats cache contents as disposable by default; the database or designated source remains authoritative."
     },
     {
       "id": "redis-eviction",
@@ -569,6 +619,31 @@
       "correctOptionId": "a",
       "explanation": "Synchronized misses can trigger a burst of identical source queries.",
       "hint": "Think about what happens when a popular key expires."
+    },
+    {
+      "id": "tenant-key-isolation",
+      "type": "single_select",
+      "prompt": "Two tenants can both have product ID 901. A cache uses the key `product:901`. What is the main risk and appropriate fix?",
+      "options": [
+        {
+          "id": "a",
+          "text": "No risk; Redis automatically checks tenant permissions"
+        },
+        {
+          "id": "b",
+          "text": "One tenant could receive the other tenant's cached value; include tenant and other response-changing context in the key and still authorize the request"
+        },
+        {
+          "id": "c",
+          "text": "The index will be slower"
+        },
+        {
+          "id": "d",
+          "text": "Use a longer TTL so data becomes tenant-specific"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "A cache key must distinguish tenant-scoped values and any other input that changes the response. Key design reduces accidental cross-tenant collisions, but authorization must still be enforced independently."
     }
   ],
   "interviewScenarios": [
