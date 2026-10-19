@@ -12,8 +12,8 @@
   "modules": [
     {
       "id": "databases",
-      "title": "Databases",
-      "description": "SQL fundamentals, schema design, indexes, query performance, caching, database trade-offs and scale.",
+      "title": "Database Engineering",
+      "description": "A practical database engineering track covering SQL, data modeling, transactions, indexes, query execution, caching, scaling, and production operations.",
       "order": 1,
       "sections": [
         {
@@ -23,7 +23,8 @@
           "difficulty": "beginner",
           "order": 1,
           "prerequisites": [],
-          "status": "published"
+          "status": "published",
+          "stageId": "sql-relational-foundations"
         },
         {
           "id": "relational-databases-keys-constraints",
@@ -34,74 +35,81 @@
           "prerequisites": [
             "sql-query-fundamentals"
           ],
-          "status": "published"
-        },
-        {
-          "id": "database-transactions-isolation",
-          "title": "Database Transactions and Isolation: ACID, Locks, and Concurrency",
-          "lessonId": "database-transactions-isolation",
-          "difficulty": "intermediate",
-          "order": 3,
-          "prerequisites": [
-            "relational-databases-keys-constraints"
-          ],
-          "status": "published"
+          "status": "published",
+          "stageId": "sql-relational-foundations"
         },
         {
           "id": "sql-joins",
           "title": "SQL Joins: INNER, LEFT, RIGHT, and FULL OUTER JOIN",
           "lessonId": "sql-joins-inner-left-right-full",
           "difficulty": "beginner",
-          "order": 4,
+          "order": 3,
           "prerequisites": [
             "relational-databases-keys-constraints"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "sql-relational-foundations"
         },
         {
           "id": "sql-aggregation-group-by-having-ctes",
           "title": "Aggregations, GROUP BY, HAVING, Subqueries, and CTEs",
           "lessonId": "sql-aggregation-group-by-having-ctes",
           "difficulty": "intermediate",
-          "order": 5,
+          "order": 4,
           "prerequisites": [
             "sql-joins"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "sql-relational-foundations"
         },
         {
           "id": "sql-null-semantics",
           "title": "NULL Semantics, Three-Valued Logic, and Common SQL Pitfalls",
           "lessonId": "sql-null-three-valued-logic",
           "difficulty": "intermediate",
-          "order": 6,
+          "order": 5,
           "prerequisites": [
             "sql-aggregation-group-by-having-ctes"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "sql-relational-foundations"
         },
         {
           "id": "schema-design-normalization",
           "title": "Database Schema Design, Normalization (1NF–3NF), and Denormalization",
           "lessonId": "database-schema-design-normalization",
           "difficulty": "intermediate",
-          "order": 7,
+          "order": 6,
           "prerequisites": [
             "relational-databases-keys-constraints"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "sql-relational-foundations"
         },
         {
           "id": "advanced-sql-window-functions-set-operations",
           "title": "Advanced SQL: Window Functions, Ranking, Set Operations, and Latest-Row-per-Group Queries",
           "lessonId": "advanced-sql-window-functions-set-operations",
           "difficulty": "intermediate",
-          "order": 8,
+          "order": 7,
           "prerequisites": [
             "sql-aggregation-group-by-having-ctes",
             "sql-null-semantics"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "sql-relational-foundations"
+        },
+        {
+          "id": "database-transactions-isolation",
+          "title": "Database Transactions and Isolation: ACID, Locks, and Concurrency",
+          "lessonId": "database-transactions-isolation",
+          "difficulty": "intermediate",
+          "order": 8,
+          "prerequisites": [
+            "relational-databases-keys-constraints"
+          ],
+          "status": "published",
+          "stageId": "transactions-concurrency"
         },
         {
           "id": "index-fundamentals",
@@ -112,7 +120,8 @@
           "prerequisites": [
             "advanced-sql-window-functions-set-operations"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "indexes-query-performance"
         },
         {
           "id": "index-design-performance",
@@ -123,7 +132,8 @@
           "prerequisites": [
             "index-fundamentals"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "indexes-query-performance"
         },
         {
           "id": "database-clustered-vs-nonclustered-indexes",
@@ -134,7 +144,8 @@
           "prerequisites": [
             "index-design-performance"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "indexes-query-performance"
         },
         {
           "id": "database-composite-indexes-column-order-leftmost-prefix",
@@ -145,7 +156,8 @@
           "prerequisites": [
             "database-clustered-vs-nonclustered-indexes"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "indexes-query-performance"
         },
         {
           "id": "database-postgresql-index-types",
@@ -156,7 +168,8 @@
           "prerequisites": [
             "database-composite-indexes-column-order-leftmost-prefix"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "indexes-query-performance"
         },
         {
           "id": "database-query-plan-analysis-explain-analyze-joins-sorts-spills",
@@ -167,7 +180,8 @@
           "prerequisites": [
             "database-postgresql-index-types"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "indexes-query-performance"
         },
         {
           "id": "database-index-selection-selectivity-sequential-scans-index-costs",
@@ -178,7 +192,8 @@
           "prerequisites": [
             "database-query-plan-analysis-explain-analyze-joins-sorts-spills"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "indexes-query-performance"
         },
         {
           "id": "advanced-database-internals",
@@ -189,7 +204,8 @@
           "prerequisites": [
             "database-index-selection-selectivity-sequential-scans-index-costs"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "database-internals"
         },
         {
           "id": "redis-and-caching",
@@ -200,7 +216,8 @@
           "prerequisites": [
             "index-fundamentals"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "caching"
         },
         {
           "id": "postgresql-vs-mongodb",
@@ -211,7 +228,8 @@
           "prerequisites": [
             "index-fundamentals"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "database-choice-and-scaling"
         },
         {
           "id": "scaling-and-reliability",
@@ -223,7 +241,8 @@
             "advanced-database-internals",
             "redis-and-caching"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "database-choice-and-scaling"
         },
         {
           "id": "database-production-operations",
@@ -234,7 +253,52 @@
           "prerequisites": [
             "scaling-and-reliability"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "production-operations"
+        }
+      ],
+      "stages": [
+        {
+          "id": "sql-relational-foundations",
+          "title": "SQL and Relational Foundations",
+          "description": "Query fundamentals, relational modeling, joins, aggregation, NULL behavior, normalization, and advanced SQL.",
+          "order": 1
+        },
+        {
+          "id": "transactions-concurrency",
+          "title": "Transactions and Concurrency",
+          "description": "ACID, isolation, locking, anomalies, safe retries, and concurrent updates.",
+          "order": 2
+        },
+        {
+          "id": "indexes-query-performance",
+          "title": "Indexes and Query Performance",
+          "description": "Index structures, index families, composite design, query plans, and index selection.",
+          "order": 3
+        },
+        {
+          "id": "database-internals",
+          "title": "Database Internals",
+          "description": "Storage pages, execution internals, MVCC, memory, and engine behavior.",
+          "order": 4
+        },
+        {
+          "id": "caching",
+          "title": "Redis and Caching",
+          "description": "Cache design, TTLs, invalidation, cache stampedes, and isolation.",
+          "order": 5
+        },
+        {
+          "id": "database-choice-and-scaling",
+          "title": "Database Choice, Scaling and Reliability",
+          "description": "Relational vs. document databases, replication, distribution, scaling, and reliability.",
+          "order": 6
+        },
+        {
+          "id": "production-operations",
+          "title": "Production Operations",
+          "description": "Backups, migrations, monitoring, safe index and constraint changes, and operational recovery.",
+          "order": 7
         }
       ]
     },
@@ -268,8 +332,8 @@
     },
     {
       "id": "ai-engineering",
-      "title": "AI Engineering — Module 1: AI and ML Foundations",
-      "description": "Module 1 of AI Engineering: core AI/ML concepts, data preparation, training, overfitting, and model evaluation.",
+      "title": "AI Engineering",
+      "description": "A unified AI Engineering track from AI/ML foundations through Python, data handling, backend services, and reliable AI application foundations.",
       "order": 6,
       "sections": [
         {
@@ -279,7 +343,8 @@
           "difficulty": "beginner",
           "order": 1,
           "prerequisites": [],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "machine-learning-types",
@@ -290,7 +355,8 @@
           "prerequisites": [
             "ai-vs-ml-deep-learning-generative-ai"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "classification-regression-clustering",
@@ -301,7 +367,8 @@
           "prerequisites": [
             "machine-learning-types"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "training-validation-test-splits",
@@ -312,7 +379,8 @@
           "prerequisites": [
             "classification-regression-clustering"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "features-labels-parameters-hyperparameters",
@@ -323,7 +391,8 @@
           "prerequisites": [
             "training-validation-test-splits"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "feature-engineering-preprocessing",
@@ -334,7 +403,8 @@
           "prerequisites": [
             "features-labels-parameters-hyperparameters"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "loss-optimization-gradient-descent",
@@ -345,7 +415,8 @@
           "prerequisites": [
             "feature-engineering-preprocessing"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "overfitting-underfitting-regularization",
@@ -356,7 +427,8 @@
           "prerequisites": [
             "loss-optimization-gradient-descent"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "bias-variance-data-leakage",
@@ -367,7 +439,8 @@
           "prerequisites": [
             "overfitting-underfitting-regularization"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "ai-ml-foundations"
         },
         {
           "id": "ml-evaluation-fundamentals",
@@ -378,124 +451,141 @@
           "prerequisites": [
             "bias-variance-data-leakage"
           ],
-          "status": "published"
-        }
-      ]
-    },
-    {
-      "id": "ai-engineering-python-data-backend",
-      "title": "AI Engineering — Module 2: Python, Data Handling and Backend Fundamentals",
-      "description": "Core Python, numerical/data processing, asynchronous I/O, API contracts, security boundaries, and durable background work used to build reliable AI applications.",
-      "order": 7,
-      "sections": [
+          "status": "published",
+          "stageId": "ai-ml-foundations"
+        },
         {
           "id": "python-for-ai-engineering",
           "title": "Python for AI Engineering: Functions, Classes, Modules, and Clean Code",
           "lessonId": "python-for-ai-engineering",
           "difficulty": "beginner",
-          "order": 1,
+          "order": 11,
           "prerequisites": [],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "data-structures-algorithmic-complexity",
           "title": "Data Structures and Algorithmic Complexity for AI Services",
           "lessonId": "data-structures-algorithmic-complexity",
           "difficulty": "beginner",
-          "order": 2,
+          "order": 12,
           "prerequisites": [
             "python-for-ai-engineering"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "numpy-vectorized-computation",
           "title": "NumPy and Vectorized Computation: Arrays, Shapes, and Broadcasting",
           "lessonId": "numpy-vectorized-computation",
           "difficulty": "beginner",
-          "order": 3,
+          "order": 13,
           "prerequisites": [
             "python-for-ai-engineering"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "pandas-dataset-preparation",
           "title": "Pandas and Dataset Preparation: Read, Filter, Join, Group, Transform",
           "lessonId": "pandas-dataset-preparation",
           "difficulty": "beginner",
-          "order": 4,
+          "order": 14,
           "prerequisites": [
             "numpy-vectorized-computation"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "missing-values-duplicates-outliers",
           "title": "Missing Values, Duplicates, and Outliers: Clean Without Hiding Errors",
           "lessonId": "missing-values-duplicates-outliers",
           "difficulty": "intermediate",
-          "order": 5,
+          "order": 15,
           "prerequisites": [
             "pandas-dataset-preparation"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "python-async-await",
           "title": "Python Async and Await: Event Loops, Coroutines, and I/O",
           "lessonId": "python-async-await",
           "difficulty": "intermediate",
-          "order": 6,
+          "order": 16,
           "prerequisites": [
             "python-for-ai-engineering"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "concurrency-parallelism",
           "title": "Concurrency and Parallelism: Threads, Processes, and Async I/O",
           "lessonId": "concurrency-parallelism",
           "difficulty": "intermediate",
-          "order": 7,
+          "order": 17,
           "prerequisites": [
             "python-async-await"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "http-rest-apis-contracts",
           "title": "HTTP, REST APIs, and API Contracts: Requests, Responses, Validation",
           "lessonId": "http-rest-apis-contracts",
           "difficulty": "beginner",
-          "order": 8,
+          "order": 18,
           "prerequisites": [
             "python-for-ai-engineering"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "authentication-authorization-tenant-isolation",
           "title": "Authentication, Authorization, and Tenant Isolation",
           "lessonId": "authentication-authorization-tenant-isolation",
           "difficulty": "intermediate",
-          "order": 9,
+          "order": 19,
           "prerequisites": [
             "http-rest-apis-contracts"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
         },
         {
           "id": "background-jobs-long-running-operations",
           "title": "Background Jobs and Long-Running Operations: Queues, Status, Cancellation, Recovery",
           "lessonId": "background-jobs-long-running-operations",
           "difficulty": "intermediate",
-          "order": 10,
+          "order": 20,
           "prerequisites": [
             "http-rest-apis-contracts",
             "authentication-authorization-tenant-isolation"
           ],
-          "status": "published"
+          "status": "published",
+          "stageId": "python-data-backend"
+        }
+      ],
+      "stages": [
+        {
+          "id": "ai-ml-foundations",
+          "title": "AI and ML Foundations",
+          "description": "Core AI/ML concepts, data preparation, training, generalization, and model evaluation.",
+          "order": 1
+        },
+        {
+          "id": "python-data-backend",
+          "title": "Python, Data and Backend Foundations",
+          "description": "Python, data processing, async/concurrency, APIs, security boundaries, and durable background work for AI applications.",
+          "order": 2
         }
       ]
     }
