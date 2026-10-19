@@ -137,6 +137,24 @@
             "Application rollback does not automatically undo a destructive data migration."
           ],
           "outcome": "Use expand-and-contract so schema and application changes do not require every instance to switch simultaneously."
+        },
+        {
+          "type": "paragraph",
+          "text": "### Large-table uniqueness and index deployment"
+        },
+        {
+          "type": "paragraph",
+          "text": "A schema migration can be logically correct and still create too much downtime if it scans a large live table under a strong lock. For PostgreSQL, one way to enforce uniqueness with less write blocking is to clean up duplicates, prevent new duplicates during the rollout, create a unique index concurrently, verify the index is valid, then attach it as a constraint. Plan the exact sequence for the PostgreSQL version and table type."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Build and verify a concurrent unique index",
+          "source": "-- Resolve existing duplicates first, and coordinate writes so duplicates cannot reappear.\nCREATE UNIQUE INDEX CONCURRENTLY users_email_uq_idx\nON users (email);\n\nSELECT indexrelid::regclass AS index_name, indisvalid, indisready\nFROM pg_index\nWHERE indexrelid = 'public.users_email_uq_idx'::regclass;\n\nALTER TABLE users\nADD CONSTRAINT users_email_key UNIQUE USING INDEX users_email_uq_idx;"
+        },
+        {
+          "type": "paragraph",
+          "text": "`CREATE INDEX CONCURRENTLY` must be run outside an explicit transaction block. It uses more work and may take longer; monitor its progress, lock waits, write latency, and replication lag. If it fails, inspect the catalog flags and server logs before retrying. An invalid concurrent unique index can still enforce uniqueness in some failure states, so do not assume every invalid index is harmless. The exact recovery step depends on the failed phase and index type."
         }
       ]
     },
@@ -397,6 +415,106 @@
       "prompt": "Large backfills should be planned for WAL, locks, replication lag, restartability, and production load.",
       "correctAnswer": true,
       "explanation": "Backfills affect storage, replicas, locks, and latency; bounded batches and monitoring reduce risk."
+    },
+    {
+      "id": "restore-drill",
+      "type": "single_select",
+      "prompt": "A nightly backup completed successfully, but no restore has ever been tested. What is still unknown?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Whether a usable database can be restored within the required RTO and data-loss window"
+        },
+        {
+          "id": "b",
+          "text": "Only the database hostname"
+        },
+        {
+          "id": "c",
+          "text": "Nothing; successful backups prove recovery"
+        },
+        {
+          "id": "d",
+          "text": "Whether SQL supports foreign keys"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A restore drill validates the artifact, credentials/keys, integrity and recovery time. The backup job alone does not prove recoverability."
+    },
+    {
+      "id": "pitr-requirements",
+      "type": "single_select",
+      "prompt": "What does PostgreSQL point-in-time recovery normally require?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A base backup and the needed continuous WAL archive to replay to the target time"
+        },
+        {
+          "id": "b",
+          "text": "Only a read replica"
+        },
+        {
+          "id": "c",
+          "text": "Only the latest schema dump"
+        },
+        {
+          "id": "d",
+          "text": "An index on every timestamp column"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "PITR restores a base backup and replays archived WAL up to the chosen point, provided the required chain is available."
+    },
+    {
+      "id": "expand-contract",
+      "type": "single_select",
+      "prompt": "Why keep the old column during the first deploy of an expand-and-contract migration?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Old application instances may still be reading or writing it while old and new versions coexist"
+        },
+        {
+          "id": "b",
+          "text": "PostgreSQL cannot add new columns"
+        },
+        {
+          "id": "c",
+          "text": "Columns cannot be dropped in PostgreSQL"
+        },
+        {
+          "id": "d",
+          "text": "The new application cannot use SQL"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "A rolling deployment can run application versions at once. Removing the old shape before every consumer is migrated can break older instances."
+    },
+    {
+      "id": "migration-index-build",
+      "type": "single_select",
+      "prompt": "A concurrent index build fails and leaves an invalid index. What is the safest next step?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Inspect its catalog state, server logs, dependencies, and failure phase before deciding whether to drop/rebuild"
+        },
+        {
+          "id": "b",
+          "text": "Assume it has no write overhead and ignore it forever"
+        },
+        {
+          "id": "c",
+          "text": "Immediately rerun CREATE INDEX with the same name without checking"
+        },
+        {
+          "id": "d",
+          "text": "Drop the table"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "An invalid index may consume storage/write overhead, and a failed unique concurrent build can have special enforcement behavior. Investigate first."
     }
   ],
   "interviewScenarios": [
