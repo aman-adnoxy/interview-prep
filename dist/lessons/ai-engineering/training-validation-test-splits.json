@@ -102,7 +102,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — One split is cheap but noisy; cross-validation costs more; time/group splits are more realistic when future periods or unseen entities matter."
+          "text": "4. Trade-offs and scale — For 100,000 independent examples, an 80/10/10 split gives 80,000 training, 10,000 validation, and 10,000 test examples. That is a starting ratio, not a rule: grouped or time-based splits can change the counts and better represent deployment; small test sets make the estimate noisier."
         },
         {
           "type": "paragraph",
