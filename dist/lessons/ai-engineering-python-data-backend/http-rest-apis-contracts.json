@@ -177,8 +177,20 @@
         {
           "type": "code",
           "language": "python",
-          "title": "One bounded retry outline (schematic)",
-          "source": "for attempt in range(max_attempts):\n    try:\n        return send_request(timeout=remaining_deadline())\n    except TransientNetworkError:\n        if attempt + 1 == max_attempts:\n            raise\n        sleep_with_exponential_backoff_and_jitter(attempt)\n# Helpers and error classification are application-specific."
+          "title": "A runnable bounded-retry demonstration",
+          "source": "import random\nimport time\nfrom collections.abc import Callable\n\n\nclass TransientNetworkError(Exception):\n    \"\"\"Temporary failure that this example is allowed to retry.\"\"\"\n\n\ndef send_with_retry(\n    send: Callable[[], str],\n    *,\n    max_attempts: int = 3,\n    base_delay: float = 0.01,\n) -> str:\n    if max_attempts < 1:\n        raise ValueError(\"max_attempts must be at least 1\")\n\n    for attempt in range(max_attempts):\n        try:\n            return send()\n        except TransientNetworkError:\n            if attempt + 1 == max_attempts:\n                raise\n            delay = base_delay * (2 ** attempt) + random.uniform(0, base_delay)\n            time.sleep(delay)\n\n    raise AssertionError(\"loop exits only by returning or raising\")\n\n\ndef demo_sender() -> Callable[[], str]:\n    calls = 0\n\n    def send() -> str:\n        nonlocal calls\n        calls += 1\n        if calls == 1:\n            raise TransientNetworkError(\"temporary demo failure\")\n        return f\"created on attempt {calls}\"\n\n    return send\n\n\nprint(send_with_retry(demo_sender()))"
+        },
+        {
+          "type": "paragraph",
+          "text": "The function rejects `max_attempts < 1` rather than silently doing no work. In this demo the second call succeeds deterministically, so the printed result is `created on attempt 2`; jitter only changes the short wait, not which call succeeds. The function is runnable, but a real API client must supply its own transport, timeout/remaining-deadline handling, provider-specific transient-error classification, and idempotency key for writes."
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output: `created on attempt 2`. The first demonstration call raises a known transient error; the bounded wrapper waits briefly and tries again. This makes the retry control flow executable instead of placing `return` at top level. The demo delay is intentionally tiny and does not implement a real request deadline."
+        },
+        {
+          "type": "paragraph",
+          "text": "For production, the injected `send` function must use the remaining end-to-end deadline, classify only explicitly retryable failures, and make duplicate execution safe (for example, by using an idempotency key for a create operation). Use a capped backoff with jitter, stop when the deadline is exhausted, and do not retry validation/authentication errors."
         },
         {
           "type": "paragraph",
