@@ -22,7 +22,7 @@ The database curriculum retains 20 published lessons across the existing modules
 - **Composite indexes:** Added a second query shape contrasting a tenant-scoped feed with a global newest-first feed, including when a second index may be worth its write and storage cost.
 - **B-tree mechanism and scale:** Removed a duplicate learning objective and added an illustrative warm/cold page-access comparison, while clarifying that B-tree height is not a fixed end-to-end latency guarantee.
 - **Failover and distribution:** Added an asynchronous-replica promotion timeline, fencing/split-brain implications, request reconciliation, and a concrete hot-tenant example distinguishing partitioning on one server from distributing writes across shards.
-- **Repetition and assessment consistency:** Merged repeated introductory definitions in Index Fundamentals. Core lessons generally use 12 questions and two interview scenarios; specialist production lessons may add a small number of targeted checks when new operational coverage warrants them. Repository tests guard the defined curriculum expectations.
+- **Repetition and assessment consistency:** Merged repeated introductory definitions in Index Fundamentals. Published database lessons are standardized at 12 questions and two interview scenarios, with a repository test to prevent accidental drift.
 
 ## Deliberately not duplicated
 
