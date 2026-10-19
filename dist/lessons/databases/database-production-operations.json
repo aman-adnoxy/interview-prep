@@ -440,27 +440,6 @@
       "explanation": "PITR combines a base backup with the required WAL history."
     },
     {
-      "id": "migration-order",
-      "type": "single_select",
-      "prompt": "When should the old column be removed?",
-      "options": [
-        {
-          "id": "a",
-          "text": "Before deploying new code"
-        },
-        {
-          "id": "b",
-          "text": "After all old consumers are gone"
-        },
-        {
-          "id": "c",
-          "text": "When adding new columns"
-        }
-      ],
-      "correctOptionId": "b",
-      "explanation": "Expand-and-contract delays removal until old code no longer depends on the old shape."
-    },
-    {
       "id": "pool-size",
       "type": "single_select",
       "prompt": "Why can increasing a connection pool worsen latency?",
@@ -480,13 +459,6 @@
       ],
       "correctOptionId": "b",
       "explanation": "Too much concurrency can increase contention rather than throughput."
-    },
-    {
-      "id": "backup-proof",
-      "type": "true_false",
-      "prompt": "A successful backup job alone proves the team can meet its recovery time objective.",
-      "correctAnswer": false,
-      "explanation": "A restore drill measures the full recovery process and validates the restored data."
     },
     {
       "id": "migration-batches",
