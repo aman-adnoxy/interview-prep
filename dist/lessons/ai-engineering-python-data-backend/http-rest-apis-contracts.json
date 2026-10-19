@@ -80,8 +80,12 @@
         {
           "type": "code",
           "language": "python",
-          "title": "Call an API with a deadline and explicit error handling",
+          "title": "HTTP request pattern (replace the placeholder endpoint)",
           "source": "import requests\n\nresponse = requests.get(\n    \"https://api.example.test/v1/models\",\n    timeout=(2, 10),  # connect timeout, read timeout\n)\nresponse.raise_for_status()\ndata = response.json()\nprint(type(data).__name__)"
+        },
+        {
+          "type": "paragraph",
+          "text": "This is syntactically runnable Python once `requests` is installed and the placeholder `https://api.example.test/v1/models` is replaced with a real endpoint you are authorized to call. As written, it is a pattern rather than an end-to-end request to a live service. The parsed payload's Python type depends on the endpoint's JSON response, so there is no fixed expected output for this placeholder."
         },
         {
           "type": "paragraph",
