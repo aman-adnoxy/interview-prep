@@ -377,14 +377,7 @@
           "text": "2. Definition and design choice — Isolation determines what concurrent transactions can observe; atomic updates protect simple row-level changes; constraints enforce invariants; locks or SERIALIZABLE may be needed for cross-row rules."
         },
         {
-          "type": "worked_example",
-          "problem": "Use `UPDATE inventory SET stock = stock - 1 WHERE product_id = 99 AND stock > 0` and inspect the affected-row count.",
-          "reasoning": [
-            "The database evaluates the predicate as part of the update, so competing requests do not both successfully decrement the same last unit.",
-            "One request changes stock from 1 to 0 and affects one row; the other no longer matches stock > 0 and affects zero rows.",
-            "If an order row must be created only when the decrement succeeds, put the update and order insert in one transaction and roll back if the update affects zero rows."
-          ],
-          "outcome": "One successful decrement corresponds to one accepted order. The application must treat zero affected rows as sold out, not as success.",
+          "type": "paragraph",
           "text": "3. Internal mechanism — A read-modify-write can overwrite a concurrent change; write skew can occur when transactions update different rows after reading the same invariant. PostgreSQL SERIALIZABLE detects dangerous dependency patterns and may abort a transaction."
         },
         {
