@@ -5,13 +5,14 @@
   "sectionId": "database-transactions-isolation",
   "title": "Database Transactions and Isolation: ACID, Locks, and Concurrency",
   "difficulty": "intermediate",
-  "estimatedMinutes": 42,
+  "estimatedMinutes": 50,
   "learningObjectives": [
     "Explain ACID using concrete failures and database guarantees.",
     "Distinguish a transaction from a single SQL statement and reason about commit and rollback.",
     "Recognize lost updates, non-repeatable reads, and serialization conflicts.",
     "Use constraints, atomic updates, row locks, and retries to protect invariants.",
-    "Explain why concurrency bugs can occur even when each request validates its input."
+    "Explain why concurrency bugs can occur even when each request validates its input.",
+    "Use optimistic concurrency with version checks and explain when deferred constraints are useful."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -399,6 +400,58 @@
           "text": "6. Interview probes — Show a lost update. What is write skew? Why can SERIALIZABLE abort? Which SQLSTATEs should be retried? How do idempotency keys and unique constraints make retries safe?"
         }
       ]
+    },
+    {
+      "id": "optimistic-concurrency-and-deferred-constraints",
+      "title": "Optimistic concurrency and deferred constraints",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "When two users edit the same record, a last-write-wins update can silently overwrite the first user's change. Optimistic concurrency detects this by recording the version that was read and allowing the update only if that version is still current. It works well when conflicts are uncommon and the application can ask the user to reload or resolve a conflict."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Update only the version you actually read",
+          "source": "UPDATE documents\nSET body = :new_body,\n    version = version + 1\nWHERE id = :id\n  AND version = :version_read\nRETURNING version;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "Two editors both read document 42 at version 7. The first editor saves and changes the version to 8. What happens when the second editor submits an update based on version 7?",
+          "reasoning": [
+            "The first UPDATE matches version 7, writes the content, and increments version to 8.",
+            "The second UPDATE still asks for version 7, so it affects zero rows. That is a conflict signal, not a successful save.",
+            "Reload the latest document and either ask the user to resolve the conflict or apply a deliberately designed merge. Do not silently retry the old content over the new version."
+          ],
+          "outcome": "A version predicate catches stale writes. It protects the row being edited, but does not by itself protect a business rule spread across several different rows."
+        },
+        {
+          "type": "paragraph",
+          "text": "A deferred constraint is useful when a multi-step transaction may temporarily violate a rule halfway through, but must restore it before commit. A DEFERRABLE INITIALLY DEFERRED foreign key is checked at commit rather than immediately after each statement."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Insert related rows in either order inside one transaction",
+          "source": "-- Assume orders(id) and order_items(order_id) already exist,\n-- with the foreign key declared DEFERRABLE INITIALLY DEFERRED.\nBEGIN;\nINSERT INTO order_items (id, order_id, sku)\nVALUES (10, 500, 'SKU-1');\n\nINSERT INTO orders (id, customer_id)\nVALUES (500, 42);\nCOMMIT;"
+        },
+        {
+          "type": "worked_example",
+          "problem": "The order item is inserted before its parent order. Why can this succeed with a deferred foreign key?",
+          "reasoning": [
+            "The foreign key is still active; it is not disabled.",
+            "PostgreSQL postpones the check until COMMIT, by which time order 500 exists.",
+            "If order 500 is still missing at commit, the transaction fails. Use deferred constraints only when a real multi-step workflow needs this flexibility."
+          ],
+          "outcome": "Deferred constraints allow temporary inconsistency inside a transaction while still enforcing the relationship at commit."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Deferral does not mean 'ignore the rule'",
+          "content": "The rule still has to hold when the transaction commits. Deferred constraints also do not replace concurrency control for invariants they cannot express, and optimistic version checks do not automatically coordinate multiple rows."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
@@ -681,6 +734,48 @@
       ],
       "explanation": "A database uniqueness rule handles concurrent duplicates. The request key and database effects must share a transaction; external side effects need their own idempotency contract.",
       "correctOptionId": "a"
+    },
+    {
+      "id": "optimistic-version",
+      "type": "single_select",
+      "prompt": "An UPDATE with `WHERE id = :id AND version = :version_read` affects zero rows. What should the application normally infer?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The row changed since it was read; handle a conflict instead of reporting success"
+        },
+        {
+          "id": "b",
+          "text": "The update definitely committed"
+        },
+        {
+          "id": "c",
+          "text": "PostgreSQL turned off MVCC"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "The version predicate no longer matches the row. Reload and resolve the conflict; blindly retrying stale content can overwrite a newer change."
+    },
+    {
+      "id": "deferred-constraint",
+      "type": "single_select",
+      "prompt": "What does a DEFERRABLE INITIALLY DEFERRED foreign key allow?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The relationship is never checked"
+        },
+        {
+          "id": "b",
+          "text": "The relationship can be temporarily incomplete inside a transaction but must be valid at commit"
+        },
+        {
+          "id": "c",
+          "text": "Any invalid row may remain after COMMIT"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The constraint remains enforced, but the check is delayed until commit. If the parent is still missing at commit, the transaction fails."
     }
   ],
   "interviewScenarios": [
