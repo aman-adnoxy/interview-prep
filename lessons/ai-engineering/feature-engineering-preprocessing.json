@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — More complex transformations can improve signal but increase latency, memory, dimensionality, and versioning burden."
+          "text": "4. Trade-offs and scale — One million rows × 100 dense float32 features is about 400 MB of raw numeric values, before data-frame overhead and temporary copies. One-hot encoding a very high-cardinality field can expand dimensions dramatically; compare sparse encoding, hashing, embeddings, or aggregated features using measured memory and prediction quality."
         },
         {
           "type": "paragraph",
