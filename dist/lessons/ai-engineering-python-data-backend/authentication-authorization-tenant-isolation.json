@@ -121,7 +121,10 @@
         {
           "type": "table",
           "title": "Common failure",
-          "columns": "Safer handling",
+          "columns": [
+            "Common failure",
+            "Safer handling"
+          ],
           "rows": [
             [
               "IDOR/BOLA: guess another object's ID",
