@@ -1,0 +1,318 @@
+{
+  "schemaVersion": "2.0.0",
+  "id": "machine-learning-types",
+  "topicId": "ai-engineering",
+  "sectionId": "machine-learning-types",
+  "title": "Types of Machine Learning: Supervised, Unsupervised, Self-Supervised, and Reinforcement Learning",
+  "difficulty": "beginner",
+  "estimatedMinutes": 34,
+  "learningObjectives": [
+    "Distinguish four learning setups by their feedback signal.",
+    "Identify the data and objective each setup needs.",
+    "Choose a learning setup for a product problem."
+  ],
+  "mentalModel": {
+    "type": "paragraph",
+    "text": "The key question is what signal teaches the system. Supervised learning gets target answers. Unsupervised learning searches for structure without target labels. Self-supervised learning derives targets from the data itself. Reinforcement learning learns from rewards tied to actions and outcomes."
+  },
+  "concepts": [
+    {
+      "id": "motivation",
+      "title": "Problem and motivation",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "The learning setup is determined by feedback, not model size or whether data is text. A language model can use self-supervised pretraining and later be fine-tuned with supervised examples."
+        },
+        {
+          "type": "paragraph",
+          "text": "The key question is what signal teaches the system. Supervised learning gets target answers. Unsupervised learning searches for structure without target labels. Self-supervised learning derives targets from the data itself. Reinforcement learning learns from rewards tied to actions and outcomes."
+        }
+      ]
+    },
+    {
+      "id": "technical-deep-dive",
+      "title": "Technical deep dive and worked example",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Supervised training compares predictions with known targets. Unsupervised methods optimize structure objectives such as clustering. Self-supervised training constructs targets automatically, such as the next token. RL connects states, actions, rewards, and future states; feedback can be delayed and actions can change future observations."
+        },
+        {
+          "type": "worked_example",
+          "problem": "You have 50,000 support tickets: some have assigned queues, some have only raw text, and you want to optimize which reply to show first.",
+          "reasoning": [
+            "Use trustworthy queue labels for supervised classification.",
+            "Use clustering to explore themes when labels are absent; validate group meaning with humans.",
+            "Use next-token prediction as a self-supervised objective on raw text.",
+            "Consider RL only if actions affect future states and a meaningful long-term reward can be measured safely."
+          ],
+          "outcome": "Name the learning signal and intended outcome before choosing an algorithm."
+        },
+        {
+          "type": "code",
+          "language": "text",
+          "source": "state → policy chooses action → environment changes\n  ↑                                  ↓\n  └──── next state + reward ←────────┘",
+          "title": "Reinforcement-learning loop"
+        },
+        {
+          "type": "paragraph",
+          "text": "Expected output: This is a conceptual loop: observe state, choose action, receive reward and next state, then update the policy/value estimate."
+        }
+      ]
+    },
+    {
+      "id": "tradeoffs-and-production",
+      "title": "Trade-offs and production behavior",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Supervised quality depends on labels. Unsupervised groups need interpretation and stability checks. Self-supervision scales with raw data but may not match the business task. RL adds reward-design, exploration, and safety complexity."
+        },
+        {
+          "type": "paragraph",
+          "text": "Production check: For a recommendation system, clicks alone may not represent long-term user value. Define the reward, safety constraints, and offline baseline before considering online exploration."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "Anti-pattern to avoid",
+          "content": "Calling clusters ground-truth classes; assuming self-supervised means no objective; using RL just because a product has a feedback button."
+        }
+      ]
+    },
+    {
+      "id": "six-layer-interview-synthesis",
+      "title": "Six-layer interview synthesis",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "1. Problem and motivation — The learning setup is determined by feedback, not model size or whether data is text. A language model can use self-supervised pretraining and later be fine-tuned with supervised examples."
+        },
+        {
+          "type": "paragraph",
+          "text": "2. Definition and design choice — Supervised training compares predictions with known targets. Unsupervised methods optimize structure objectives such as clustering. Self-supervised training constructs targets automatically, such as the next token. RL connects states, actions, rewards, and future states; feedback can be delayed and actions can change future observations."
+        },
+        {
+          "type": "paragraph",
+          "text": "3. Internal mechanism — Supervised learning uses target labels; unsupervised learning discovers structure; self-supervised learning derives targets from input; RL learns action policies from reward-bearing experience."
+        },
+        {
+          "type": "worked_example",
+          "problem": "You have 50,000 support tickets: some have assigned queues, some have only raw text, and you want to optimize which reply to show first.",
+          "reasoning": [
+            "Use trustworthy queue labels for supervised classification.",
+            "Use clustering to explore themes when labels are absent; validate group meaning with humans.",
+            "Use next-token prediction as a self-supervised objective on raw text.",
+            "Consider RL only if actions affect future states and a meaningful long-term reward can be measured safely."
+          ],
+          "outcome": "Name the learning signal and intended outcome before choosing an algorithm."
+        },
+        {
+          "type": "paragraph",
+          "text": "4. Trade-offs and scale — Supervised quality depends on labels. Unsupervised groups need interpretation and stability checks. Self-supervision scales with raw data but may not match the business task. RL adds reward-design, exploration, and safety complexity."
+        },
+        {
+          "type": "paragraph",
+          "text": "5. Anti-patterns — Calling clusters ground-truth classes; assuming self-supervised means no objective; using RL just because a product has a feedback button."
+        },
+        {
+          "type": "paragraph",
+          "text": "6. Interview probes — What is the target? Who supplies feedback? Do actions affect future states? Can outcomes be explored safely? Could a simpler supervised baseline work?"
+        }
+      ]
+    }
+  ],
+  "tradeoffsAndPitfalls": [
+    {
+      "type": "callout",
+      "kind": "tip",
+      "title": "Engineering rule of thumb",
+      "content": "Choose the learning paradigm based on the available feedback and the outcome the system must optimize."
+    },
+    {
+      "type": "paragraph",
+      "text": "Supervised quality depends on labels. Unsupervised groups need interpretation and stability checks. Self-supervision scales with raw data but may not match the business task. RL adds reward-design, exploration, and safety complexity."
+    }
+  ],
+  "revisionSheet": [
+    {
+      "type": "paragraph",
+      "text": "The key question is what signal teaches the system. Supervised learning gets target answers. Unsupervised learning searches for structure without target labels. Self-supervised learning derives targets from the data itself. Reinforcement learning learns from rewards tied to actions and outcomes."
+    },
+    {
+      "type": "paragraph",
+      "text": "Supervised training compares predictions with known targets. Unsupervised methods optimize structure objectives such as clustering. Self-supervised training constructs targets automatically, such as the next token. RL connects states, actions, rewards, and future states; feedback can be delayed and actions can change future observations."
+    },
+    {
+      "type": "paragraph",
+      "text": "Mechanism: Supervised learning uses target labels; unsupervised learning discovers structure; self-supervised learning derives targets from input; RL learns action policies from reward-bearing experience."
+    },
+    {
+      "type": "paragraph",
+      "text": "Trade-off: Supervised quality depends on labels. Unsupervised groups need interpretation and stability checks. Self-supervision scales with raw data but may not match the business task. RL adds reward-design, exploration, and safety complexity."
+    },
+    {
+      "type": "paragraph",
+      "text": "Avoid: Calling clusters ground-truth classes; assuming self-supervised means no objective; using RL just because a product has a feedback button."
+    },
+    {
+      "type": "paragraph",
+      "text": "Interview probes: What is the target? Who supplies feedback? Do actions affect future states? Can outcomes be explored safely? Could a simpler supervised baseline work?"
+    }
+  ],
+  "questions": [
+    {
+      "id": "supervised",
+      "type": "single_select",
+      "prompt": "Which dataset best supports supervised training?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Inputs paired with trusted targets"
+        },
+        {
+          "id": "b",
+          "text": "Raw inputs without targets"
+        },
+        {
+          "id": "c",
+          "text": "A reward total without states/actions"
+        },
+        {
+          "id": "d",
+          "text": "A list of model names"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Supervised learning uses examples paired with target answers."
+    },
+    {
+      "id": "unsupervised",
+      "type": "single_select",
+      "prompt": "What is a typical unsupervised-learning goal?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Predict a known label for every row"
+        },
+        {
+          "id": "b",
+          "text": "Discover groups or structure in unlabeled data"
+        },
+        {
+          "id": "c",
+          "text": "Enforce access control"
+        },
+        {
+          "id": "d",
+          "text": "Guarantee factual generation"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Clustering can discover structure without known class labels."
+    },
+    {
+      "id": "self-supervised",
+      "type": "single_select",
+      "prompt": "Why is next-token training self-supervised?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The final answer labels itself correct"
+        },
+        {
+          "id": "b",
+          "text": "The next token supplies the target"
+        },
+        {
+          "id": "c",
+          "text": "No loss is used"
+        },
+        {
+          "id": "d",
+          "text": "A human labels every token"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "The target is derived by shifting the text sequence."
+    },
+    {
+      "id": "rl-signal",
+      "type": "single_select",
+      "prompt": "Which signal is most characteristic of RL?",
+      "options": [
+        {
+          "id": "a",
+          "text": "A fixed class label"
+        },
+        {
+          "id": "b",
+          "text": "Rewards associated with actions and outcomes"
+        },
+        {
+          "id": "c",
+          "text": "A list of clusters"
+        },
+        {
+          "id": "d",
+          "text": "A JSON schema"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "RL learns from reward-bearing interactions, often with delayed consequences."
+    },
+    {
+      "id": "unsupervised-no-objective",
+      "type": "true_false",
+      "prompt": "Unsupervised learning has no objective function.",
+      "correctAnswer": false,
+      "explanation": "Unsupervised methods still optimize objectives; they simply do not rely on explicit target labels in the same way."
+    },
+    {
+      "id": "rl-any-feedback",
+      "type": "true_false",
+      "prompt": "Any app with thumbs-up/down feedback automatically requires RL.",
+      "correctAnswer": false,
+      "explanation": "Feedback can support evaluation, supervised preference data, or analytics; RL is only one possible use."
+    }
+  ],
+  "interviewScenarios": [
+    {
+      "id": "customer-segmentation",
+      "prompt": "A retailer has purchase histories but no segment labels and wants to explore groups.",
+      "skillsTested": [
+        "learning setup",
+        "data quality",
+        "evaluation"
+      ],
+      "strongAnswerPoints": [
+        "Start with unsupervised clustering or embeddings plus clustering.",
+        "Prevent IDs from dominating distance and inspect feature scaling.",
+        "Check stability and interpretability; treat clusters as hypotheses."
+      ],
+      "pitfalls": [
+        "Calling clusters ground-truth customer types"
+      ],
+      "referenceAnswer": "I would explore unsupervised grouping, test stability under resampling, and inspect useful behavioral differences. Business usefulness must be validated separately."
+    },
+    {
+      "id": "reward-design",
+      "prompt": "A feed team wants to use RL to maximize clicks. What risks do you raise?",
+      "skillsTested": [
+        "RL formulation",
+        "reward design",
+        "safe deployment"
+      ],
+      "strongAnswerPoints": [
+        "Check whether clicks reflect long-term user value.",
+        "Define state, actions, delayed reward, and safety constraints.",
+        "Compare with supervised ranking and use guarded experiments if RL is justified."
+      ],
+      "pitfalls": [
+        "Optimizing clicks without measuring user harm"
+      ],
+      "referenceAnswer": "I would challenge the reward first: clicks can reward sensational content without improving outcomes. I would define a broader objective and compare with a simpler ranking baseline."
+    }
+  ]
+}
