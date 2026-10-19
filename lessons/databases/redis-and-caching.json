@@ -469,6 +469,106 @@
       "prompt": "A Redis cache should normally tolerate losing or evicting cache entries by reloading them from the authoritative source.",
       "correctAnswer": true,
       "explanation": "A cache is generally a rebuildable performance layer; if Redis is the durable source of truth, that is a different architecture and needs explicit durability guarantees."
+    },
+    {
+      "id": "cache-source-of-truth",
+      "type": "single_select",
+      "prompt": "A cache is lost after a restart. What should a cache-aside application normally do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Treat it as a miss and reload from the source of truth"
+        },
+        {
+          "id": "b",
+          "text": "Assume the data is permanently lost"
+        },
+        {
+          "id": "c",
+          "text": "Write an empty value back to the database"
+        },
+        {
+          "id": "d",
+          "text": "Route all writes to the cache forever"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Cache-aside treats cache contents as disposable by default; the database or designated source remains authoritative."
+    },
+    {
+      "id": "ttl-freshness",
+      "type": "single_select",
+      "prompt": "A cache TTL is 60 seconds. What does that guarantee?",
+      "options": [
+        {
+          "id": "a",
+          "text": "The entry cannot be stale for more than 60 seconds under any failure"
+        },
+        {
+          "id": "b",
+          "text": "The key is eligible to expire after its TTL; actual freshness also depends on invalidation, refresh, and failure behavior"
+        },
+        {
+          "id": "c",
+          "text": "The database write and cache update become atomic"
+        },
+        {
+          "id": "d",
+          "text": "The key will always exist for exactly 60 seconds"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "TTL bounds normal residence time but does not make an asynchronous cache update atomic or guarantee freshness during failures."
+    },
+    {
+      "id": "stampede",
+      "type": "single_select",
+      "prompt": "An expired popular key receives 800 requests per second. What reduces a cache stampede?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Let all requests query the database independently"
+        },
+        {
+          "id": "b",
+          "text": "Coordinate refreshes with single-flight/short lock, jittered TTLs, or stale-while-revalidate where acceptable"
+        },
+        {
+          "id": "c",
+          "text": "Increase the database connection limit without a bound"
+        },
+        {
+          "id": "d",
+          "text": "Cache database errors as empty values indefinitely"
+        }
+      ],
+      "correctOptionId": "b",
+      "explanation": "Coordinated refresh, TTL jitter, and carefully permitted stale serving reduce synchronized misses and protect the source."
+    },
+    {
+      "id": "redis-eviction",
+      "type": "single_select",
+      "prompt": "Redis reaches maxmemory and evicts a cached product key. What should the application do?",
+      "options": [
+        {
+          "id": "a",
+          "text": "Expect a cache miss and reload from the authoritative data source"
+        },
+        {
+          "id": "b",
+          "text": "Report the product as deleted"
+        },
+        {
+          "id": "c",
+          "text": "Assume replication guarantees the key is present everywhere forever"
+        },
+        {
+          "id": "d",
+          "text": "Disable database fallback"
+        }
+      ],
+      "correctOptionId": "a",
+      "explanation": "Eviction is a normal cache operating condition; callers must tolerate misses and protect the source against refill surges."
     }
   ],
   "interviewScenarios": [
