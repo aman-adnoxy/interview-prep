@@ -103,7 +103,7 @@
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs — Adding features may help but adds missingness, leakage, collection, and serving costs. Larger hyperparameter searches consume compute and can overfit validation."
+          "text": "4. Trade-offs and scale — A dense array with 1,000,000 rows and 100 float32 features needs roughly 400 MB for values alone (1,000,000 × 100 × 4 bytes), excluding table/object overhead. Additional features can add storage and serving work, so evaluate predictive value against collection, missingness, latency, and maintenance costs."
         },
         {
           "type": "paragraph",
