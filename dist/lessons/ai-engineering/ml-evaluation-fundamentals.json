@@ -98,32 +98,32 @@
       ]
     },
     {
-      "id": "six-layer-interview-synthesis",
-      "title": "Six-layer interview synthesis",
+      "id": "offline-to-production-evaluation-checklist",
+      "title": "Offline-to-production evaluation checklist",
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem — High accuracy can hide costly misses when positive examples are rare."
+          "text": "Before trusting a model score, verify that every feature existed at the prediction timestamp and that learned preprocessing was fitted only on training data. If users, stores, patients, or other entities recur across rows, consider whether a group split is needed; if the task predicts the future, prefer a time-aware holdout."
         },
         {
           "type": "paragraph",
-          "text": "2. Choice — Precision measures correctness among predicted positives; recall measures coverage of actual positives; F1 balances them; calibration checks probability reliability."
+          "text": "Compare against a simple baseline and inspect the confusion matrix, not only accuracy. For rare positives, report precision and recall, and state how many cases would be flagged for human review at each candidate threshold."
         },
         {
           "type": "paragraph",
-          "text": "3. Mechanism — Use TP/FP/FN/TN counts, compare a baseline, and inspect how changing the threshold alters errors and review volume."
+          "text": "Translate thresholds into operating consequences. Estimate false-negative cost, false-positive cost, review capacity, service latency, and cost per successfully handled case. A model with a better offline metric may be a worse product if it overloads reviewers or misses high-cost cases."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — If positives are only 0.5% of 10,000 cases, there are about 50 positives. An always-negative baseline reaches 99.5% accuracy but has zero positive recall. Threshold changes must also be evaluated against real workload—for example, whether the review team can process the number of alerts produced per day."
+          "text": "Keep ranking and calibration separate. A model can order risky cases well while systematically overestimating probabilities. When decisions use the probability value itself, compare predicted probability bands with observed outcomes and calibrate using held-out data."
         },
         {
           "type": "paragraph",
-          "text": "5. Avoid — Reporting accuracy alone, treating a score as a guarantee, or selecting a threshold without its operational cost."
+          "text": "After launch, monitor the input/score distribution, class prevalence, delayed-label precision/recall, calibration, subgroup outcomes, review volume, latency and cost. A change in prevalence alone can change precision; rising errors may reflect drift, leakage in evaluation, a changed workflow, or a changed threshold—not only model quality."
         },
         {
           "type": "paragraph",
-          "text": "6. Interview probes — Which error is most costly? What volume can operations review? Does the score represent a reliable probability? What happens to rare subgroups?"
+          "text": "In an interview, narrate the chain: validate the information boundary → choose a deployment-like split → compare baselines → quantify threshold consequences → define monitoring and rollback/review triggers. Use a versioned evaluation set so later changes are comparable."
         }
       ]
     }
