@@ -57,6 +57,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Walkthrough: `pd.to_datetime(..., utc=True)` converts the event values to timezone-aware UTC timestamps. `pd.Timestamp(...Z)` creates a cutoff in the same timezone. The boolean condition is true only for rows at or before the cutoff, so the login and support ticket remain while the later account_closed event is excluded. The example illustrates one decision time; production pipelines usually need a separate cutoff per prediction row."
+        },
+        {
+          "type": "paragraph",
           "text": "Expected output:\n                  timestamp          event\n2026-01-03 10:00:00+00:00          login\n2026-01-05 09:30:00+00:00 support_ticket\n\nThe account_closed event occurred after the prediction timestamp, so it is excluded. The example uses real UTC timestamps on both sides of the comparison. In a real pipeline, the prediction timestamp should be defined per record, not copied as a single global value."
         }
       ]
@@ -87,37 +91,27 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "**1. Problem and motivation.** A loan model looks perfect offline because it uses collections activity that only begins after default. The score is misleading because the model sees the future."
+          "text": "1. Problem — Offline results can be too good or fail on a new region when the model has learned the wrong signal or evaluation is contaminated."
         },
         {
           "type": "paragraph",
-          "text": "**2. Definition and design choice.** Bias is systematic error from a limited model; variance is sensitivity to the sampled training data; leakage is invalid information crossing the prediction-time or evaluation boundary."
+          "text": "2. Choice — Bias is systematic model limitation; variance is sensitivity to training samples; leakage lets invalid information into the model/evaluation."
         },
         {
           "type": "paragraph",
-          "text": "**3. Mechanism.** Freeze the prediction timestamp, build each feature only from earlier events, split data by time or entity when required, and fit learned preprocessing on the training partition. Compare repeated runs if you need evidence of variance."
-        },
-        {
-          "type": "worked_example",
-          "problem": "At approval time, should a loan model use collections events created after a default?",
-          "reasoning": [
-            "No. Such data did not exist when the decision was made.",
-            "Filter events using compatible, timezone-aware timestamps, as shown in the runnable example above.",
-            "After removing the invalid feature, rerun evaluation using a time-appropriate holdout."
-          ],
-          "outcome": "Remove future-derived information before tuning the model."
+          "text": "3. Mechanism — Define the prediction timestamp, build features from earlier events only, split by time/entity when required, fit preprocessing on training data, and compare repeated runs to study variance."
         },
         {
           "type": "paragraph",
-          "text": "**4. Trade-offs and scale.** Time/group splits may reduce the available training data but better represent deployment. Cross-validation gives more stable estimates at additional compute cost. Small test sets have wider uncertainty."
+          "text": "4. Trade-offs — Time/group splits may reduce training data but better reflect deployment. Cross-validation costs more compute and reduces dependence on a single split."
         },
         {
           "type": "paragraph",
-          "text": "**5. Anti-patterns.** Calling every train-validation gap variance; assuming regularization fixes leakage; using future events; repeatedly tuning against the final test set."
+          "text": "5. Avoid — Calling every gap variance, assuming regularization fixes leakage, or repeatedly selecting on the final test set."
         },
         {
           "type": "paragraph",
-          "text": "**6. Interview probes.** What information exists at decision time? Could the same entity occur in multiple partitions? Is the problem variance or distribution shift? How would you measure uncertainty?"
+          "text": "6. Interview probes — What was known at decision time? Are entities shared across splits? Is the issue instability or a changed population? How much uncertainty surrounds the score?"
         }
       ]
     }
@@ -137,76 +131,76 @@
   "revisionSheet": [
     {
       "type": "paragraph",
-      "text": "Bias = systematic miss; variance = sensitivity to training samples; leakage = invalid information crosses a boundary."
+      "text": "Bias = systematic miss; variance = sensitivity to the training sample; leakage = invalid information crosses a boundary."
     },
     {
       "type": "paragraph",
-      "text": "Define the prediction timestamp and build features only from data available then."
+      "text": "Build features only from data available at the real prediction timestamp."
     },
     {
       "type": "paragraph",
-      "text": "Fit scalers/imputers/selectors on training data only."
+      "text": "Use time/group splits where needed and fit preprocessing on training data only."
     },
     {
       "type": "paragraph",
-      "text": "A strong offline score is suspicious when future events or duplicate entities may cross partitions."
+      "text": "A great offline score is suspicious if future events or duplicate entities may cross partitions."
     }
   ],
   "questions": [
     {
       "id": "bias",
       "type": "single_select",
-      "prompt": "A model consistently misses a nonlinear relationship because it is too simple. Which concept fits?",
+      "prompt": "A model has high training error and high validation error, and its learning curves stay close together. Which hypothesis is most reasonable to investigate first?",
       "options": [
         {
           "id": "a",
-          "text": "High bias"
+          "text": "The model may be too limited or its features/objective may miss important structure"
         },
         {
           "id": "b",
-          "text": "High variance only"
+          "text": "It has necessarily memorized the training data"
         },
         {
           "id": "c",
-          "text": "Prompt injection"
+          "text": "A feature definitely contains future target information"
         },
         {
           "id": "d",
-          "text": "Normalization"
+          "text": "The test set must have been tuned repeatedly"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "A model that systematically misses the underlying relationship has high bias."
+      "explanation": "Poor performance on both training and validation with a small gap is consistent with underfitting/high bias, weak features, or a mismatched objective. Verify the data and training setup before simply increasing model size."
     },
     {
       "id": "variance",
       "type": "single_select",
-      "prompt": "A flexible model changes substantially across training samples. What does this suggest?",
+      "prompt": "A model is retrained on five different training samples and its predictions change markedly, even on the same holdout records. What does this most directly suggest?",
       "options": [
         {
           "id": "a",
-          "text": "High variance"
+          "text": "High variance or unstable fitting"
         },
         {
           "id": "b",
-          "text": "No variance"
+          "text": "Guaranteed data leakage"
         },
         {
           "id": "c",
-          "text": "Guaranteed calibration"
+          "text": "Perfect calibration"
         },
         {
           "id": "d",
-          "text": "A correct split"
+          "text": "An incorrect precision formula"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "High sensitivity to the sampled data is the intuition behind variance."
+      "explanation": "Sensitivity to the training sample is the key intuition behind variance. Check sample size, model capacity, data quality, and regularization; this observation alone does not prove leakage."
     },
     {
       "id": "leakage",
       "type": "single_select",
-      "prompt": "A feature records an action that happens after a loan defaults. What is the main issue?",
+      "prompt": "A loan-default predictor uses collections activity that begins only after a default. What is the main problem?",
       "options": [
         {
           "id": "a",
@@ -214,7 +208,7 @@
         },
         {
           "id": "b",
-          "text": "Temporal or target leakage"
+          "text": "Temporal/target leakage: the feature is unavailable at decision time"
         },
         {
           "id": "c",
@@ -222,36 +216,36 @@
         },
         {
           "id": "d",
-          "text": "Clustering"
+          "text": "A clustering error"
         }
       ],
       "correctOptionId": "b",
-      "explanation": "The feature is not available at the intended prediction time."
+      "explanation": "A predictor evaluated with post-outcome events gets information it would not possess when making a real decision. Remove or reconstruct the feature and rerun a time-appropriate evaluation."
     },
     {
       "id": "tiny-difference",
       "type": "single_select",
-      "prompt": "Two models differ by 0.2 percentage points on one small validation set. What is the best next step?",
+      "prompt": "Model A scores 91.0% and Model B 91.2% on a small validation sample. The change also costs twice as much. What is the best next step?",
       "options": [
         {
           "id": "a",
-          "text": "Declare the higher score universally better"
+          "text": "Always choose B because its score is higher"
         },
         {
           "id": "b",
-          "text": "Compare uncertainty and per-example errors under a fixed protocol"
+          "text": "Compare uncertainty, per-example errors, and cost on a fixed evaluation protocol"
         },
         {
           "id": "c",
-          "text": "Tune on the test set until the gap grows"
+          "text": "Tune on test until the gap becomes statistically obvious"
         },
         {
           "id": "d",
-          "text": "Ignore all other metrics"
+          "text": "Ignore costs because accuracy is all that matters"
         }
       ],
       "correctOptionId": "b",
-      "explanation": "Small differences may be sampling noise and require careful comparison."
+      "explanation": "A tiny difference on a small sample may be noise. Compare uncertainty and disagreements, then decide whether any reliable benefit justifies extra latency or cost. Do not use the final test set for repeated selection."
     },
     {
       "id": "leakage-regularization",
