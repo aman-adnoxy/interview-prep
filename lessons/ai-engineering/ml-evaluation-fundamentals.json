@@ -57,6 +57,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Walkthrough: `precision` divides true positives by all flagged cases (40+30), giving 0.571. `recall` divides true positives by all actual fraud cases (40+10), giving 0.8. F1 combines precision and recall; accuracy divides correct predictions by all 1,000 examples and reaches 0.96 because true negatives dominate. The printed values are rounded only for display."
+        },
+        {
+          "type": "paragraph",
           "text": "Expected output: 0.571 0.8 0.667 0.96"
         }
       ]
@@ -87,38 +91,27 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A classifier can report 96% accuracy and still miss too much fraud when positive cases are rare. Counts of true positives, false positives, false negatives, and true negatives expose the actual errors."
+          "text": "1. Problem — High accuracy can hide costly misses when positive examples are rare."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — Precision = TP/(TP+FP). Recall = TP/(TP+FN). F1 is the harmonic mean of precision and recall. Accuracy can hide failures on rare classes. Thresholds trade precision against recall; calibration asks whether predicted probabilities match observed frequencies."
+          "text": "2. Choice — Precision measures correctness among predicted positives; recall measures coverage of actual positives; F1 balances them; calibration checks probability reliability."
         },
         {
           "type": "paragraph",
-          "text": "3. Internal mechanism — Use TP, FP, FN, TN counts to calculate metrics; sweep thresholds to inspect the precision-recall trade-off; compare with a baseline."
-        },
-        {
-          "type": "worked_example",
-          "problem": "A fraud detector has TP=40, FP=30, FN=10, TN=920.",
-          "reasoning": [
-            "Precision = 40/(40+30) ≈ 57.1%.",
-            "Recall = 40/(40+10) = 80%.",
-            "F1 = 2PR/(P+R) ≈ 66.7%.",
-            "Accuracy = (40+920)/1000 = 96%, but this hides missed fraud and false alerts."
-          ],
-          "outcome": "A confusion matrix makes error types visible; the right threshold depends on business cost and operational capacity."
+          "text": "3. Mechanism — Use TP/FP/FN/TN counts, compare a baseline, and inspect how changing the threshold alters errors and review volume."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — Threshold choice affects review workload and error costs. PR curves are often informative for rare positives. Calibration needs enough data and can drift as the population changes."
+          "text": "4. Trade-offs — Recall may improve at the cost of more false alarms. PR curves help when positives are rare. Calibration and subgroup behavior can drift."
         },
         {
           "type": "paragraph",
-          "text": "5. Anti-patterns — Reporting accuracy alone on imbalanced data; assuming a score of 0.8 is calibrated; choosing a threshold without considering capacity."
+          "text": "5. Avoid — Reporting accuracy alone, treating a score as a guarantee, or selecting a threshold without its operational cost."
         },
         {
           "type": "paragraph",
-          "text": "6. Interview probes — What is the positive class? Which error is more costly? How many cases can operations review? What does the score mean? How will threshold performance be monitored?"
+          "text": "6. Interview probes — Which error is most costly? What volume can operations review? Does the score represent a reliable probability? What happens to rare subgroups?"
         }
       ]
     }
@@ -138,59 +131,51 @@
   "revisionSheet": [
     {
       "type": "paragraph",
-      "text": "Evaluation turns model outputs into evidence. Start with a baseline, define what counts as a correct outcome, inspect the confusion matrix, and choose metrics that reflect the cost of mistakes. A score is not a decision until a threshold converts it into action."
+      "text": "Precision = TP/(TP+FP); recall = TP/(TP+FN); F1 is their harmonic mean."
     },
     {
       "type": "paragraph",
-      "text": "Precision = TP/(TP+FP). Recall = TP/(TP+FN). F1 is the harmonic mean of precision and recall. Accuracy can hide failures on rare classes. Thresholds trade precision against recall; calibration asks whether predicted probabilities match observed frequencies."
+      "text": "Accuracy can mislead on imbalanced classes; always inspect the confusion matrix."
     },
     {
       "type": "paragraph",
-      "text": "Mechanism: Use TP, FP, FN, TN counts to calculate metrics; sweep thresholds to inspect the precision-recall trade-off; compare with a baseline."
+      "text": "Thresholds convert scores to actions and should reflect error costs and capacity."
     },
     {
       "type": "paragraph",
-      "text": "Trade-off: Threshold choice affects review workload and error costs. PR curves are often informative for rare positives. Calibration needs enough data and can drift as the population changes."
-    },
-    {
-      "type": "paragraph",
-      "text": "Avoid: Reporting accuracy alone on imbalanced data; assuming a score of 0.8 is calibrated; choosing a threshold without considering capacity."
-    },
-    {
-      "type": "paragraph",
-      "text": "Interview probes: What is the positive class? Which error is more costly? How many cases can operations review? What does the score mean? How will threshold performance be monitored?"
+      "text": "Calibration compares predicted probabilities with observed frequencies."
     }
   ],
   "questions": [
     {
       "id": "precision",
       "type": "single_select",
-      "prompt": "With TP=40 and FP=30, what is precision?",
+      "prompt": "A fraud model flags 70 transactions and 42 are genuinely fraudulent. What is its precision?",
       "options": [
         {
           "id": "a",
-          "text": "40/50 = 80%"
+          "text": "42/70 = 60%"
         },
         {
           "id": "b",
-          "text": "40/70 ≈ 57.1%"
+          "text": "42/50 = 84%"
         },
         {
           "id": "c",
-          "text": "960/1000 = 96%"
+          "text": "920/1,000 = 92%"
         },
         {
           "id": "d",
-          "text": "30/70 ≈ 42.9%"
+          "text": "28/70 = 40%"
         }
       ],
-      "correctOptionId": "b",
-      "explanation": "Precision is TP divided by all predicted positives: 40/(40+30)."
+      "correctOptionId": "a",
+      "explanation": "Precision is the fraction of predicted positives that are actually positive: 42 divided by all 70 flagged transactions. It answers how noisy the alert queue is."
     },
     {
       "id": "recall",
       "type": "single_select",
-      "prompt": "With TP=40 and FN=10, what is recall?",
+      "prompt": "Out of 50 fraudulent transactions, a model catches 40 and misses 10. What is recall?",
       "options": [
         {
           "id": "a",
@@ -198,69 +183,69 @@
         },
         {
           "id": "b",
-          "text": "40/70 ≈ 57.1%"
+          "text": "40/70 ≈ 57%"
         },
         {
           "id": "c",
-          "text": "920/1000 = 92%"
+          "text": "10/50 = 20%"
         },
         {
           "id": "d",
-          "text": "10/50 = 20%"
+          "text": "A value determined by true negatives only"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Recall is TP divided by all actual positives: 40/(40+10)."
+      "explanation": "Recall is TP/(TP+FN), so 40/(40+10)=80%. It measures coverage of actual positive cases, not the fraction of alerts that are correct."
     },
     {
       "id": "imbalance",
       "type": "single_select",
-      "prompt": "Why can accuracy mislead when fraud is rare?",
+      "prompt": "Fraud is 0.5% of transactions. A model predicts “not fraud” for every transaction and gets 99.5% accuracy. What should the team conclude?",
       "options": [
         {
           "id": "a",
-          "text": "Accuracy ignores true negatives"
+          "text": "The model is production-ready because accuracy is high"
         },
         {
           "id": "b",
-          "text": "A model can predict the majority class and still score highly while missing fraud"
+          "text": "The baseline catches no fraud, so evaluate recall/precision and compare better models"
         },
         {
           "id": "c",
-          "text": "Accuracy measures calibration only"
+          "text": "Calibration is automatically perfect"
         },
         {
           "id": "d",
-          "text": "Accuracy is always lower than recall"
+          "text": "F1 must be 99.5%"
         }
       ],
       "correctOptionId": "b",
-      "explanation": "The majority class can dominate the accuracy calculation."
+      "explanation": "The majority class dominates accuracy, while fraud recall is zero. Report a confusion matrix and positive-class metrics; compare against this baseline before claiming model value."
     },
     {
       "id": "calibration",
       "type": "single_select",
-      "prompt": "What does a well-calibrated prediction of 0.8 mean across comparable cases?",
+      "prompt": "A risk model assigns probability 0.8 to 100 comparable cases, but only 50 turn positive. What issue should be investigated?",
       "options": [
         {
           "id": "a",
-          "text": "Every individual case is definitely positive"
+          "text": "The model is well calibrated because 0.8 is a high score"
         },
         {
           "id": "b",
-          "text": "Roughly 80% of cases assigned that probability should be positive"
+          "text": "The model may be overconfident or miscalibrated for this group"
         },
         {
           "id": "c",
-          "text": "The model has 80% accuracy on every subgroup"
+          "text": "Recall must equal 80%"
         },
         {
           "id": "d",
-          "text": "The threshold must be 0.8"
+          "text": "The model should always use 0.8 as its decision threshold"
         }
       ],
       "correctOptionId": "b",
-      "explanation": "Calibration compares predicted probabilities with observed frequencies."
+      "explanation": "Calibration asks whether groups assigned probability 0.8 are positive about 80% of the time. An observed rate near 50% suggests overprediction, subject to sample uncertainty and correct label timing."
     },
     {
       "id": "threshold-fixed",
