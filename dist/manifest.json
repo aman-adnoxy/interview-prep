@@ -247,8 +247,8 @@
     },
     {
       "id": "ai-engineering",
-      "title": "AI Engineering",
-      "description": "Core AI and machine-learning foundations: choose learning approaches, prepare data, understand training, and evaluate models reliably.",
+      "title": "AI Engineering — Module 1: AI and ML Foundations",
+      "description": "Module 1 of AI Engineering: core AI/ML concepts, data preparation, training, overfitting, and model evaluation.",
       "order": 6,
       "sections": [
         {
@@ -350,6 +350,114 @@
           "lessonPath": "/lessons/ai-engineering/ml-evaluation-fundamentals.json",
           "questionCount": 6,
           "lessonId": "ml-evaluation-fundamentals"
+        }
+      ]
+    },
+    {
+      "id": "ai-engineering-python-data-backend",
+      "title": "AI Engineering — Module 2: Python, Data Handling and Backend Fundamentals",
+      "description": "Core Python, numerical/data processing, asynchronous I/O, API contracts, security boundaries, and durable background work used to build reliable AI applications.",
+      "order": 7,
+      "sections": [
+        {
+          "id": "python-for-ai-engineering",
+          "title": "Python for AI Engineering: Functions, Classes, Modules, and Clean Code",
+          "difficulty": "beginner",
+          "order": 1,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/python-for-ai-engineering.json",
+          "questionCount": 6,
+          "lessonId": "python-for-ai-engineering"
+        },
+        {
+          "id": "data-structures-algorithmic-complexity",
+          "title": "Data Structures and Algorithmic Complexity for AI Services",
+          "difficulty": "beginner",
+          "order": 2,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/data-structures-algorithmic-complexity.json",
+          "questionCount": 6,
+          "lessonId": "data-structures-algorithmic-complexity"
+        },
+        {
+          "id": "numpy-vectorized-computation",
+          "title": "NumPy and Vectorized Computation: Arrays, Shapes, and Broadcasting",
+          "difficulty": "beginner",
+          "order": 3,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/numpy-vectorized-computation.json",
+          "questionCount": 6,
+          "lessonId": "numpy-vectorized-computation"
+        },
+        {
+          "id": "pandas-dataset-preparation",
+          "title": "Pandas and Dataset Preparation: Read, Filter, Join, Group, Transform",
+          "difficulty": "beginner",
+          "order": 4,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/pandas-dataset-preparation.json",
+          "questionCount": 6,
+          "lessonId": "pandas-dataset-preparation"
+        },
+        {
+          "id": "missing-values-duplicates-outliers",
+          "title": "Missing Values, Duplicates, and Outliers: Clean Without Hiding Errors",
+          "difficulty": "intermediate",
+          "order": 5,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/missing-values-duplicates-outliers.json",
+          "questionCount": 6,
+          "lessonId": "missing-values-duplicates-outliers"
+        },
+        {
+          "id": "python-async-await",
+          "title": "Python Async and Await: Event Loops, Coroutines, and I/O",
+          "difficulty": "intermediate",
+          "order": 6,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/python-async-await.json",
+          "questionCount": 6,
+          "lessonId": "python-async-await"
+        },
+        {
+          "id": "concurrency-parallelism",
+          "title": "Concurrency and Parallelism: Threads, Processes, and Async I/O",
+          "difficulty": "intermediate",
+          "order": 7,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/concurrency-parallelism.json",
+          "questionCount": 6,
+          "lessonId": "concurrency-parallelism"
+        },
+        {
+          "id": "http-rest-apis-contracts",
+          "title": "HTTP, REST APIs, and API Contracts: Requests, Responses, Validation",
+          "difficulty": "beginner",
+          "order": 8,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/http-rest-apis-contracts.json",
+          "questionCount": 6,
+          "lessonId": "http-rest-apis-contracts"
+        },
+        {
+          "id": "authentication-authorization-tenant-isolation",
+          "title": "Authentication, Authorization, and Tenant Isolation",
+          "difficulty": "intermediate",
+          "order": 9,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/authentication-authorization-tenant-isolation.json",
+          "questionCount": 6,
+          "lessonId": "authentication-authorization-tenant-isolation"
+        },
+        {
+          "id": "background-jobs-long-running-operations",
+          "title": "Background Jobs and Long-Running Operations: Queues, Status, Cancellation, Recovery",
+          "difficulty": "intermediate",
+          "order": 10,
+          "status": "published",
+          "lessonPath": "/lessons/ai-engineering-python-data-backend/background-jobs-long-running-operations.json",
+          "questionCount": 6,
+          "lessonId": "background-jobs-long-running-operations"
         }
       ]
     }

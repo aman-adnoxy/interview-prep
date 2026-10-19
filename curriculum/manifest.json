@@ -268,8 +268,8 @@
     },
     {
       "id": "ai-engineering",
-      "title": "AI Engineering",
-      "description": "Core AI and machine-learning foundations: choose learning approaches, prepare data, understand training, and evaluate models reliably.",
+      "title": "AI Engineering — Module 1: AI and ML Foundations",
+      "description": "Module 1 of AI Engineering: core AI/ML concepts, data preparation, training, overfitting, and model evaluation.",
       "order": 6,
       "sections": [
         {
@@ -377,6 +377,123 @@
           "order": 10,
           "prerequisites": [
             "bias-variance-data-leakage"
+          ],
+          "status": "published"
+        }
+      ]
+    },
+    {
+      "id": "ai-engineering-python-data-backend",
+      "title": "AI Engineering — Module 2: Python, Data Handling and Backend Fundamentals",
+      "description": "Core Python, numerical/data processing, asynchronous I/O, API contracts, security boundaries, and durable background work used to build reliable AI applications.",
+      "order": 7,
+      "sections": [
+        {
+          "id": "python-for-ai-engineering",
+          "title": "Python for AI Engineering: Functions, Classes, Modules, and Clean Code",
+          "lessonId": "python-for-ai-engineering",
+          "difficulty": "beginner",
+          "order": 1,
+          "prerequisites": [],
+          "status": "published"
+        },
+        {
+          "id": "data-structures-algorithmic-complexity",
+          "title": "Data Structures and Algorithmic Complexity for AI Services",
+          "lessonId": "data-structures-algorithmic-complexity",
+          "difficulty": "beginner",
+          "order": 2,
+          "prerequisites": [
+            "python-for-ai-engineering"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "numpy-vectorized-computation",
+          "title": "NumPy and Vectorized Computation: Arrays, Shapes, and Broadcasting",
+          "lessonId": "numpy-vectorized-computation",
+          "difficulty": "beginner",
+          "order": 3,
+          "prerequisites": [
+            "python-for-ai-engineering"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "pandas-dataset-preparation",
+          "title": "Pandas and Dataset Preparation: Read, Filter, Join, Group, Transform",
+          "lessonId": "pandas-dataset-preparation",
+          "difficulty": "beginner",
+          "order": 4,
+          "prerequisites": [
+            "numpy-vectorized-computation"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "missing-values-duplicates-outliers",
+          "title": "Missing Values, Duplicates, and Outliers: Clean Without Hiding Errors",
+          "lessonId": "missing-values-duplicates-outliers",
+          "difficulty": "intermediate",
+          "order": 5,
+          "prerequisites": [
+            "pandas-dataset-preparation"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "python-async-await",
+          "title": "Python Async and Await: Event Loops, Coroutines, and I/O",
+          "lessonId": "python-async-await",
+          "difficulty": "intermediate",
+          "order": 6,
+          "prerequisites": [
+            "python-for-ai-engineering"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "concurrency-parallelism",
+          "title": "Concurrency and Parallelism: Threads, Processes, and Async I/O",
+          "lessonId": "concurrency-parallelism",
+          "difficulty": "intermediate",
+          "order": 7,
+          "prerequisites": [
+            "python-async-await"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "http-rest-apis-contracts",
+          "title": "HTTP, REST APIs, and API Contracts: Requests, Responses, Validation",
+          "lessonId": "http-rest-apis-contracts",
+          "difficulty": "beginner",
+          "order": 8,
+          "prerequisites": [
+            "python-for-ai-engineering"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "authentication-authorization-tenant-isolation",
+          "title": "Authentication, Authorization, and Tenant Isolation",
+          "lessonId": "authentication-authorization-tenant-isolation",
+          "difficulty": "intermediate",
+          "order": 9,
+          "prerequisites": [
+            "http-rest-apis-contracts"
+          ],
+          "status": "published"
+        },
+        {
+          "id": "background-jobs-long-running-operations",
+          "title": "Background Jobs and Long-Running Operations: Queues, Status, Cancellation, Recovery",
+          "lessonId": "background-jobs-long-running-operations",
+          "difficulty": "intermediate",
+          "order": 10,
+          "prerequisites": [
+            "http-rest-apis-contracts",
+            "authentication-authorization-tenant-isolation"
           ],
           "status": "published"
         }
