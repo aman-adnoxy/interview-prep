@@ -57,6 +57,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Read the diagram clockwise: observe the current state → the policy chooses an action → the environment changes → the agent receives a reward and next state → the loop repeats. This is a conceptual diagram, not runnable Python. Unlike a single supervised example, the action can change which future states and rewards are observed."
+        },
+        {
+          "type": "paragraph",
           "text": "Expected output: This is a conceptual loop: observe state, choose action, receive reward and next state, then update the policy/value estimate."
         }
       ]
@@ -87,38 +91,27 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — The learning setup is determined by feedback, not model size or whether data is text. A language model can use self-supervised pretraining and later be fine-tuned with supervised examples."
+          "text": "1. Problem — The dataset has raw examples, partial labels, and perhaps feedback. The available learning signal constrains what can be learned."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — Supervised training compares predictions with known targets. Unsupervised methods optimize structure objectives such as clustering. Self-supervised training constructs targets automatically, such as the next token. RL connects states, actions, rewards, and future states; feedback can be delayed and actions can change future observations."
+          "text": "2. Choice — Supervised uses target labels; unsupervised finds structure; self-supervised derives targets from inputs; reinforcement learning uses rewards for actions."
         },
         {
           "type": "paragraph",
-          "text": "3. Internal mechanism — Supervised learning uses target labels; unsupervised learning discovers structure; self-supervised learning derives targets from input; RL learns action policies from reward-bearing experience."
-        },
-        {
-          "type": "worked_example",
-          "problem": "You have 50,000 support tickets: some have assigned queues, some have only raw text, and you want to optimize which reply to show first.",
-          "reasoning": [
-            "Use trustworthy queue labels for supervised classification.",
-            "Use clustering to explore themes when labels are absent; validate group meaning with humans.",
-            "Use next-token prediction as a self-supervised objective on raw text.",
-            "Consider RL only if actions affect future states and a meaningful long-term reward can be measured safely."
-          ],
-          "outcome": "Name the learning signal and intended outcome before choosing an algorithm."
+          "text": "3. Mechanism — Supervised training compares predictions to targets. Self-supervised next-token training shifts text to make the next token the target. RL observes state, chooses an action, then receives reward and next state."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — Supervised quality depends on labels. Unsupervised groups need interpretation and stability checks. Self-supervision scales with raw data but may not match the business task. RL adds reward-design, exploration, and safety complexity."
+          "text": "4. Trade-offs — Unsupervised groups need interpretation; self-supervision may not directly optimize the product task; RL adds reward-design, exploration, and safety complexity."
         },
         {
           "type": "paragraph",
-          "text": "5. Anti-patterns — Calling clusters ground-truth classes; assuming self-supervised means no objective; using RL just because a product has a feedback button."
+          "text": "5. Avoid — Calling clusters ground-truth classes, saying self-supervised has no objective, and adopting RL only because feedback exists."
         },
         {
           "type": "paragraph",
-          "text": "6. Interview probes — What is the target? Who supplies feedback? Do actions affect future states? Can outcomes be explored safely? Could a simpler supervised baseline work?"
+          "text": "6. Interview probes — What is the signal? Is the target known? Do actions affect later states? Can a simpler supervised baseline meet the goal?"
         }
       ]
     }
@@ -138,27 +131,15 @@
   "revisionSheet": [
     {
       "type": "paragraph",
-      "text": "The key question is what signal teaches the system. Supervised learning gets target answers. Unsupervised learning searches for structure without target labels. Self-supervised learning derives targets from the data itself. Reinforcement learning learns from rewards tied to actions and outcomes."
+      "text": "Supervised = labeled targets; unsupervised = discover structure; self-supervised = derive targets from input; RL = action/reward feedback."
     },
     {
       "type": "paragraph",
-      "text": "Supervised training compares predictions with known targets. Unsupervised methods optimize structure objectives such as clustering. Self-supervised training constructs targets automatically, such as the next token. RL connects states, actions, rewards, and future states; feedback can be delayed and actions can change future observations."
+      "text": "Next-token prediction is self-supervised; it does not by itself teach a business-specific label taxonomy."
     },
     {
       "type": "paragraph",
-      "text": "Mechanism: Supervised learning uses target labels; unsupervised learning discovers structure; self-supervised learning derives targets from input; RL learns action policies from reward-bearing experience."
-    },
-    {
-      "type": "paragraph",
-      "text": "Trade-off: Supervised quality depends on labels. Unsupervised groups need interpretation and stability checks. Self-supervision scales with raw data but may not match the business task. RL adds reward-design, exploration, and safety complexity."
-    },
-    {
-      "type": "paragraph",
-      "text": "Avoid: Calling clusters ground-truth classes; assuming self-supervised means no objective; using RL just because a product has a feedback button."
-    },
-    {
-      "type": "paragraph",
-      "text": "Interview probes: What is the target? Who supplies feedback? Do actions affect future states? Can outcomes be explored safely? Could a simpler supervised baseline work?"
+      "text": "RL is useful when sequential actions affect future outcomes and the reward represents the goal."
     }
   ],
   "questions": [
@@ -215,52 +196,52 @@
     {
       "id": "self-supervised",
       "type": "single_select",
-      "prompt": "Why is next-token training self-supervised?",
+      "prompt": "A team has billions of unlabeled text tokens and wants to pretrain a language model. Which training signal can be constructed directly from the text?",
       "options": [
         {
           "id": "a",
-          "text": "The final answer labels itself correct"
+          "text": "Predict the next token from preceding tokens"
         },
         {
           "id": "b",
-          "text": "The next token supplies the target"
+          "text": "Require a human to label every token as helpful or harmful"
         },
         {
           "id": "c",
-          "text": "No loss is used"
+          "text": "Cluster documents and assume cluster IDs are factual answers"
         },
         {
           "id": "d",
-          "text": "A human labels every token"
+          "text": "Reward an environment action without defining a state"
         }
       ],
-      "correctOptionId": "b",
-      "explanation": "The target is derived by shifting the text sequence."
+      "correctOptionId": "a",
+      "explanation": "The next token provides a target for the preceding context. This makes training self-supervised, although later adaptation may still be needed for the product task."
     },
     {
       "id": "rl-signal",
       "type": "single_select",
-      "prompt": "Which signal is most characteristic of RL?",
+      "prompt": "A robot chooses actions that affect its future position and receives delayed rewards for reaching a goal. Which learning setup best matches this problem?",
       "options": [
         {
           "id": "a",
-          "text": "A fixed class label"
+          "text": "Supervised classification only"
         },
         {
           "id": "b",
-          "text": "Rewards associated with actions and outcomes"
+          "text": "Unsupervised clustering only"
         },
         {
           "id": "c",
-          "text": "A list of clusters"
+          "text": "Reinforcement learning"
         },
         {
           "id": "d",
-          "text": "A JSON schema"
+          "text": "Static feature scaling"
         }
       ],
-      "correctOptionId": "b",
-      "explanation": "RL learns from reward-bearing interactions, often with delayed consequences."
+      "correctOptionId": "c",
+      "explanation": "The action changes future states and success is expressed through reward over a sequence, which is the defining RL setup. A simpler approach may still work, but the feedback structure is sequential."
     },
     {
       "id": "unsupervised-no-objective",
