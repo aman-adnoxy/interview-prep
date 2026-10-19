@@ -227,6 +227,97 @@
       ]
     },
     {
+      "id": "filter-patterns-and-pagination",
+      "title": "Common filters and pagination",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "SQL filters can express a set of allowed values, a range, or a text pattern. PostgreSQL `ILIKE` matches text without case sensitivity under the applicable collation; `LIKE` is case-sensitive in ordinary PostgreSQL collations. `%` means any sequence of characters and `_` means one character."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "SELECT order_id, customer_id, status, amount\nFROM orders\nWHERE status IN ('paid', 'pending')\n  AND amount BETWEEN 2000 AND 4000\nORDER BY order_id;",
+          "title": "Combine IN and BETWEEN"
+        },
+        {
+          "type": "table",
+          "title": "Expected result using the Orders sample above",
+          "columns": [
+            "order_id",
+            "customer_id",
+            "status",
+            "amount"
+          ],
+          "rows": [
+            [
+              "101",
+              "7",
+              "paid",
+              "4000"
+            ],
+            [
+              "102",
+              "7",
+              "pending",
+              "3000"
+            ],
+            [
+              "104",
+              "9",
+              "paid",
+              "2000"
+            ]
+          ]
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "SELECT email FROM customers WHERE email LIKE '%@example.com';\nSELECT name FROM customers WHERE name ILIKE 'aman%';",
+          "title": "LIKE and PostgreSQL ILIKE"
+        },
+        {
+          "type": "paragraph",
+          "text": "The first pattern matches email addresses ending in `@example.com`. The second matches names beginning with `aman`, including capitalization variants such as `Aman` or `AMAN`. A leading wildcard such as `'%aman%'` often cannot use a normal B-tree index efficiently; text-search or trigram indexing may be more appropriate if that search is important."
+        },
+        {
+          "type": "paragraph",
+          "text": "### Offset pagination versus keyset pagination"
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "source": "-- Page 3 by a stable, unique key (simple illustrative ID order)\nSELECT order_id, amount\nFROM orders\nORDER BY order_id\nLIMIT 2 OFFSET 4;\n\n-- Keyset pagination: pass the last order_id from the previous page\nSELECT order_id, amount\nFROM orders\nWHERE order_id > 104\nORDER BY order_id\nLIMIT 2;",
+          "title": "Two ways to fetch the next page"
+        },
+        {
+          "type": "table",
+          "title": "With ordered IDs 101–110 and page size 2",
+          "columns": [
+            "Method",
+            "Rows in the requested page",
+            "Work as pages get deeper"
+          ],
+          "rows": [
+            [
+              "OFFSET 4 LIMIT 2",
+              "105, 106",
+              "The database still has to walk past skipped rows; deep offsets can become expensive."
+            ],
+            [
+              "Keyset: order_id > 104 LIMIT 2",
+              "105, 106",
+              "Can seek from the last key using a suitable index rather than count through prior rows."
+            ]
+          ]
+        },
+        {
+          "type": "paragraph",
+          "text": "For a stable keyset cursor, the `ORDER BY` must be deterministic and the cursor must include every ordering key. If the order is `created_at DESC, id DESC`, the next-page predicate must compare that pair, not only the timestamp. Keyset pagination avoids deep offset work and is less likely to duplicate/skip rows as new rows arrive before the cursor, but it does not provide a frozen snapshot of the entire result set."
+        }
+      ]
+    },
+    {
       "id": "query-evaluation-order",
       "title": "How to reason through a query",
       "blocks": [
@@ -497,6 +588,90 @@
       "prompt": "Adding a unique tie-breaker to ORDER BY can make a LIMIT query deterministic when the main sort key ties.",
       "correctAnswer": true,
       "explanation": "A unique secondary key defines the order among rows tied on the primary sort key."
+    },
+    {
+      "id": "filter-patterns",
+      "type": "single_select",
+      "prompt": "A report must select orders whose status is either paid or pending and whose amount is between ₹2,000 and ₹4,000 inclusive. Which filter matches that request?",
+      "options": [
+        {
+          "text": "`status IN ('paid','pending') AND amount BETWEEN 2000 AND 4000`"
+        },
+        {
+          "text": "`status = 'paid' OR amount > 4000`"
+        },
+        {
+          "text": "`status BETWEEN 'paid' AND 'pending'`"
+        },
+        {
+          "text": "`amount = 2000 AND amount = 4000`"
+        }
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "IN checks membership in an allowed set. BETWEEN includes its two endpoints in SQL."
+    },
+    {
+      "id": "keyset-pagination",
+      "type": "single_select",
+      "prompt": "A feed uses `ORDER BY created_at DESC, id DESC` and needs the next page after the last row. Which design is correct?",
+      "options": [
+        {
+          "text": "Use `OFFSET 100000` regardless of the last row"
+        },
+        {
+          "text": "Use a cursor containing both created_at and id and a predicate that compares the same ordered pair"
+        },
+        {
+          "text": "Filter only by created_at even when many rows share it"
+        },
+        {
+          "text": "Drop ORDER BY to make pagination faster"
+        }
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "The cursor must uniquely identify the position in the full order. Including the tie-breaker prevents skipped or repeated rows when timestamps tie."
+    },
+    {
+      "id": "distinct-whole-row",
+      "type": "single_select",
+      "prompt": "`SELECT DISTINCT customer_id, status FROM orders` returns two rows for one customer with different statuses. Why?",
+      "options": [
+        {
+          "text": "DISTINCT only checks customer_id"
+        },
+        {
+          "text": "DISTINCT removes duplicates of the complete selected tuple, so the different statuses make rows distinct"
+        },
+        {
+          "text": "DISTINCT chooses the newest order automatically"
+        },
+        {
+          "text": "The database ignored DISTINCT"
+        }
+      ],
+      "correctOptionIndex": 1,
+      "explanation": "DISTINCT applies to all selected expressions together; it is not a per-customer row-selection operation."
+    },
+    {
+      "id": "like-operator",
+      "type": "single_select",
+      "prompt": "Which statement about PostgreSQL `LIKE` and `ILIKE` is correct?",
+      "options": [
+        {
+          "text": "`ILIKE` is PostgreSQL's case-insensitive pattern-match operator"
+        },
+        {
+          "text": "`LIKE` always ignores case"
+        },
+        {
+          "text": "`%` matches exactly one character"
+        },
+        {
+          "text": "Leading-wildcard patterns always use a normal B-tree efficiently"
+        }
+      ],
+      "correctOptionIndex": 0,
+      "explanation": "ILIKE is PostgreSQL-specific case-insensitive pattern matching in the ordinary usage shown. `%` matches zero or more characters; a leading wildcard often limits a normal B-tree's usefulness."
     }
   ],
   "interviewScenarios": [
