@@ -57,6 +57,10 @@
         },
         {
           "type": "paragraph",
+          "text": "Walkthrough: `strip()` catches an empty ticket before classification. `lower()` makes matching case-insensitive. The `if/elif` chain chooses the first matching rule, so invoice/refund wins if both keyword groups occur. The final `else` is the fallback. The output reports both the queue and rule reason; it does not claim a model inferred intent."
+        },
+        {
+          "type": "paragraph",
           "text": "Expected output: {'queue': 'billing', 'reason': 'baseline rule'}. This is a simple baseline, not a robust language classifier."
         }
       ]
@@ -87,38 +91,27 @@
       "blocks": [
         {
           "type": "paragraph",
-          "text": "1. Problem and motivation — A request to “add AI” is not a technical design. Clarify the required output, available data, tolerance for errors, and whether decisions must be auditable. The solution may be rules, a classifier, an LLM, or a combination."
+          "text": "1. Problem — “Add AI” is a goal, not a solution. Identify the output, data, cost of mistakes, and need for auditability."
         },
         {
           "type": "paragraph",
-          "text": "2. Definition and design choice — Rules execute conditions written by engineers. Supervised ML learns a mapping from examples to a target. Deep networks learn layered representations for complex inputs. Generative models produce content conditioned on input. A language model is usually a deep-learning model, which is ML within AI."
+          "text": "2. Choice — Rules fit explicit policies; supervised ML fits labeled prediction; deep learning handles learned representations; generative AI creates content."
         },
         {
           "type": "paragraph",
-          "text": "3. Internal mechanism — Rules evaluate explicit conditions; supervised ML fits a mapping from examples to labels; generative models produce sequences/content conditioned on input."
-        },
-        {
-          "type": "worked_example",
-          "problem": "An invoice product reads scanned documents, extracts a total, verifies arithmetic, and enforces tenant access.",
-          "reasoning": [
-            "Use OCR or a vision model to read scanned text.",
-            "Use structured extraction to propose fields and retain evidence.",
-            "Use ordinary code to recompute totals and compare with tolerances.",
-            "Use authenticated application permissions to enforce tenant access; never ask an LLM to decide authorization."
-          ],
-          "outcome": "Use models for perception and flexible interpretation; use deterministic code for arithmetic, validation, and security invariants."
+          "text": "3. Mechanism — Rules execute conditions, classifiers map inputs to labels or scores, and generative models produce content from context. Keep authorization and exact arithmetic deterministic."
         },
         {
           "type": "paragraph",
-          "text": "4. Trade-offs and scale — Rules are cheap and auditable but brittle. Traditional ML can be fast for stable prediction tasks but needs labeled data and monitoring. LLMs handle flexible language but add variable latency, cost, and output uncertainty. Compare cost per successful task, not just cost per call."
+          "text": "4. Trade-offs — Compare quality, latency, cost per successful task, maintainability, and failure impact—not model size alone."
         },
         {
           "type": "paragraph",
-          "text": "5. Anti-patterns — Calling every model “AI”; assuming a bigger model is always better; using an LLM for exact arithmetic; treating generated explanations as proof of correctness."
+          "text": "5. Avoid — Using an LLM for every step, trusting generated explanations as proof, and allowing a model to grant access."
         },
         {
           "type": "paragraph",
-          "text": "6. Interview probes — When would rules beat an LLM? What data would justify supervised ML? Which steps need deterministic guarantees? How would you compare alternatives?"
+          "text": "6. Interview probes — Which stage actually needs learned behavior? What is the baseline? How will correctness and incremental value be measured?"
         }
       ]
     }
@@ -138,27 +131,15 @@
   "revisionSheet": [
     {
       "type": "paragraph",
-      "text": "AI is the broad goal of building systems that perform tasks associated with intelligence. ML learns patterns from examples. Deep learning is a family of ML based on multi-layer neural networks. Generative AI creates new content and commonly uses deep learning; these are overlapping categories, not four alternatives."
+      "text": "AI is the umbrella; ML learns patterns; deep learning uses multi-layer neural networks; generative AI creates content."
     },
     {
       "type": "paragraph",
-      "text": "Rules execute conditions written by engineers. Supervised ML learns a mapping from examples to a target. Deep networks learn layered representations for complex inputs. Generative models produce content conditioned on input. A language model is usually a deep-learning model, which is ML within AI."
+      "text": "Use rules for stable explicit policies, ML for prediction, and generative models for flexible language/content tasks."
     },
     {
       "type": "paragraph",
-      "text": "Mechanism: Rules evaluate explicit conditions; supervised ML fits a mapping from examples to labels; generative models produce sequences/content conditioned on input."
-    },
-    {
-      "type": "paragraph",
-      "text": "Trade-off: Rules are cheap and auditable but brittle. Traditional ML can be fast for stable prediction tasks but needs labeled data and monitoring. LLMs handle flexible language but add variable latency, cost, and output uncertainty. Compare cost per successful task, not just cost per call."
-    },
-    {
-      "type": "paragraph",
-      "text": "Avoid: Calling every model “AI”; assuming a bigger model is always better; using an LLM for exact arithmetic; treating generated explanations as proof of correctness."
-    },
-    {
-      "type": "paragraph",
-      "text": "Interview probes: When would rules beat an LLM? What data would justify supervised ML? Which steps need deterministic guarantees? How would you compare alternatives?"
+      "text": "Hybrid systems are common: model for perception/interpretation; code for validation, arithmetic, permissions, and side effects."
     }
   ],
   "questions": [
@@ -215,52 +196,52 @@
     {
       "id": "ml-fit",
       "type": "single_select",
-      "prompt": "A company has labeled tabular data and wants to predict fraud risk. What is a sensible baseline?",
+      "prompt": "A team has 80,000 labeled historical support tickets and needs to route new tickets into five fixed queues. What is a sensible baseline to compare against its LLM?",
       "options": [
         {
           "id": "a",
-          "text": "A supervised classifier"
+          "text": "A supervised text classifier evaluated on a held-out set"
         },
         {
           "id": "b",
-          "text": "A speech synthesis model"
+          "text": "Unsupervised clustering treated as the true queue label"
         },
         {
           "id": "c",
-          "text": "An image generator"
+          "text": "A generative image model"
         },
         {
           "id": "d",
-          "text": "An LLM with no evaluation"
+          "text": "A rule that always selects the first queue"
         }
       ],
       "correctOptionId": "a",
-      "explanation": "Structured prediction with labeled examples is a natural fit for supervised ML."
+      "explanation": "The labels and fixed target categories make supervised classification a reasonable baseline. Evaluate it on the same held-out examples as the LLM; use class-specific metrics because rare queues can be missed."
     },
     {
       "id": "genai-fit",
       "type": "single_select",
-      "prompt": "Which is a clear generative-AI use case?",
+      "prompt": "An invoice product must summarize a paragraph in plain English but calculate tax totals exactly. Which design is most defensible?",
       "options": [
         {
           "id": "a",
-          "text": "Checking authentication"
+          "text": "Ask the LLM to do both and trust its explanation"
         },
         {
           "id": "b",
-          "text": "Enforcing a foreign key"
+          "text": "Use a generative model for the summary and deterministic arithmetic for tax totals"
         },
         {
           "id": "c",
-          "text": "Drafting a document summary"
+          "text": "Use clustering for both steps"
         },
         {
           "id": "d",
-          "text": "Adding two integers"
+          "text": "Avoid validating the model output if JSON is valid"
         }
       ],
-      "correctOptionId": "c",
-      "explanation": "Summarization creates new text based on input content."
+      "correctOptionId": "b",
+      "explanation": "Flexible language generation fits generative AI, while arithmetic and financial invariants should be computed and checked by deterministic code."
     },
     {
       "id": "all-ai-learns",
