@@ -110,7 +110,7 @@
           "type": "code",
           "language": "sql",
           "title": "PostgreSQL 17+: inspect checkpoint statistics",
-          "source": "-- PostgreSQL 17 and later\nSELECT num_timed,\n       num_requested,\n       num_done,\n       write_time,\n       sync_time,\n       buffers_written,\n       stats_reset\nFROM pg_stat_checkpointer;"
+          "source": "-- PostgreSQL 17 and later\nSELECT num_timed,\n       num_requested,\n       restartpoints_timed,\n       restartpoints_req,\n       restartpoints_done,\n       write_time,\n       sync_time,\n       buffers_written,\n       stats_reset\nFROM pg_stat_checkpointer;"
         },
         {
           "type": "table",
