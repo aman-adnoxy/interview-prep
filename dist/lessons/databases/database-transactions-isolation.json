@@ -12,7 +12,9 @@
     "Recognize lost updates, non-repeatable reads, and serialization conflicts.",
     "Use constraints, atomic updates, row locks, and retries to protect invariants.",
     "Explain why concurrency bugs can occur even when each request validates its input.",
-    "Use optimistic concurrency with version checks and explain when deferred constraints are useful."
+    "Use optimistic concurrency with version checks and explain when deferred constraints are useful.",
+    "Choose between atomic SQL, constraints, row locks, REPEATABLE READ, and SERIALIZABLE from the invariant being protected.",
+    "Predict the cost of stronger isolation: blocking, deadlocks, serialization aborts, retries, and reduced throughput."
   ],
   "mentalModel": {
     "type": "paragraph",
@@ -334,6 +336,123 @@
       ]
     },
     {
+      "id": "choose-the-right-concurrency-control",
+      "title": "Choose the weakest mechanism that safely protects the invariant",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "Do not start by asking “Which isolation level is strongest?” Start by stating the invariant in one sentence. Then ask whether the database can protect it with one statement or a constraint. Stronger isolation is useful when a decision depends on a set of rows or a predicate, but it costs more coordination and may abort work. The goal is not maximum isolation; it is correctness with an acceptable contention and retry cost."
+        },
+        {
+          "type": "table",
+          "title": "A practical decision guide (PostgreSQL)",
+          "columns": [
+            "Situation / invariant",
+            "Start with",
+            "Why this is usually the right fit",
+            "What can still go wrong"
+          ],
+          "rows": [
+            [
+              "Increment a counter; decrement stock only if positive",
+              "Atomic conditional UPDATE ... RETURNING",
+              "The database evaluates the condition and changes the row as one operation",
+              "Check affected-row count; ensure the business invariant really is row-local"
+            ],
+            [
+              "An email, username, or external event ID must be unique",
+              "UNIQUE constraint, optionally INSERT ... ON CONFLICT",
+              "The constraint is the final authority even when requests race",
+              "Handle the conflict; define whether duplicate requests return the original result"
+            ],
+            [
+              "Read one row, make a decision from it, then update that same row",
+              "SELECT ... FOR UPDATE or conditional UPDATE",
+              "Competing writers coordinate on the row being changed",
+              "Locks cause waits and can deadlock; keep the transaction short"
+            ],
+            [
+              "Several rows must change together, such as a bank transfer",
+              "One transaction with appropriate constraints",
+              "Atomicity prevents partial database changes",
+              "It does not undo an external payment/email; validate sufficient funds and other business rules"
+            ],
+            [
+              "A rule spans multiple rows, such as at least one doctor on call",
+              "Prefer a schema/constraint or shared lockable row; otherwise SERIALIZABLE plus full-transaction retry",
+              "A predicate-level invariant can fail even when transactions update different rows",
+              "Serializable transactions can abort; retry safely and monitor conflict rates"
+            ],
+            [
+              "Read-mostly reporting where a slightly changing view is acceptable",
+              "READ COMMITTED may be sufficient",
+              "Each statement sees a committed snapshot without holding a long stable snapshot",
+              "Two statements in one transaction may see different committed states"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "An API sells the last ticket. Two requests may arrive at the same time. Each must reserve at most one ticket, and an unsuccessful reservation must not create an order.",
+          "reasoning": [
+            "Avoid `SELECT available` in the application followed by an unconditional update. Both requests can read 1 before either writes.",
+            "Use `UPDATE tickets SET remaining = remaining - 1 WHERE event_id = $1 AND remaining > 0 RETURNING remaining`. Exactly one concurrent request can change the last ticket.",
+            "Only create the order when the update returns a row, and keep the ticket decrement and order insert in the same transaction.",
+            "If the update returns no row, return sold-out. Do not treat this normal business outcome as a transient database error and retry forever.",
+            "Add a unique idempotency key for client retries, because a client can lose the response after the transaction commits and send the request again."
+          ],
+          "outcome": "For a row-local invariant, an atomic conditional update plus a short transaction and idempotency key is usually simpler and cheaper than SERIALIZABLE."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Atomic reservation: condition, mutation, and result in one statement",
+          "source": "BEGIN;\\nWITH reserved AS (\\n  UPDATE event_inventory\\n  SET remaining = remaining - 1\\n  WHERE event_id = $1 AND remaining > 0\\n  RETURNING event_id\\n)\\nINSERT INTO tickets (event_id, request_id)\\nSELECT event_id, $2 FROM reserved\\nON CONFLICT (request_id) DO NOTHING;\\nCOMMIT;"
+        },
+        {
+          "type": "paragraph",
+          "text": "Walkthrough: if the conditional UPDATE finds no available row, `reserved` is empty, so the INSERT inserts no ticket. Concurrent updates to the same inventory row are coordinated by PostgreSQL. The transaction groups the reservation and ticket write, but the application must still inspect the result and distinguish sold-out from an idempotency-key conflict. In a real implementation, make the idempotency record and outcome explicit so a retry after a lost response returns the original result."
+        },
+        {
+          "type": "table",
+          "title": "What you pay for stronger coordination",
+          "columns": [
+            "Mechanism",
+            "Correctness benefit",
+            "Operational downside"
+          ],
+          "rows": [
+            [
+              "Atomic statement / constraint",
+              "Small, explicit invariant enforced close to the data",
+              "May require redesigning a multi-step business rule into a single statement or schema constraint"
+            ],
+            [
+              "Row lock",
+              "Lets a transaction inspect and then safely change a particular row",
+              "Other transactions wait; inconsistent lock ordering can deadlock"
+            ],
+            [
+              "REPEATABLE READ",
+              "Stable transaction snapshot; avoids several read anomalies",
+              "Long transactions retain old snapshots; conflicting updates can fail; cross-row write skew is still possible in PostgreSQL"
+            ],
+            [
+              "SERIALIZABLE",
+              "Rejects executions that cannot be equivalent to a serial order",
+              "More serialization failures under contention; application must retry the whole transaction and avoid non-repeatable side effects"
+            ]
+          ]
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Isolation does not replace invariant design",
+          "content": "SERIALIZABLE is not a magic switch that makes an incorrect transaction correct. State the business invariant, enforce it with constraints or atomic writes where possible, and use isolation to protect the remaining cross-row reasoning. A transaction can still commit a logically wrong value if the application computes the wrong value."
+        }
+      ]
+    },
+    {
       "id": "transaction-boundaries",
       "title": "Choose the transaction boundary",
       "blocks": [
@@ -460,6 +579,42 @@
       "kind": "pitfall",
       "title": "Do not memorize slogans",
       "content": "Start with the rows and operations involved, state what must remain true, then predict the result. Similar-looking SQL can behave differently under concurrency or when NULLs and errors are involved."
+    },
+    {
+      "type": "table",
+      "title": "Production symptom → likely cause → first response",
+      "columns": [
+        "Symptom",
+        "Possible cause",
+        "First response"
+      ],
+      "rows": [
+        [
+          "Occasional duplicate username/order",
+          "Uniqueness enforced only by application pre-check",
+          "Add a database UNIQUE constraint; handle conflict as a normal outcome"
+        ],
+        [
+          "Counter occasionally undercounts",
+          "Application read-modify-write lost update",
+          "Use `SET value = value + 1` and return the resulting value"
+        ],
+        [
+          "Both rows changed but a cross-row rule is broken",
+          "Write skew / invariant spans rows",
+          "Use a constraint or common lockable row; otherwise consider SERIALIZABLE with full retry"
+        ],
+        [
+          "Requests stall and then one fails with deadlock",
+          "Transactions acquire locks in inconsistent order or stay open too long",
+          "Keep transactions short, acquire locks in a consistent order, retry deadlock victims safely"
+        ],
+        [
+          "Retries increase load during contention",
+          "Unbounded or immediate retries amplify conflicts",
+          "Bound attempts, add jitter/backoff, measure retry rate, and return a controlled failure after exhaustion"
+        ]
+      ]
     }
   ],
   "revisionSheet": [
@@ -486,6 +641,10 @@
     {
       "type": "paragraph",
       "text": "Keep transactions short and do not expect rollback to undo external API calls."
+    },
+    {
+      "type": "paragraph",
+      "text": "Decision rule: (1) state the invariant, (2) use a constraint for uniqueness/referential rules, (3) use an atomic conditional statement for a row-local change, (4) use a short row-locked transaction when a read must guide a write, (5) use SERIALIZABLE or redesign around a shared lockable row for cross-row predicates, and (6) design bounded full-transaction retries and idempotent outcomes before enabling retryable isolation."
     }
   ],
   "questions": [
