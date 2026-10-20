@@ -365,6 +365,64 @@
           "outcome": "Choose SP-GiST only when the operator class matches the actual operation and measurements justify it."
         }
       ]
+    },
+    {
+      "id": "postgres-index-family-selection-lab",
+      "title": "Decision lab: match the operator to the index access method",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Choose an index by the operator and data shape",
+          "columns": [
+            "Query / data shape",
+            "Candidate index",
+            "Important limitation"
+          ],
+          "rows": [
+            [
+              "Equality, range, ordering, prefix patterns under supported collation",
+              "B-tree",
+              "General-purpose default, but not ideal for every containment/spatial operator"
+            ],
+            [
+              "JSONB containment `@>`",
+              "GIN, with operator class chosen for workload",
+              "`jsonb_path_ops` supports containment well but does not support key-existence `?` operators"
+            ],
+            [
+              "JSONB key existence `?`",
+              "GIN with an operator class that supports the operator",
+              "Choosing the wrong operator class can make the index unusable for the predicate"
+            ],
+            [
+              "Large time-correlated append-only table with broad range filters",
+              "BRIN",
+              "Lossy page-range summaries; effectiveness depends on physical correlation and ranges"
+            ],
+            [
+              "Geometric/spatial operators",
+              "GiST or SP-GiST depending on data/operator",
+              "The operator class and predicate must match; test actual query"
+            ],
+            [
+              "Rows satisfying a stable subset, such as active records",
+              "Partial index with matching predicate",
+              "Planner must prove query predicate implies the index predicate"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A JSONB column stores store attributes. One query uses `attributes @> '{\"category\":\"cafe\"}'`; another asks whether the key `verified` exists.",
+          "reasoning": [
+            "Both are JSONB queries, but their operators express different operations.",
+            "An index's operator class defines which operators it can accelerate; “GIN exists” is not enough to conclude both queries can use it.",
+            "Choose an operator class compatible with each critical operator, then verify the plan for representative data.",
+            "If the two query families are both frequent, the additional index may be worth its storage/write cost; otherwise prioritize the dominant workload."
+          ],
+          "outcome": "Do not select an index family from the column type alone. Match operator semantics, operator class, selectivity, and workload."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
