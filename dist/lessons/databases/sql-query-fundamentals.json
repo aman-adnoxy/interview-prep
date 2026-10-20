@@ -474,7 +474,7 @@
           "type": "code",
           "language": "sql",
           "title": "Stable newest-first page",
-          "source": "SELECT id, created_at, total\\nFROM orders\\nWHERE tenant_id = $1\\n  AND status = 'paid'\\nORDER BY created_at DESC, id DESC\\nLIMIT 20;"
+          "source": "SELECT id, created_at, total\nFROM orders\nWHERE tenant_id = $1\n  AND status = 'paid'\nORDER BY created_at DESC, id DESC\nLIMIT 20;"
         },
         {
           "type": "paragraph",
