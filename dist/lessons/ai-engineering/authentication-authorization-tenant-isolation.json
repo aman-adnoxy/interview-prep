@@ -155,6 +155,60 @@
           "content": "A model can suggest actions or summarize content, but permissions must be enforced by trusted identity and application policy outside the model. Tool allowlists, scoped credentials, and audit trails limit impact."
         }
       ]
+    },
+    {
+      "id": "tenant-boundary-review-lab",
+      "title": "Decision lab: follow tenant identity through every access path",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A user from tenant A requests `/reports/123`. Report 123 belongs to tenant B. The API checks that the user is logged in but only queries by report ID.",
+          "reasoning": [
+            "Authentication proves who the caller is; it does not prove the caller may access report 123.",
+            "Derive tenant ID from verified identity/session claims, not from a request body field that the caller can edit.",
+            "Query by both resource ID and tenant scope, or load the resource then explicitly authorize ownership before returning data.",
+            "Apply the same boundary to cache keys, object storage paths, background jobs, exports, logs, and search indexes; one missing tenant dimension can leak data.",
+            "Test cross-tenant reads and writes for every endpoint and background path, including guessed IDs and replayed job IDs."
+          ],
+          "outcome": "Tenant isolation is an end-to-end data-flow invariant. A login check at the route is not enough."
+        },
+        {
+          "type": "table",
+          "title": "Where tenant isolation commonly breaks",
+          "columns": [
+            "Path",
+            "Unsafe pattern",
+            "Safer pattern"
+          ],
+          "rows": [
+            [
+              "SQL",
+              "`SELECT * FROM reports WHERE id = ?`",
+              "Scope by authenticated tenant and resource ID"
+            ],
+            [
+              "Cache",
+              "Cache key contains only report ID",
+              "Include tenant/resource identity and authorization-sensitive dimensions"
+            ],
+            [
+              "Background worker",
+              "Trust tenant ID from job payload without validation",
+              "Persist ownership and validate job/resource association"
+            ],
+            [
+              "Object storage",
+              "Predictable key returned without ownership check",
+              "Authorize access before issuing a short-lived scoped URL"
+            ],
+            [
+              "Logs/telemetry",
+              "Log full prompts, tokens, or tenant data",
+              "Minimize/redact sensitive fields and restrict access"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
