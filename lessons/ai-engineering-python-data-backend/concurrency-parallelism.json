@@ -181,6 +181,65 @@
           "outcome": "With the assumptions stated, 40 connections × five 100 ms waves means roughly 500 ms for the burst to drain. A 250 ms deadline cannot serve the last three waves. Backpressure limits how much work enters the bottleneck; deadlines and bounded retries prevent the backlog from feeding itself."
         }
       ]
+    },
+    {
+      "id": "choose-concurrency-model",
+      "title": "Decision lab: threads, processes, or async?",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Choose from the bottleneck",
+          "columns": [
+            "Workload",
+            "Starting choice",
+            "Why",
+            "Cost / warning"
+          ],
+          "rows": [
+            [
+              "Many HTTP/database calls spend most time waiting",
+              "Async I/O or threads",
+              "Many waits can overlap without one thread per operation",
+              "Need bounded concurrency, cancellation, timeouts, and async-compatible clients"
+            ],
+            [
+              "CPU-heavy pure-Python parsing or computation",
+              "Process pool",
+              "Separate processes can use multiple CPU cores despite the usual CPython GIL",
+              "Startup, serialization, memory duplication, and inter-process failure handling"
+            ],
+            [
+              "Blocking library that has no async API",
+              "Thread pool",
+              "Moves blocking calls off the event-loop thread",
+              "Thread count and shared mutable state need limits"
+            ],
+            [
+              "Large numerical operations implemented in NumPy/native code",
+              "Benchmark vectorized/native path first",
+              "Native code may release the GIL and avoid Python loops",
+              "Memory bandwidth and temporary arrays can dominate"
+            ],
+            [
+              "Tiny tasks or tasks sharing complex mutable state",
+              "Keep it simple / sequential baseline",
+              "Coordination can cost more than the work",
+              "Do not add concurrency without measuring"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A service runs a 50 ms network request and a 500 ms pure-Python CPU calculation per job.",
+          "reasoning": [
+            "Async helps overlap the network wait across jobs, but the CPU calculation still occupies the event-loop thread unless it yields.",
+            "Moving the CPU calculation to a process pool can use multiple cores, but serialization and process startup may erase gains for small payloads.",
+            "Benchmark sequential, async-I/O, and process-pool versions using representative concurrency and payload sizes.",
+            "Add backpressure and limits so a burst does not create an unbounded number of queued CPU tasks."
+          ],
+          "outcome": "Choose concurrency based on the scarce resource and benchmark the whole system, not the syntax that looks modern."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
