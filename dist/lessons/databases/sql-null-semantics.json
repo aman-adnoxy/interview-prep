@@ -380,6 +380,60 @@
           "explanation": "NULL changes predicate logic. Correct SQL starts by specifying how unknown values should behave, not by treating NULL like a normal value."
         }
       ]
+    },
+    {
+      "id": "null-semantics-decision-lab",
+      "title": "Decision lab: distinguish unknown, absent, and false",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A report should return customers who have not opted out of marketing. `opted_out` can be TRUE, FALSE, or NULL because the preference has never been recorded.",
+          "reasoning": [
+            "`opted_out = false` returns only explicit false values; NULL comparisons evaluate to UNKNOWN, not TRUE.",
+            "If the business rule is “not known to have opted out,” use `opted_out IS NOT TRUE` in PostgreSQL, which includes FALSE and NULL.",
+            "If the business rule is “explicitly opted in,” use `opted_out = false` only if false has that precise meaning; otherwise add an explicit consent state.",
+            "Be careful with `NOT IN` when the subquery may contain NULL: one NULL can make comparisons UNKNOWN and filter out rows unexpectedly.",
+            "For uniqueness, remember ordinary UNIQUE constraints generally allow multiple NULLs in PostgreSQL; use NOT NULL or an appropriate NULLS NOT DISTINCT constraint when required."
+          ],
+          "outcome": "Write down what NULL means in the domain before choosing a predicate. Unknown is not the same as false or absent."
+        },
+        {
+          "type": "table",
+          "title": "Choose the predicate by business meaning",
+          "columns": [
+            "Business question",
+            "Predicate",
+            "Result for NULL"
+          ],
+          "rows": [
+            [
+              "Is the value explicitly missing?",
+              "`col IS NULL`",
+              "Matches"
+            ],
+            [
+              "Is the value explicitly present?",
+              "`col IS NOT NULL`",
+              "Does not match"
+            ],
+            [
+              "Is the value not true (false or unknown)?",
+              "`col IS NOT TRUE`",
+              "Matches"
+            ],
+            [
+              "Is the value explicitly false?",
+              "`col = FALSE`",
+              "Does not match"
+            ],
+            [
+              "Exclude values listed in a subquery that may contain NULL",
+              "Prefer `NOT EXISTS` with a correlated match",
+              "Avoids NOT IN's NULL trap"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
