@@ -291,6 +291,34 @@
           "explanation": "WHERE controls input rows; HAVING controls groups. The distinction is both semantic and often relevant to efficiency."
         }
       ]
+    },
+    {
+      "id": "aggregation-grain-decision-lab",
+      "title": "Decision lab: aggregate at the grain of the question",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "You need monthly revenue by tenant and campaign, but orders have multiple line items and a campaign can have many stores.",
+          "reasoning": [
+            "Define one output row as `(tenant_id, campaign_id, month)` before writing SQL.",
+            "Calculate revenue from line-item amounts at line-item grain, then aggregate to campaign/month. Do not sum an order total after joining to multiple items or stores.",
+            "Use WHERE to filter source rows before grouping and HAVING to filter groups after aggregation.",
+            "Use a CTE to name a meaningful intermediate result when it clarifies logic; a CTE is not automatically a performance optimization in every database/version.",
+            "Compare a few groups against hand-calculated source records to validate the aggregate."
+          ],
+          "outcome": "Correct aggregation starts with the meaning of one output row. Query syntax cannot rescue a mismatched grain."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Aggregate line items once at the intended grain",
+          "source": "WITH monthly_campaign_revenue AS (\\n  SELECT tenant_id, campaign_id, date_trunc('month', paid_at) AS month,\\n         SUM(line_total) AS revenue\\n  FROM order_items\\n  WHERE status = 'paid'\\n  GROUP BY tenant_id, campaign_id, date_trunc('month', paid_at)\\n)\\nSELECT tenant_id, campaign_id, month, revenue\\nFROM monthly_campaign_revenue\\nWHERE revenue > 0;"
+        },
+        {
+          "type": "paragraph",
+          "text": "The CTE produces one row per tenant, campaign, and month. The outer query filters those already-aggregated rows; if the filter were `HAVING SUM(line_total) > 0` it would belong in the aggregation query. Confirm that `paid_at`, status, and line_total represent the business definition of revenue before using the result for finance."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
