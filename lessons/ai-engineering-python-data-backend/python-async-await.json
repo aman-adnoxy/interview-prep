@@ -130,6 +130,60 @@
           "outcome": "Use async when overlapping I/O improves end-to-end latency, not simply because the application is written in Python."
         }
       ]
+    },
+    {
+      "id": "async-capacity-decision-lab",
+      "title": "Decision lab: async needs limits, timeouts, and cancellation",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "An API receives 100 requests. Each request calls three independent external services, each usually takes 200 ms but can hang for 20 seconds. A naive `gather` starts all calls at once.",
+          "reasoning": [
+            "Async can overlap network waiting, but it does not make the external services faster and does not make CPU-heavy Python code parallel.",
+            "Unbounded fan-out can create hundreds of simultaneous connections, exhaust provider quotas, and amplify an outage.",
+            "Use a semaphore or bounded worker pool, set per-call timeouts, and propagate cancellation when the client no longer needs the result.",
+            "Choose an overall request deadline as well as per-dependency timeouts; otherwise three individually acceptable waits can exceed the user-facing latency budget.",
+            "Measure concurrency, timeout rate, queue wait, p95/p99 latency, and dependency errors under load."
+          ],
+          "outcome": "Use async for independent I/O, but make concurrency and deadlines explicit. A fast happy path is not a capacity plan."
+        },
+        {
+          "type": "table",
+          "title": "What if you omit the control?",
+          "columns": [
+            "Missing control",
+            "Failure mode",
+            "Mitigation"
+          ],
+          "rows": [
+            [
+              "Concurrency limit",
+              "Connection/quota exhaustion and cascading overload",
+              "Semaphore or bounded queue"
+            ],
+            [
+              "Timeout",
+              "Hung work consumes resources indefinitely",
+              "Dependency and overall deadlines"
+            ],
+            [
+              "Cancellation handling",
+              "Work continues after caller has gone away",
+              "Propagate cancellation; clean up resources"
+            ],
+            [
+              "Async-compatible client",
+              "Blocking call freezes event loop",
+              "Use async driver/client or isolate blocking work"
+            ],
+            [
+              "CPU offload",
+              "CPU-bound function blocks event loop",
+              "Process pool/native vectorized code where appropriate"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
