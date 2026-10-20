@@ -247,60 +247,6 @@
           "outcome": "An API contract must define not only the happy response but also retries, timeouts, invalid input, pagination, and authorization."
         }
       ]
-    },
-    {
-      "id": "api-contract-failure-lab",
-      "title": "Decision lab: design the behavior clients can rely on",
-      "blocks": [
-        {
-          "type": "table",
-          "title": "API design decisions",
-          "columns": [
-            "Requirement",
-            "Design choice",
-            "Failure if omitted"
-          ],
-          "rows": [
-            [
-              "Client may retry after a timeout",
-              "Idempotency key for non-idempotent business operations",
-              "A committed operation may be repeated because the client never received the response"
-            ],
-            [
-              "Dependency may hang",
-              "Explicit connect/read/overall timeout budget",
-              "Requests occupy workers and resources indefinitely"
-            ],
-            [
-              "Collection may grow large",
-              "Cursor/keyset pagination with stable ordering",
-              "Large responses become slow and offset pagination can skip/repeat rows as data changes"
-            ],
-            [
-              "Input can be malformed",
-              "Schema validation and field-level error response",
-              "Invalid values fail deep in business logic or become ambiguous server errors"
-            ],
-            [
-              "Resource may not belong to caller",
-              "Authorize ownership on every request",
-              "Knowing or guessing an ID can expose another user's resource"
-            ]
-          ]
-        },
-        {
-          "type": "worked_example",
-          "problem": "A client sends `POST /payments`, the server commits the payment, but the response is lost. The client retries.",
-          "reasoning": [
-            "Without idempotency, the server cannot distinguish a retry from a second intentional payment.",
-            "Require a stable idempotency key scoped to the authenticated customer and persist the key plus the original result atomically with the payment record.",
-            "If the same key arrives with a different request body, reject it rather than returning or overwriting a result for another operation.",
-            "Return the stored outcome on a legitimate retry. Use provider-side idempotency and reconciliation for external payment effects.",
-            "Document status codes and retry semantics so clients do not blindly retry permanent validation or authorization failures."
-          ],
-          "outcome": "An API contract must define not only the happy response but also retries, timeouts, invalid input, pagination, and authorization."
-        }
-      ]
     }
   ],
   "tradeoffsAndPitfalls": [
