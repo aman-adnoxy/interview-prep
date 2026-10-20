@@ -168,6 +168,58 @@
           "content": "Poll only a status resource, use bounded intervals/backoff or server push where appropriate, and authorize status/result access by tenant. Never return another customer's job status because a guessed job ID exists."
         }
       ]
+    },
+    {
+      "id": "job-queue-failure-decision-lab",
+      "title": "Decision lab: prevent accepted work from disappearing",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "An endpoint inserts a campaign row into PostgreSQL, then publishes a job to a queue. The process crashes between the two operations.",
+          "reasoning": [
+            "If the database commit succeeds but queue publish never happens, the campaign remains stuck with no worker processing it.",
+            "Publishing first is not enough either: the worker may receive a job whose database transaction later rolls back.",
+            "Use a transactional outbox: write the business change and an outbox event in the same database transaction, then a publisher retries delivery from the outbox.",
+            "Assume queue delivery can be duplicated. Make the job handler idempotent using a stable job/event ID and persist state transitions.",
+            "Track queued/running/succeeded/failed/cancelled states, attempt count, last error, timestamps, and a recovery policy for workers that die mid-job."
+          ],
+          "outcome": "A queue is usually at-least-once delivery, not magical exactly-once execution. Durable state, idempotency, and recovery close the gaps."
+        },
+        {
+          "type": "table",
+          "title": "Worker failure and recovery plan",
+          "columns": [
+            "Failure",
+            "Required behavior"
+          ],
+          "rows": [
+            [
+              "Worker crashes during execution",
+              "Lease/heartbeat or timeout detects stale running job; requeue safely"
+            ],
+            [
+              "Same message delivered twice",
+              "Idempotent handler returns existing outcome or safely resumes"
+            ],
+            [
+              "Transient dependency failure",
+              "Bounded retries with backoff and jitter"
+            ],
+            [
+              "Permanent invalid input",
+              "Mark failed with a useful error; do not retry forever"
+            ],
+            [
+              "User cancels",
+              "Record cancellation and check it at safe checkpoints; explain whether side effects can still finish"
+            ],
+            [
+              "Job belongs to another tenant",
+              "Authorize status and result access using trusted tenant context"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
