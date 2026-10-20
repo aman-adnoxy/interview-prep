@@ -161,6 +161,59 @@
           "content": "Big O ignores constants and memory layout. Measure representative workloads after identifying the algorithm; do not replace readable code with a complicated structure based on asymptotic notation alone."
         }
       ]
+    },
+    {
+      "id": "complexity-with-realistic-scale",
+      "title": "Decision lab: estimate cost before optimizing",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "For each of 20,000 incoming records, your code scans 50,000 existing IDs to check whether it is already processed.",
+          "reasoning": [
+            "A nested scan performs up to 20,000 × 50,000 = 1,000,000,000 comparisons in the worst case.",
+            "Build a set of existing IDs once. Membership checks are expected O(1), so the work is closer to O(50,000 + 20,000) on average.",
+            "Account for memory: the set stores additional references and hash-table overhead. If the data exceeds memory, use a database uniqueness constraint or a disk-backed index instead.",
+            "Use a heap when only the top K priorities are needed; sorting all N items costs O(N log N), while maintaining a size-K heap costs O(N log K)."
+          ],
+          "outcome": "Choose data structures from the repeated operation and data scale, while accounting for memory and worst-case behavior."
+        },
+        {
+          "type": "table",
+          "title": "Common operation → useful structure",
+          "columns": [
+            "Need",
+            "Structure",
+            "Why / trade-off"
+          ],
+          "rows": [
+            [
+              "Fast membership and deduplication",
+              "set",
+              "Expected constant-time membership, extra memory, no ordering guarantee"
+            ],
+            [
+              "Lookup by key",
+              "dict",
+              "Expected constant-time lookup, key hash/equality must be stable"
+            ],
+            [
+              "Repeated minimum/maximum extraction",
+              "heap",
+              "Efficient priority retrieval, not a fully sorted collection"
+            ],
+            [
+              "Maintain ordered results for all items",
+              "sorted list / sort",
+              "Simple and often fast enough; insertion into a list can be O(N)"
+            ],
+            [
+              "Data larger than process memory",
+              "Database index / external storage",
+              "Avoid loading everything into a Python collection"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
