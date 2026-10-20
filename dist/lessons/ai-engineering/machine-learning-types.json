@@ -114,6 +114,69 @@
           "text": "6. Interview probes — What is the signal? Is the target known? Do actions affect later states? Can a simpler supervised baseline meet the goal?"
         }
       ]
+    },
+    {
+      "id": "choose-learning-paradigm-from-feedback",
+      "title": "Decision lab: what kind of learning fits the available feedback?",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Choose based on what the data actually contains",
+          "columns": [
+            "Product problem",
+            "Available signal",
+            "Likely starting point",
+            "Main risk"
+          ],
+          "rows": [
+            [
+              "Predict whether an invoice is fraudulent",
+              "Historical examples labeled fraud/not fraud",
+              "Supervised classification",
+              "Labels may be delayed, noisy, or reflect past review bias"
+            ],
+            [
+              "Group stores by behavior without predefined categories",
+              "Feature vectors but no target labels",
+              "Clustering / unsupervised exploration",
+              "Clusters are not automatically meaningful business segments"
+            ],
+            [
+              "Rank which support ticket should be handled first",
+              "Historical priority labels or outcome feedback",
+              "Supervised ranking/classification baseline",
+              "Historical priority may encode old policy rather than customer impact"
+            ],
+            [
+              "Recommend content and learn from user choices",
+              "Clicks, skips, purchases, possibly delayed reward",
+              "Start with supervised/offline ranking; consider bandits when safe feedback loops exist",
+              "Exploration can harm users; clicks are a biased proxy for satisfaction"
+            ],
+            [
+              "Generate a response from a language prompt",
+              "Large-scale text pretraining plus instruction tuning",
+              "Use a pretrained generative model; adapt with prompting/RAG/fine-tuning based on the gap",
+              "A generative model is not automatically the right choice for tabular prediction"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "You have 50,000 support tickets but only 1,200 have been manually labeled for urgency. You need a reliable first version next month.",
+          "reasoning": [
+            "Begin with a supervised baseline on the labeled tickets and establish precision/recall at the workload the team can handle.",
+            "Check whether labeled tickets represent all teams, languages, and urgency levels; selection bias can make the measured score misleading.",
+            "Use clustering only as an exploratory tool to discover recurring themes or help prioritize labeling; cluster IDs are not ground truth.",
+            "Keep human override and collect outcomes. Do not label every ticket as urgent just to avoid misses if the team cannot act on the queue."
+          ],
+          "outcome": "Choose the learning paradigm from the target signal and decision being made, not from the newest model family."
+        },
+        {
+          "type": "paragraph",
+          "text": "Before selecting a paradigm, write down the prediction target, what counts as a correct result, how labels are obtained, how quickly outcomes arrive, and what a false positive or false negative costs. If those cannot be answered, the first task is problem definition and data collection, not model selection."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
