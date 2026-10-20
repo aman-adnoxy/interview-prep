@@ -170,6 +170,54 @@
           "outcome": "Evaluate the whole learned preprocessing pipeline, not just the estimator, and keep the held-out data out of fitting."
         }
       ]
+    },
+    {
+      "id": "data-cleaning-decision-lab",
+      "title": "Decision lab: clean the data without deleting the signal",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Treat data defects according to their cause",
+          "columns": [
+            "Observation",
+            "Do not assume",
+            "A safer next step"
+          ],
+          "rows": [
+            [
+              "Age is missing",
+              "Missing means average age",
+              "Check why it is missing; impute with a fitted rule and consider a missingness indicator"
+            ],
+            [
+              "Two rows share an email",
+              "They are duplicates",
+              "Define business identity and compare timestamps/source IDs before merging"
+            ],
+            [
+              "A transaction amount is extremely high",
+              "It is a bad outlier",
+              "Check units, currency, fraud, and valid high-value behavior before capping/removing"
+            ],
+            [
+              "A field is missing mostly for one customer group",
+              "Random missingness",
+              "Investigate process or product bias; blanket deletion may disproportionately remove that group"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A model predicts campaign spend. A few records are 100 times larger than typical, and some records lack spend.",
+          "reasoning": [
+            "Check currency and unit conventions first; 100x differences may be a dollars-versus-cents bug rather than a statistical outlier.",
+            "Compare extreme records with source systems and business context. If valid, preserve them or use a model/transform robust to skew.",
+            "Inspect missingness by city, partner, and time. Missing values may indicate a broken integration or systematic collection gap.",
+            "Fit imputation/capping thresholds on training data only, save the fitted preprocessing, and compare results with and without the treatment."
+          ],
+          "outcome": "Cleaning should encode a justified data-quality policy, not make distributions look tidy."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
