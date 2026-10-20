@@ -322,6 +322,60 @@
           "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
+    },
+    {
+      "id": "database-model-choice-lab",
+      "title": "Decision lab: choose a database from invariants and query patterns",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A product stores customer accounts, orders, order items, and a flexible metadata object that varies by integration partner.",
+          "reasoning": [
+            "Start with invariants and access patterns, not a slogan that SQL is structured and NoSQL is flexible.",
+            "Orders and items often need referential integrity, multi-row transactions, joins, and reporting; PostgreSQL is a strong default for those needs.",
+            "Partner metadata can fit JSONB in PostgreSQL if it remains part of the relational aggregate and query/index needs are known.",
+            "MongoDB may fit when documents are naturally aggregate-shaped, commonly read/written as a whole, schema variation is central, and cross-document relational queries are not dominant.",
+            "Estimate query patterns, consistency requirements, operational expertise, backup/restore, migration costs, and future reporting before choosing. Avoid polyglot persistence unless a concrete need pays for the added operational burden."
+          ],
+          "outcome": "Choose the data model and engine that make invariants and dominant queries easiest to implement correctly; benchmark the real workload."
+        },
+        {
+          "type": "table",
+          "title": "Decision signals",
+          "columns": [
+            "Signal",
+            "Relational PostgreSQL often fits",
+            "Document MongoDB may fit"
+          ],
+          "rows": [
+            [
+              "Strong relationships and foreign-key invariants",
+              "Natural fit",
+              "Requires explicit application/data-model discipline for relationships"
+            ],
+            [
+              "Transactions across related rows",
+              "Mature relational transaction model",
+              "Multi-document transactions exist but schema/access patterns still matter"
+            ],
+            [
+              "Aggregate read/write as one document",
+              "Can use normalized tables or JSONB depending on needs",
+              "Natural fit for bounded aggregate documents"
+            ],
+            [
+              "Ad hoc joins and SQL analytics",
+              "Strong ecosystem and query language",
+              "Possible with aggregation pipelines, but model shape and pipeline complexity matter"
+            ],
+            [
+              "Flexible nested attributes",
+              "JSONB alongside relational columns",
+              "Document model can make variable shape natural"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
