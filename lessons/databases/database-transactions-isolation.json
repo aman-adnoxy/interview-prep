@@ -337,7 +337,7 @@
     },
     {
       "id": "choose-the-right-concurrency-control",
-      "title": "Choose the weakest mechanism that safely protects the invariant",
+      "title": "Decision lab: choose the weakest mechanism that safely protects the invariant",
       "blocks": [
         {
           "type": "paragraph",
@@ -407,7 +407,7 @@
           "type": "code",
           "language": "sql",
           "title": "Atomic reservation: condition, mutation, and result in one statement",
-          "source": "BEGIN;\\nWITH reserved AS (\\n  UPDATE event_inventory\\n  SET remaining = remaining - 1\\n  WHERE event_id = $1 AND remaining > 0\\n  RETURNING event_id\\n)\\nINSERT INTO tickets (event_id, request_id)\\nSELECT event_id, $2 FROM reserved\\nON CONFLICT (request_id) DO NOTHING;\\nCOMMIT;"
+          "source": "BEGIN;\nWITH reserved AS (\n  UPDATE event_inventory\n  SET remaining = remaining - 1\n  WHERE event_id = $1 AND remaining > 0\n  RETURNING event_id\n)\nINSERT INTO tickets (event_id, request_id)\nSELECT event_id, $2 FROM reserved\nON CONFLICT (request_id) DO NOTHING;\nCOMMIT;"
         },
         {
           "type": "paragraph",
