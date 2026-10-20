@@ -430,6 +430,124 @@
           "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
+    },
+    {
+      "id": "scaling-bottleneck-decision-lab",
+      "title": "Decision lab: find the bottleneck before scaling the database",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "Read traffic has tripled and p95 latency is rising. The team proposes sharding immediately.",
+          "reasoning": [
+            "Break down latency into application queueing, connection-pool wait, database execution, lock wait, and network time before choosing an intervention.",
+            "If the database is CPU-bound on one expensive query, query/index improvements may be cheaper than adding replicas or shards.",
+            "If reads dominate and stale reads are acceptable, replicas or a cache may help; replicas add lag and do not remove primary write bottlenecks.",
+            "If connections are exhausted, pooling and bounded concurrency may help more than increasing database size.",
+            "Sharding adds routing, cross-shard query/transaction complexity, rebalancing, and operational failure modes. Use it when a measured single-node limit and growth path justify that cost."
+          ],
+          "outcome": "Scale the bottleneck you measured. Replicas solve some read workloads; they do not automatically solve write contention, bad queries, or connection storms."
+        },
+        {
+          "type": "table",
+          "title": "Scaling option and its price",
+          "columns": [
+            "Option",
+            "Good fit",
+            "New failure mode / cost"
+          ],
+          "rows": [
+            [
+              "Query/index optimization",
+              "Expensive repeated query or plan issue",
+              "Needs measurement and regression testing"
+            ],
+            [
+              "Connection pooling / backpressure",
+              "Too many concurrent connections or queueing",
+              "Pool saturation must be visible; clients wait or reject"
+            ],
+            [
+              "Read replicas",
+              "Read-heavy workload with acceptable lag",
+              "Stale reads, failover/routing complexity"
+            ],
+            [
+              "Caching",
+              "Repeated reads with acceptable staleness",
+              "Invalidation, stampedes, stale data"
+            ],
+            [
+              "Partitioning",
+              "Large table with aligned pruning/retention patterns",
+              "Partition-key constraints and more operational complexity"
+            ],
+            [
+              "Sharding",
+              "Measured single-node write/storage ceiling",
+              "Cross-shard transactions, routing, rebalancing, uneven shards"
+            ]
+          ]
+        }
+      ]
+    },
+    {
+      "id": "scaling-bottleneck-decision-lab",
+      "title": "Decision lab: find the bottleneck before scaling the database",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "Read traffic has tripled and p95 latency is rising. The team proposes sharding immediately.",
+          "reasoning": [
+            "Break down latency into application queueing, connection-pool wait, database execution, lock wait, and network time before choosing an intervention.",
+            "If the database is CPU-bound on one expensive query, query/index improvements may be cheaper than adding replicas or shards.",
+            "If reads dominate and stale reads are acceptable, replicas or a cache may help; replicas add lag and do not remove primary write bottlenecks.",
+            "If connections are exhausted, pooling and bounded concurrency may help more than increasing database size.",
+            "Sharding adds routing, cross-shard query/transaction complexity, rebalancing, and operational failure modes. Use it when a measured single-node limit and growth path justify that cost."
+          ],
+          "outcome": "Scale the bottleneck you measured. Replicas solve some read workloads; they do not automatically solve write contention, bad queries, or connection storms."
+        },
+        {
+          "type": "table",
+          "title": "Scaling option and its price",
+          "columns": [
+            "Option",
+            "Good fit",
+            "New failure mode / cost"
+          ],
+          "rows": [
+            [
+              "Query/index optimization",
+              "Expensive repeated query or plan issue",
+              "Needs measurement and regression testing"
+            ],
+            [
+              "Connection pooling / backpressure",
+              "Too many concurrent connections or queueing",
+              "Pool saturation must be visible; clients wait or reject"
+            ],
+            [
+              "Read replicas",
+              "Read-heavy workload with acceptable lag",
+              "Stale reads, failover/routing complexity"
+            ],
+            [
+              "Caching",
+              "Repeated reads with acceptable staleness",
+              "Invalidation, stampedes, stale data"
+            ],
+            [
+              "Partitioning",
+              "Large table with aligned pruning/retention patterns",
+              "Partition-key constraints and more operational complexity"
+            ],
+            [
+              "Sharding",
+              "Measured single-node write/storage ceiling",
+              "Cross-shard transactions, routing, rebalancing, uneven shards"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
