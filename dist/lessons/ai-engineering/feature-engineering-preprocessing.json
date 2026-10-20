@@ -114,6 +114,59 @@
           "text": "6. Interview probes — Does this model need scaling? What happens to unseen categories? Why is the value missing? Can production reproduce training transformations?"
         }
       ]
+    },
+    {
+      "id": "preprocessing-choice-lab",
+      "title": "Decision lab: choose preprocessing without leakage",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Pick transformations from the data and model",
+          "columns": [
+            "Input/problem",
+            "Reasonable approach",
+            "Important caveat"
+          ],
+          "rows": [
+            [
+              "Numeric features with very different scales for distance-based models",
+              "Standardize or normalize using training-set statistics",
+              "Tree models often need scaling less; do not fit scaler on validation/test data"
+            ],
+            [
+              "Categorical feature with a few known values",
+              "One-hot encoding",
+              "Define behavior for categories unseen at inference time"
+            ],
+            [
+              "High-cardinality ID-like feature",
+              "Question whether it carries legitimate predictive signal; consider hashing/target encoding only with safeguards",
+              "Raw IDs often memorize entities; target encoding can leak labels unless cross-fitted"
+            ],
+            [
+              "Text fields",
+              "Tokenization/embeddings or text-specific features",
+              "Keep preprocessing consistent between training and serving"
+            ],
+            [
+              "Feature available only after the prediction decision",
+              "Exclude it",
+              "Even a highly predictive feature is invalid if it is unavailable at inference time"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "You predict campaign conversion before a campaign starts. The dataset includes `clicks_after_launch` and `store_id`.",
+          "reasoning": [
+            "Clicks after launch leak future information and must not be used to predict before launch.",
+            "Store ID may let the model memorize known stores. It may be valid for repeat stores but invalid if the target is new-store generalization; the split must match the intended use.",
+            "Fit imputation, scaling, and encoding on training data. Package the fitted transformations with the model so serving uses the same rules.",
+            "Evaluate slices such as new stores, cities, and campaign types, not only one aggregate score."
+          ],
+          "outcome": "A feature is useful only if it is valid at prediction time and generalizes to the population where the product will use it."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
