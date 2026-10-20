@@ -469,6 +469,60 @@
           "explanation": "A strong interview answer states the problem, walks through the mechanism, names assumptions and trade-offs, and describes how to verify the result rather than relying on a rule of thumb."
         }
       ]
+    },
+    {
+      "id": "window-function-vs-grouping-decision-lab",
+      "title": "Decision lab: keep rows or collapse them?",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "For each customer, return every order plus that customer's total spend and the most recent order.",
+          "reasoning": [
+            "GROUP BY collapses each customer into one row, so it cannot by itself preserve every order row.",
+            "A window aggregate `SUM(total) OVER (PARTITION BY customer_id)` adds the customer total to each order while keeping order-level grain.",
+            "Use `ROW_NUMBER() OVER (PARTITION BY customer_id ORDER BY created_at DESC, id DESC)` to identify one latest row per customer; the unique tie-breaker makes the result deterministic.",
+            "Use UNION when duplicate rows should be removed across the complete selected tuple; use UNION ALL when preserving duplicates is correct and avoiding deduplication cost matters.",
+            "Validate window frame semantics for running totals: tied ORDER BY values can share a default RANGE frame, so use an explicit ROWS frame and tie-breaker when row-by-row behavior is intended."
+          ],
+          "outcome": "Choose GROUP BY when you want fewer rows; choose window functions when each original row still matters."
+        },
+        {
+          "type": "table",
+          "title": "SQL pattern choice",
+          "columns": [
+            "Need",
+            "Pattern",
+            "Common mistake"
+          ],
+          "rows": [
+            [
+              "One summary row per group",
+              "GROUP BY",
+              "Expecting detail columns without aggregating or grouping them"
+            ],
+            [
+              "Detail rows plus group statistic",
+              "Window function",
+              "Grouping away rows then trying to reconstruct them"
+            ],
+            [
+              "Latest row per entity",
+              "ROW_NUMBER with deterministic ordering",
+              "Ordering only by a non-unique timestamp"
+            ],
+            [
+              "Running total row by row",
+              "SUM OVER with explicit ROWS frame and tie-breaker",
+              "Unexpected jumps because tied sort keys share a frame"
+            ],
+            [
+              "Combine query results preserving duplicates",
+              "UNION ALL",
+              "Using UNION and paying for deduplication or losing meaningful duplicate rows"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
