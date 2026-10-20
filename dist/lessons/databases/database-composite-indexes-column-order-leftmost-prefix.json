@@ -327,6 +327,55 @@
           "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
+    },
+    {
+      "id": "composite-index-order-decision-lab",
+      "title": "Decision lab: design an index from the query shape",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A multi-tenant app runs `WHERE tenant_id = ? AND status = ? ORDER BY created_at DESC LIMIT 50` and also has a global newest-events page.",
+          "reasoning": [
+            "For the tenant-scoped feed, an index beginning with `tenant_id` and then useful filter/order columns can narrow to one tenant and return newest rows efficiently.",
+            "Column order matters: equality predicates commonly precede a range/order column for this query pattern, but selectivity and actual plans still matter.",
+            "The global feed cannot efficiently use a leading `tenant_id` when no tenant predicate exists; a separate index beginning with `created_at` may be justified if the global feed is important enough.",
+            "A wider index increases storage, cache pressure, and write amplification. Add INCLUDE columns only when index-only reads materially help.",
+            "Test both query shapes with EXPLAIN ANALYZE and representative parameter values; a single index rarely optimizes every access pattern."
+          ],
+          "outcome": "Design composite indexes around the complete WHERE + ORDER BY + LIMIT shape, then pay for additional indexes only when measured workload value warrants it."
+        },
+        {
+          "type": "table",
+          "title": "Query shape to candidate index",
+          "columns": [
+            "Query shape",
+            "Candidate starting point",
+            "Trade-off"
+          ],
+          "rows": [
+            [
+              "Tenant equality + status equality + newest first",
+              "`(tenant_id, status, created_at DESC)`",
+              "More index maintenance; status distribution may affect usefulness"
+            ],
+            [
+              "Tenant equality + newest first across all statuses",
+              "`(tenant_id, created_at DESC)`",
+              "A second index may be needed because status-first order differs"
+            ],
+            [
+              "Global newest-first page",
+              "`(created_at DESC)`",
+              "Does not help tenant filtering as directly"
+            ],
+            [
+              "Frequent query selects a few extra columns",
+              "Consider INCLUDE columns",
+              "Larger index; write cost and cache footprint rise"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
