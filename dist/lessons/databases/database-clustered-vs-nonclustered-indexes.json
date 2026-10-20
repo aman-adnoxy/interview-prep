@@ -298,6 +298,55 @@
           "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
+    },
+    {
+      "id": "clustered-layout-choice-lab",
+      "title": "Decision lab: choose a physical access pattern, not just an index name",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "An orders table is usually queried by tenant and newest order, but the primary key is a random UUID. The team is considering changing the primary key to a timestamp.",
+          "reasoning": [
+            "Separate logical identity from physical row layout. In PostgreSQL, a table is a heap and its primary key does not automatically cluster the table physically the way some other engines cluster by primary key.",
+            "A random UUID can cause less locality in a B-tree as inserts spread across pages; a time-ordered key can improve insertion locality but may create hot spots and has privacy/ordering implications.",
+            "`CLUSTER` in PostgreSQL rewrites a table once according to an index; it does not continuously maintain that order as rows change.",
+            "A covering index can reduce heap fetches for a frequent narrow query, but duplicates values and adds write/storage cost.",
+            "Measure the dominant access pattern and write workload before changing identifiers or assuming “clustered index” semantics transfer between engines."
+          ],
+          "outcome": "Engine-specific storage behavior matters. Design for locality only when the workload and database's actual implementation justify it."
+        },
+        {
+          "type": "table",
+          "title": "What the terms do and do not guarantee",
+          "columns": [
+            "Concept",
+            "Useful for",
+            "Caveat"
+          ],
+          "rows": [
+            [
+              "Clustered index in engines that support it",
+              "Align row storage with an access key",
+              "Usually one physical clustering order; changes affect other indexes and writes"
+            ],
+            [
+              "PostgreSQL heap + B-tree index",
+              "Efficient key lookup and ordered traversal",
+              "Primary key does not mean rows remain physically ordered"
+            ],
+            [
+              "Index-only scan",
+              "Avoid heap reads for some queries",
+              "Visibility map and selected columns affect whether heap visits are needed"
+            ],
+            [
+              "Periodic CLUSTER / rewrite",
+              "Improve locality for a measured pattern",
+              "Locks/rewrite cost and subsequent inserts gradually disturb order"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
