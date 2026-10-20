@@ -466,6 +466,55 @@
           ]
         }
       ]
+    },
+    {
+      "id": "btree-scale-and-write-cost-lab",
+      "title": "Decision lab: understand what a B-tree saves and what it costs",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A table grows from 100,000 to 100 million rows. A developer assumes an indexed lookup will always take the same number of milliseconds.",
+          "reasoning": [
+            "A B-tree keeps keys ordered in balanced pages, so lookup visits a small number of tree pages rather than scanning every row.",
+            "Tree height grows slowly as the index grows, but end-to-end latency also depends on cache misses, heap access, row count returned, contention, and storage.",
+            "Inserts can split pages and write index pages; random insertion patterns and large indexes affect cache behavior and maintenance.",
+            "An index lookup returning half the table still has to visit many rows; low tree height does not make large result sets cheap.",
+            "Measure buffers, rows returned, cache behavior, and write throughput rather than treating logarithmic complexity as a latency guarantee."
+          ],
+          "outcome": "B-trees reduce search work; they do not remove the cost of fetching results or maintaining the index."
+        },
+        {
+          "type": "table",
+          "title": "What the B-tree mechanism means operationally",
+          "columns": [
+            "Mechanism",
+            "Benefit",
+            "Cost / caveat"
+          ],
+          "rows": [
+            [
+              "Balanced multi-level pages",
+              "Search depth grows slowly",
+              "Page reads can still be cache misses"
+            ],
+            [
+              "Leaf pages hold ordered keys and references",
+              "Range scans and ordered retrieval are efficient",
+              "Large ranges still touch many pages/rows"
+            ],
+            [
+              "Page split on insert when a page fills",
+              "Maintains tree structure",
+              "Writes more pages and can affect locality"
+            ],
+            [
+              "Index-only possibility",
+              "May avoid heap reads when required values are in index and visibility permits",
+              "Wider indexes consume more memory/disk and add write cost"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
