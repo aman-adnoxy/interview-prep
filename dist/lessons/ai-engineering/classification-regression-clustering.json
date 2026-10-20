@@ -143,6 +143,59 @@
           "text": "6. Interview probes — What is the target? What metric fits the cost of error? What threshold is operationally feasible? Are groups stable and useful?"
         }
       ]
+    },
+    {
+      "id": "select-task-and-metric",
+      "title": "Decision lab: choose the task, baseline, and metric",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Same dataset, different question, different model task",
+          "columns": [
+            "Question the product must answer",
+            "Task",
+            "Output",
+            "Useful first metric"
+          ],
+          "rows": [
+            [
+              "Will this transaction be fraudulent?",
+              "Classification",
+              "Probability/class label",
+              "Precision, recall, PR-AUC when positives are rare"
+            ],
+            [
+              "How much will delivery cost?",
+              "Regression",
+              "Numeric estimate",
+              "MAE for interpretable average error; RMSE when large errors deserve more penalty"
+            ],
+            [
+              "Which stores behave similarly?",
+              "Clustering",
+              "Group assignments or distances",
+              "Stability and usefulness of clusters to a downstream decision, not accuracy against nonexistent labels"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A fraud team can manually investigate 100 alerts per day. A model scores 10,000 transactions and fraud is rare.",
+          "reasoning": [
+            "Accuracy is misleading: predicting “not fraud” for every transaction could score highly while finding no fraud.",
+            "Rank transactions by risk and evaluate precision among the top 100, recall at that review capacity, and the cost of missed fraud.",
+            "Choose a threshold based on investigation capacity and the relative cost of false positives versus false negatives.",
+            "Compare against a simple baseline and split by time if production predicts future transactions; random splits can leak near-duplicates or future patterns."
+          ],
+          "outcome": "Metrics must mirror the actual decision and operational constraint. A better global score can still produce a worse queue for investigators."
+        },
+        {
+          "type": "callout",
+          "kind": "warning",
+          "title": "Clustering has no automatic ground truth",
+          "content": "A silhouette score or visually neat plot does not prove a cluster is useful. Validate whether clusters are stable, interpretable, and change a real decision such as outreach, inventory, or support strategy."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
