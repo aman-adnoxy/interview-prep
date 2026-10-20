@@ -114,6 +114,49 @@
           "text": "6. Interview probes — What was known at decision time? Are entities shared across splits? Is the issue instability or a changed population? How much uncertainty surrounds the score?"
         }
       ]
+    },
+    {
+      "id": "leakage-debugging-lab",
+      "title": "Decision lab: spot the shortcut the model learned",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A churn model scores 98% offline. You discover one feature called `account_closed_date` and repeated rows for each account.",
+          "reasoning": [
+            "Ask when the prediction is made. If it is made before closure, a closure date can reveal the answer and is unavailable at inference time.",
+            "Split by account or by time according to the deployment question; repeated account rows in both splits can inflate performance.",
+            "Re-run evaluation after removing the leaked feature and rebuilding the split. Expect the score to drop; the lower score may be the honest estimate.",
+            "Trace every feature back to its source timestamp and enforce point-in-time joins so future events cannot enter training examples."
+          ],
+          "outcome": "Leakage is a measurement failure, not a model achievement. A lower honest score is more useful than a high score that cannot be reproduced in production."
+        },
+        {
+          "type": "table",
+          "title": "Fast leakage checklist",
+          "columns": [
+            "Question",
+            "Warning sign"
+          ],
+          "rows": [
+            [
+              "Was this field known at prediction time?",
+              "Field created after outcome or decision"
+            ],
+            [
+              "Can one entity appear in multiple splits?",
+              "Near-identical rows across train/test"
+            ],
+            [
+              "Were transformations fitted before splitting?",
+              "Global means, target encoding, feature selection or oversampling used all data"
+            ],
+            [
+              "Was the test set used to tune repeatedly?",
+              "Many design choices justified by test score"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
