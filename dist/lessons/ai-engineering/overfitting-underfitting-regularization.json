@@ -114,6 +114,59 @@
           "text": "6. Interview probes — Are both train and validation errors high? Does only validation worsen? What happens if regularization is too strong? What evidence would justify adding model capacity?"
         }
       ]
+    },
+    {
+      "id": "generalization-intervention-lab",
+      "title": "Decision lab: choose the right generalization fix",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Do not use regularization as the answer to every problem",
+          "columns": [
+            "Evidence",
+            "Likely issue",
+            "Intervention to test",
+            "Trade-off"
+          ],
+          "rows": [
+            [
+              "Training and validation both poor",
+              "Underfitting, weak features, noisy labels, or optimization failure",
+              "Improve signal/features, verify labels, adjust model capacity or training",
+              "More capacity can overfit; more features can add leakage/noise"
+            ],
+            [
+              "Training strong, validation poor",
+              "Overfitting or distribution mismatch",
+              "Regularization, simpler model, early stopping, more representative data",
+              "Too much regularization can underfit"
+            ],
+            [
+              "Validation good but production poor",
+              "Distribution shift or serving/training skew",
+              "Audit time/population splits, feature availability, preprocessing and monitoring",
+              "May require new data and retraining, not just a different hyperparameter"
+            ],
+            [
+              "Performance differs sharply by segment",
+              "Uneven data coverage or subgroup behavior",
+              "Evaluate slices and collect representative data",
+              "Aggregate metrics can hide subgroup failures"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Training accuracy is 99%, validation accuracy 78%, and production accuracy falls to 61% for new cities.",
+          "reasoning": [
+            "The train-validation gap suggests overfitting; the additional production drop for new cities suggests distribution shift or poor geographic coverage.",
+            "Try simpler models/regularization only for the first problem. For the second, inspect whether training data represented new-city conditions and whether features remain available.",
+            "Create a city-held-out evaluation and report per-city metrics before claiming the model generalizes.",
+            "Do not repeatedly tune against the production holdout; preserve it for unbiased assessment."
+          ],
+          "outcome": "Diagnose whether the gap comes from capacity, data quality, leakage, or distribution shift before selecting a remedy."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
