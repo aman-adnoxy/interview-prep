@@ -312,7 +312,7 @@
           "type": "code",
           "language": "sql",
           "title": "Aggregate line items once at the intended grain",
-          "source": "WITH monthly_campaign_revenue AS (\\n  SELECT tenant_id, campaign_id, date_trunc('month', paid_at) AS month,\\n         SUM(line_total) AS revenue\\n  FROM order_items\\n  WHERE status = 'paid'\\n  GROUP BY tenant_id, campaign_id, date_trunc('month', paid_at)\\n)\\nSELECT tenant_id, campaign_id, month, revenue\\nFROM monthly_campaign_revenue\\nWHERE revenue > 0;"
+          "source": "WITH monthly_campaign_revenue AS (\n  SELECT tenant_id, campaign_id, date_trunc('month', paid_at) AS month,\n         SUM(line_total) AS revenue\n  FROM order_items\n  WHERE status = 'paid'\n  GROUP BY tenant_id, campaign_id, date_trunc('month', paid_at)\n)\nSELECT tenant_id, campaign_id, month, revenue\nFROM monthly_campaign_revenue\nWHERE revenue > 0;"
         },
         {
           "type": "paragraph",
