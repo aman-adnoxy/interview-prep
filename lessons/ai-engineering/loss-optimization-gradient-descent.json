@@ -114,6 +114,59 @@
           "text": "6. Interview probes — What does the gradient tell you? Why step in the negative direction? How would you diagnose divergence? What metric would you use to choose a checkpoint?"
         }
       ]
+    },
+    {
+      "id": "diagnose-training-behavior",
+      "title": "Decision lab: diagnose the loss curve before tuning",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Read the pattern, then choose an intervention",
+          "columns": [
+            "Training loss",
+            "Validation loss",
+            "Likely interpretation",
+            "First thing to test"
+          ],
+          "rows": [
+            [
+              "High and barely decreasing",
+              "High",
+              "Underfitting, bad features/labels, or optimization not progressing",
+              "Verify labels and loss implementation, inspect gradients/learning rate, compare a baseline"
+            ],
+            [
+              "Low",
+              "Much higher",
+              "Overfitting or split/distribution mismatch",
+              "Check leakage/split, regularization, model capacity, and data coverage"
+            ],
+            [
+              "Oscillates or explodes",
+              "Unstable or explodes",
+              "Learning rate too high, bad scaling, numerical instability",
+              "Lower learning rate, inspect feature scales and gradient magnitudes"
+            ],
+            [
+              "Both decrease, validation later rises",
+              "Validation starts rising",
+              "Model begins fitting training-specific patterns",
+              "Early stopping based on validation; consider regularization or more representative data"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Loss drops quickly then becomes NaN after several updates.",
+          "reasoning": [
+            "Do not immediately increase model size. NaN often indicates numerical instability or invalid inputs.",
+            "Inspect input/label NaNs and infinities, loss inputs, gradient magnitudes, and learning rate.",
+            "Reduce learning rate and consider gradient clipping or numerically stable loss functions where appropriate.",
+            "Log the loss before and after updates and use a tiny hand-checkable dataset to verify the implementation."
+          ],
+          "outcome": "Gradient descent is a feedback loop: observe loss and gradients, form a hypothesis, change one variable, and compare reproducibly."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
