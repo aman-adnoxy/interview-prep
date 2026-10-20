@@ -195,7 +195,7 @@
           "type": "code",
           "language": "python",
           "title": "A small explicit contract",
-          "source": "from math import isfinite\\n\\ndef best_score(scores: list[float]) -> float:\\n    if not scores:\\n        raise ValueError('scores must not be empty')\\n    if any(not isfinite(score) for score in scores):\\n        raise ValueError('scores must be finite numbers')\\n    return max(scores)\\n\\nprint(best_score([0.2, 0.91, 0.6]))  # 0.91"
+          "source": "from math import isfinite\n\ndef best_score(scores: list[float]) -> float:\n    if not scores:\n        raise ValueError('scores must not be empty')\n    if any(not isfinite(score) for score in scores):\n        raise ValueError('scores must be finite numbers')\n    return max(scores)\n\nprint(best_score([0.2, 0.91, 0.6]))  # 0.91"
         },
         {
           "type": "paragraph",
