@@ -126,6 +126,58 @@
           "text": "In an interview, narrate the chain: validate the information boundary → choose a deployment-like split → compare baselines → quantify threshold consequences → define monitoring and rollback/review triggers. Use a versioned evaluation set so later changes are comparable."
         }
       ]
+    },
+    {
+      "id": "threshold-and-workload-decision-lab",
+      "title": "Decision lab: a metric only matters through the decision it changes",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A document classifier flags risky invoices. At a threshold of 0.30 it catches 90 of 100 risky invoices but sends 800 invoices to review. At 0.70 it catches 65 risky invoices and sends 180 invoices to review. The team can review only 250 invoices per day.",
+          "reasoning": [
+            "Recall is 90% at the lower threshold and 65% at the higher threshold, but the lower threshold exceeds review capacity.",
+            "Precision answers how many flagged items are truly risky; recall answers how many risky items were found. Neither alone captures the capacity constraint.",
+            "Choose a threshold using a validation set and a cost/workload curve, then validate expected review volume under realistic daily traffic.",
+            "Report confusion-matrix counts as well as percentages. At low prevalence, a small false-positive rate can still create a large queue.",
+            "Monitor threshold performance by segment and over time because prevalence and input distributions can change."
+          ],
+          "outcome": "Select the threshold from the cost of errors and the team's ability to act. Re-evaluate when workload or prevalence changes."
+        },
+        {
+          "type": "table",
+          "title": "Evaluation questions to answer before shipping",
+          "columns": [
+            "Dimension",
+            "Question"
+          ],
+          "rows": [
+            [
+              "Data validity",
+              "Does the test split match future users, time, and deployment conditions?"
+            ],
+            [
+              "Business cost",
+              "What is the cost of false positives versus false negatives?"
+            ],
+            [
+              "Operating point",
+              "What precision/recall do we get at the threshold the product will actually use?"
+            ],
+            [
+              "Uncertainty",
+              "How many examples support the metric, and how wide might the estimate vary?"
+            ],
+            [
+              "Slices",
+              "Does performance degrade for a language, city, customer segment, or rare class?"
+            ],
+            [
+              "Production",
+              "Which metrics and drift signals trigger review, rollback, or retraining?"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

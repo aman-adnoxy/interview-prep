@@ -174,6 +174,34 @@
           "text": "6. Interview probes — What is the function's contract? What state is shared? What errors should the caller handle? How would you test independent calls?"
         }
       ]
+    },
+    {
+      "id": "python-service-debugging-lab",
+      "title": "Decision lab: make a data-processing function safe to operate",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A function accepts a list of model scores from an external service and returns the maximum. Sometimes the service returns an empty list, `None`, strings, or a malformed value.",
+          "reasoning": [
+            "Write down the function contract: accepted type, empty-input behavior, whether scores must be finite, and the error returned for invalid input.",
+            "Use type hints to communicate intent, but remember Python does not enforce them at runtime.",
+            "Validate data at the external boundary; do not scatter defensive conversions through every downstream function.",
+            "Raise a specific exception or return a typed error result when the contract is violated. Avoid silently converting invalid data to zero because that can change ranking decisions.",
+            "Test normal, empty, malformed, and extreme inputs; log enough context to debug without exposing sensitive payloads."
+          ],
+          "outcome": "Readable Python is not only concise syntax. Explicit contracts and failure behavior prevent bad data from becoming plausible output."
+        },
+        {
+          "type": "code",
+          "language": "python",
+          "title": "A small explicit contract",
+          "source": "from math import isfinite\n\ndef best_score(scores: list[float]) -> float:\n    if not scores:\n        raise ValueError('scores must not be empty')\n    if any(not isfinite(score) for score in scores):\n        raise ValueError('scores must be finite numbers')\n    return max(scores)\n\nprint(best_score([0.2, 0.91, 0.6]))  # 0.91"
+        },
+        {
+          "type": "paragraph",
+          "text": "The function rejects empty and non-finite inputs rather than inventing a result. At a service boundary, catch the exception where you can translate it into a documented client error or a recoverable job failure. Do not catch every exception and continue as if the result were valid."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

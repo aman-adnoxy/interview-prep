@@ -343,6 +343,54 @@
           "text": "6. Interview probes — What if backfill stops halfway? How do old and new versions coexist? How would you recover an accidental delete? What do RPO and RTO measure?"
         }
       ]
+    },
+    {
+      "id": "safe-database-change-lab",
+      "title": "Decision lab: ship a schema change without blocking production",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A large orders table needs a new non-null `external_id` that must be unique. The table is actively receiving writes.",
+          "reasoning": [
+            "Do not immediately add a NOT NULL column with a costly default or build a blocking unique constraint without checking the engine/version and table size.",
+            "Deploy an expand-and-contract sequence: add a nullable column, deploy code that writes it for new rows, backfill existing rows in bounded batches, and monitor lag/locks.",
+            "Check for duplicates before adding uniqueness. Build a unique index concurrently in PostgreSQL where supported, outside a transaction block, then verify it is valid.",
+            "Only after all rows are populated and writers enforce the value should you add/validate NOT NULL or the final constraint using a supported low-blocking sequence.",
+            "Plan rollback and compatibility: old and new application versions may run simultaneously during deployment. Observe lock waits, replication lag, errors, and backfill throughput."
+          ],
+          "outcome": "Production schema changes are distributed deployments across old/new code and existing data. Use staged compatibility, bounded backfills, and explicit verification."
+        },
+        {
+          "type": "table",
+          "title": "Before executing a migration",
+          "columns": [
+            "Check",
+            "Why"
+          ],
+          "rows": [
+            [
+              "Table size and write rate",
+              "Predicts duration and operational impact"
+            ],
+            [
+              "Lock level and transaction duration",
+              "Avoids blocking production traffic"
+            ],
+            [
+              "Existing bad data / duplicates",
+              "Prevents constraint build from failing late"
+            ],
+            [
+              "Application compatibility during rollout",
+              "Old and new versions coexist during deploys"
+            ],
+            [
+              "Replication lag, disk space, rollback plan",
+              "Migration can stress storage or replicas and may not be cheaply reversible"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

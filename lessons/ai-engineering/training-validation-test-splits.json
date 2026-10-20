@@ -113,6 +113,54 @@
           "text": "6. Interview probes — What must be unseen at deployment? Which information existed at prediction time? How would you detect entity leakage?"
         }
       ]
+    },
+    {
+      "id": "split-design-decision-lab",
+      "title": "Decision lab: split the data to match deployment",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A model predicts whether a customer will churn next month. The dataset contains repeated rows for the same customers over several months.",
+          "reasoning": [
+            "If the product predicts future churn, use a time-based holdout: train on earlier periods and validate/test on later periods.",
+            "If rows for one customer are correlated, keep a customer in only one split when the deployment target is a new customer. Otherwise the model may memorize customer-specific patterns.",
+            "Fit imputers, scalers, encoders, feature selection, and resampling on training data only; apply the fitted transformations to validation/test data.",
+            "Use validation data for model and threshold choices. Open the test set only for the final estimate, or repeated tuning will turn it into another validation set."
+          ],
+          "outcome": "There is no universally correct random split. Choose the split from the unit and time horizon the model must generalize to."
+        },
+        {
+          "type": "table",
+          "title": "Split design failure modes",
+          "columns": [
+            "Leakage path",
+            "Why score looks too good",
+            "Fix"
+          ],
+          "rows": [
+            [
+              "Same user appears in train and test",
+              "Model exploits user-specific patterns",
+              "Group split by user when testing generalization to unseen users"
+            ],
+            [
+              "Future event appears in training features",
+              "The model uses information unavailable at prediction time",
+              "Build point-in-time features and split chronologically"
+            ],
+            [
+              "Preprocessing fitted on all rows",
+              "Test distribution influences learned transformation",
+              "Fit preprocessing only on training data"
+            ],
+            [
+              "Test set used to pick thresholds repeatedly",
+              "Test results indirectly guide model choices",
+              "Keep a final untouched holdout or use nested evaluation"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

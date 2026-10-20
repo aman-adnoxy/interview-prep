@@ -662,6 +662,55 @@
           "explanation": "Outer joins preserve unmatched rows only until later predicates reject them. Predicate placement is part of query semantics."
         }
       ]
+    },
+    {
+      "id": "join-cardinality-debugging-lab",
+      "title": "Decision lab: predict row counts before joining",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "You join 1,000 orders to an `order_items` table and get 3,400 rows. A report then sums order totals and overstates revenue.",
+          "reasoning": [
+            "One order can match multiple item rows, so the join returns one row per matching order-item pair, not one row per order.",
+            "Do not use `SUM(DISTINCT order_total)` as a general repair: two different orders can legitimately have the same total.",
+            "Aggregate items to one row per order before joining if the report needs order-level values, or calculate revenue from item-level amounts at item grain.",
+            "For a LEFT JOIN, filters on the right table in the WHERE clause can remove unmatched left rows; put the condition in ON when unmatched left rows should remain.",
+            "State the grain of each input and expected output explicitly, then validate row counts and key uniqueness."
+          ],
+          "outcome": "Join correctness is about relationship cardinality and output grain, not just picking INNER versus LEFT."
+        },
+        {
+          "type": "table",
+          "title": "What a relationship does to row count",
+          "columns": [
+            "Relationship",
+            "Typical result shape",
+            "Check"
+          ],
+          "rows": [
+            [
+              "One-to-one",
+              "At most one output row per left row",
+              "Verify uniqueness on both keys"
+            ],
+            [
+              "Many-to-one",
+              "Usually preserves left-row count for an inner/left join",
+              "Verify right-side join key is unique"
+            ],
+            [
+              "One-to-many",
+              "Left rows can expand into several output rows",
+              "Aggregate at the required grain before summing parent-level measures"
+            ],
+            [
+              "Many-to-many",
+              "Combinations can multiply unexpectedly",
+              "Identify bridge table and intended grain; test duplicate keys"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

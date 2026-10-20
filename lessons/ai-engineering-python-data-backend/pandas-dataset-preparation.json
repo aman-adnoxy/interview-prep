@@ -161,6 +161,34 @@
           "content": "Avoid silently coercing invalid values to zero or dropping all rows with any null. Record the rule and counts, preserve important IDs, and verify the result before sending it to a model."
         }
       ]
+    },
+    {
+      "id": "dataframe-row-count-debugging",
+      "title": "Decision lab: use row counts as correctness checks",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "You merge 100,000 campaign rows with a store table expected to contain one row per store. After the merge, you have 134,000 rows.",
+          "reasoning": [
+            "The row increase is a warning: one or more store IDs probably match multiple rows in the store table.",
+            "Check uniqueness with `stores['store_id'].is_unique` and inspect duplicate keys before merging.",
+            "Use `merge(..., validate='many_to_one')` when many campaign rows should map to one store row; let pandas fail loudly when the contract is broken.",
+            "If the store table is versioned, decide whether you need the latest row or a point-in-time join rather than arbitrarily dropping duplicates.",
+            "Compare row counts, null rates, and key coverage before and after every important transformation."
+          ],
+          "outcome": "A DataFrame operation is not correct merely because it runs. Define expected cardinality and validate it."
+        },
+        {
+          "type": "code",
+          "language": "python",
+          "title": "Make the relationship explicit",
+          "source": "merged = campaigns.merge(\n    stores,\n    on='store_id',\n    how='left',\n    validate='many_to_one',\n    indicator=True,\n)\nprint(len(campaigns), len(merged))\nprint(merged['_merge'].value_counts())"
+        },
+        {
+          "type": "paragraph",
+          "text": "`validate='many_to_one'` checks that the right-side key is unique for the join. `indicator=True` adds a column showing whether each campaign row matched. For a left join, the row count should remain equal to the left input when the right key is unique. Unmatched rows are a separate data-quality question, not a reason to silently discard them."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

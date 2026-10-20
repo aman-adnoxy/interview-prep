@@ -364,6 +364,54 @@
           "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
+    },
+    {
+      "id": "index-selection-workload-lab",
+      "title": "Decision lab: why did PostgreSQL choose a sequential scan?",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "You added an index to `status`, but PostgreSQL still chooses a sequential scan for `WHERE status = 'active'`.",
+          "reasoning": [
+            "If most rows are active, a sequential scan can be cheaper than reading many index entries and fetching a large fraction of heap pages.",
+            "Check actual selectivity and the estimated row count; stale statistics or skew may cause the planner to misestimate.",
+            "Check whether the query needs many columns, whether heap access dominates, and whether a composite or partial index matches the real predicate better.",
+            "Do not force index use just because the index exists. Compare execution time, buffers, and write overhead on realistic data.",
+            "A partial index such as `WHERE status = 'active'` may be smaller, but it is only useful if the planner can prove the query matches that predicate and its workload justifies maintenance."
+          ],
+          "outcome": "The planner minimizes estimated cost, not index usage. A sequential scan is often the correct plan for broad queries."
+        },
+        {
+          "type": "table",
+          "title": "Index selection checklist",
+          "columns": [
+            "Check",
+            "Why it matters"
+          ],
+          "rows": [
+            [
+              "Selectivity / rows returned",
+              "Broad matches can favor sequential scans"
+            ],
+            [
+              "Estimated versus actual rows",
+              "Misestimates can cause poor plan choices"
+            ],
+            [
+              "Columns returned and heap fetches",
+              "Index lookup may still require many table-page reads"
+            ],
+            [
+              "Sort and LIMIT",
+              "Index order may save sorting and stop early"
+            ],
+            [
+              "Write rate and index size",
+              "An index can slow every mutation and compete for cache"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

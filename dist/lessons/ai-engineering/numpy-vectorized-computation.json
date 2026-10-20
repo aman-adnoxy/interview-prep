@@ -162,6 +162,54 @@
           "text": "Expected output: `(3,) (3, 1) float32`. `reshape` changes the logical shape without changing the number of elements. Some operations return a view sharing underlying memory; others allocate a copy. If mutation matters, do not assume two arrays are independent—check the operation's behavior or copy explicitly."
         }
       ]
+    },
+    {
+      "id": "shape-debugging-decision-lab",
+      "title": "Decision lab: debug array shape before changing the model",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A batch has 32 examples and 10 features. The model expects shape `(batch_size, features)`, but the input arrives as `(32, 10, 1)` and a broadcasted operation unexpectedly returns `(32, 32, 10)`.",
+          "reasoning": [
+            "Print each operand's shape and dtype before the operation; dimensions are part of the data contract.",
+            "NumPy aligns dimensions from the right. A `(32, 10, 1)` array and a `(32, 10)` array can broadcast unexpectedly because the latter is treated as `(1, 32, 10)`.",
+            "Reshape/squeeze only when the removed dimension has the intended meaning; do not use reshape merely to silence an error.",
+            "Check whether an operation created a view or copy if later mutation or memory use matters."
+          ],
+          "outcome": "Predict broadcasting by aligning trailing dimensions. When shapes are confusing, write the intended semantic axes down before editing code."
+        },
+        {
+          "type": "table",
+          "title": "Shape and memory warning signs",
+          "columns": [
+            "Symptom",
+            "Likely cause",
+            "Check"
+          ],
+          "rows": [
+            [
+              "Unexpectedly huge result",
+              "Broadcast created an outer operation",
+              "Print operand and result shapes; align trailing dimensions"
+            ],
+            [
+              "Slow Python loop",
+              "Per-element Python overhead",
+              "Try vectorized ufuncs and benchmark representative sizes"
+            ],
+            [
+              "Unexpected mutation",
+              "Two arrays share memory through a view",
+              "Use `np.shares_memory` and copy only when needed"
+            ],
+            [
+              "High memory usage",
+              "Large temporary arrays or wide dtype",
+              "Inspect `nbytes`, dtype, and whether operations allocate copies"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

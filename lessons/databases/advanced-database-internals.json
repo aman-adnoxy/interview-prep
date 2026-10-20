@@ -381,6 +381,60 @@
           "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
+    },
+    {
+      "id": "database-internals-production-symptom-lab",
+      "title": "Decision lab: connect an internal mechanism to a production symptom",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Symptom → internal mechanism → safe investigation",
+          "columns": [
+            "Symptom",
+            "Possible mechanism",
+            "First investigation"
+          ],
+          "rows": [
+            [
+              "Queries slow after a long-running transaction",
+              "Old MVCC snapshot prevents cleanup of dead tuples",
+              "Find long-running/idle-in-transaction sessions and inspect transaction age before terminating anything"
+            ],
+            [
+              "Table/index grows while row count is stable",
+              "Dead tuples, update churn, bloat, or index growth",
+              "Inspect dead tuple estimates, relation sizes, vacuum history, and workload"
+            ],
+            [
+              "Autovacuum cannot keep up",
+              "High churn, long transactions, thresholds, or resource contention",
+              "Check table-level vacuum settings, dead tuples, transaction age, and worker activity"
+            ],
+            [
+              "Unexpected I/O or memory pressure",
+              "Working set exceeds cache, large sorts/hash operations, or inefficient plans",
+              "Use EXPLAIN BUFFERS, I/O stats, and memory/temporary-file metrics together"
+            ],
+            [
+              "Transaction IDs approach wraparound danger",
+              "Freeze/autovacuum cannot advance quickly enough",
+              "Check database/table XID age and live freeze settings; treat this as an availability risk"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "A table is growing and queries are slower, so an engineer wants to run VACUUM FULL immediately.",
+          "reasoning": [
+            "First distinguish dead-tuple bloat from transaction-ID wraparound risk; they are different problems with different urgency.",
+            "Check long-running transactions and vacuum progress because old snapshots can prevent cleanup from reclaiming space for reuse.",
+            "Estimate whether ordinary vacuum can help. VACUUM FULL rewrites the table and takes a strong lock, so it can create substantial downtime/blocking.",
+            "Use version-appropriate PostgreSQL statistics views and verify counters are cumulative/resettable before interpreting them.",
+            "Choose an intervention from evidence, schedule disruptive maintenance, and monitor before/after relation size and query performance."
+          ],
+          "outcome": "Database internals are useful when they explain a measurable symptom and guide a safe operational action, not as a list of implementation trivia."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

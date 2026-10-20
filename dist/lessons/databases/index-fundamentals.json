@@ -534,6 +534,60 @@
           "explanation": "A strong interview answer states the problem, walks through the mechanism, names assumptions and trade-offs, and describes how to verify the result rather than relying on a rule of thumb."
         }
       ]
+    },
+    {
+      "id": "index-or-no-index-decision-lab",
+      "title": "Decision lab: should this query have an index?",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A `users` table has 20 million rows. The app runs `WHERE country = 'IN'` on almost every request, and 65% of rows are in India.",
+          "reasoning": [
+            "An index is not automatically faster: if a predicate returns most rows, random index lookups plus heap fetches can cost more than a sequential scan.",
+            "An index may still help when it supports ORDER BY/LIMIT, a selective combination of filters, or index-only access; test the full query shape.",
+            "Every index consumes disk and cache, and inserts/updates/deletes must maintain it. Too many indexes increase write latency and vacuum/maintenance work.",
+            "Use `EXPLAIN (ANALYZE, BUFFERS)` with representative data and parameters, then compare latency and buffer work under realistic concurrency.",
+            "Index only for a demonstrated query pattern or integrity constraint, and review usage after deployment."
+          ],
+          "outcome": "Index selection is a workload trade-off: read savings must justify storage, write amplification, and maintenance."
+        },
+        {
+          "type": "table",
+          "title": "Index decision checklist",
+          "columns": [
+            "Question",
+            "If yes",
+            "If no"
+          ],
+          "rows": [
+            [
+              "Does the query run often or have a latency objective?",
+              "Measure its plan and contribution to workload",
+              "A new index may not be worth its cost"
+            ],
+            [
+              "Does the predicate narrow rows substantially?",
+              "Index may reduce rows visited",
+              "A sequential scan may win"
+            ],
+            [
+              "Can index order satisfy ORDER BY/LIMIT?",
+              "Index can avoid sort and stop early",
+              "Consider other plan costs"
+            ],
+            [
+              "Will the indexed columns change frequently?",
+              "Account for write amplification",
+              "Read-side cost may be lower"
+            ],
+            [
+              "Has the plan been measured with realistic data?",
+              "Deploy with monitoring",
+              "Do not guess from table size alone"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

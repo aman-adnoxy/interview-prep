@@ -453,6 +453,34 @@
           "text": "6. Interview probes — Why might LIMIT return different rows? What happens when the sort key ties? Why does `column = NULL` return no true matches? Explain the result before running the query."
         }
       ]
+    },
+    {
+      "id": "query-shape-decision-lab",
+      "title": "Decision lab: make a query correct before making it fast",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "An endpoint returns the 20 newest paid orders for one tenant. The table contains millions of orders.",
+          "reasoning": [
+            "Filter by both tenant and paid status before choosing an access path; tenant scoping is also a correctness/security boundary.",
+            "Order by a deterministic tuple such as `created_at DESC, id DESC`; ordering by a non-unique timestamp alone makes page boundaries unstable.",
+            "Use `LIMIT 20` and select only fields the response needs. Avoid `SELECT *` when wide columns or sensitive fields are unnecessary.",
+            "If the endpoint needs later pages under frequent inserts, prefer keyset pagination using the last `(created_at, id)` pair rather than large offsets.",
+            "Only after the query shape is correct, inspect `EXPLAIN (ANALYZE, BUFFERS)` and choose an index that supports its filters and order."
+          ],
+          "outcome": "Start from the result contract and access pattern. Query correctness, stable ordering, data minimization, and pagination come before index tuning."
+        },
+        {
+          "type": "code",
+          "language": "sql",
+          "title": "Stable newest-first page",
+          "source": "SELECT id, created_at, total\nFROM orders\nWHERE tenant_id = $1\n  AND status = 'paid'\nORDER BY created_at DESC, id DESC\nLIMIT 20;"
+        },
+        {
+          "type": "paragraph",
+          "text": "The unique `id` tie-breaker makes the order deterministic when timestamps match. A suitable composite/partial index may help this shape, but confirm with the actual plan and production-like data rather than assuming every filter should have its own index."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

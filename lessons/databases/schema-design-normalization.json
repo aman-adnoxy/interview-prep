@@ -453,6 +453,55 @@
           "explanation": "Normalization is about dependencies and anomalies. Intentional snapshots are valid when they represent a different business fact."
         }
       ]
+    },
+    {
+      "id": "normalize-or-denormalize-decision-lab",
+      "title": "Decision lab: normalize for correctness, denormalize for a measured bottleneck",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A store's address is copied into every order row. Store addresses change, and historical orders must retain the address used at purchase time.",
+          "reasoning": [
+            "Normalization suggests storing the current store address once in a store table to avoid update anomalies and inconsistent copies.",
+            "But historical order reporting may need the address snapshot at order time. A foreign key to the current store row cannot reconstruct history after the address changes.",
+            "Keep canonical current store data normalized; intentionally snapshot selected immutable-at-purchase values on the order when the business requires historical accuracy.",
+            "Denormalize for a known read path or historical requirement, document the source of truth, and define how updates propagate.",
+            "Use constraints and transactions to keep related writes consistent; normalization alone does not enforce every business invariant."
+          ],
+          "outcome": "Normalization prevents accidental duplication. Deliberate duplication can be correct when it represents a different business fact or solves a measured access need."
+        },
+        {
+          "type": "table",
+          "title": "Symptoms and design responses",
+          "columns": [
+            "Symptom",
+            "Likely design issue",
+            "Response"
+          ],
+          "rows": [
+            [
+              "Changing one fact requires updating many rows",
+              "Update anomaly / duplicated canonical data",
+              "Normalize and reference a single source of truth"
+            ],
+            [
+              "Many queries repeatedly join large tables and miss latency target",
+              "Potential read-path bottleneck",
+              "Measure query plans first; consider precomputed aggregates or denormalized read models"
+            ],
+            [
+              "Historical reports change when current entity data changes",
+              "Missing historical snapshot/version",
+              "Store effective-dated history or snapshot the fields required by the business"
+            ],
+            [
+              "Multiple services write copies independently",
+              "Unclear ownership and synchronization",
+              "Define canonical owner, update path, reconciliation, and consistency expectations"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

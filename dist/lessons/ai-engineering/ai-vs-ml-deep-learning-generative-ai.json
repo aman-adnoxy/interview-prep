@@ -114,6 +114,65 @@
           "text": "6. Interview probes — Which stage actually needs learned behavior? What is the baseline? How will correctness and incremental value be measured?"
         }
       ]
+    },
+    {
+      "id": "choose-the-smallest-sufficient-approach",
+      "title": "Decision lab: do you need an LLM here?",
+      "blocks": [
+        {
+          "type": "paragraph",
+          "text": "A product manager asks for an AI feature that reads an invoice, extracts the total, checks whether line items add up, and rejects unauthorized access. These are four different jobs. Choosing one model for all four is usually a design mistake."
+        },
+        {
+          "type": "table",
+          "title": "Match the requirement to the mechanism",
+          "columns": [
+            "Requirement",
+            "Good first choice",
+            "Why not use a generative model for everything?"
+          ],
+          "rows": [
+            [
+              "Read text from a scan",
+              "OCR or a vision model",
+              "Text must first be recovered from pixels; a plain text model cannot inspect an image it never receives"
+            ],
+            [
+              "Map variable wording to fields such as vendor and total",
+              "Structured extraction model with schema validation",
+              "A model can misread or omit fields; validate types and required fields"
+            ],
+            [
+              "Check whether subtotal + tax = total",
+              "Deterministic arithmetic",
+              "The rule is exact, cheap, testable, and does not need learned judgement"
+            ],
+            [
+              "Check whether this user may access the invoice",
+              "Server-side authorization policy",
+              "A model must never be the security authority"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Build an invoice extraction pipeline for messy scans. Accuracy matters, but an incorrect total must not silently become an approved payment.",
+          "reasoning": [
+            "Use OCR/vision to produce text and layout, then an extraction model to emit typed fields.",
+            "Validate the output against a schema. Missing or malformed fields should trigger repair or human review, not be silently filled with guesses.",
+            "Recompute totals deterministically and compare with the extracted total using a documented currency/rounding policy.",
+            "Apply tenant and role authorization in backend code before returning or processing the invoice.",
+            "Measure field-level exact match, invalid-output rate, review rate, latency, and cost on representative invoices."
+          ],
+          "outcome": "Use learned models for ambiguous perception/language; use deterministic code for exact rules and security boundaries."
+        },
+        {
+          "type": "callout",
+          "kind": "pitfall",
+          "title": "A fluent answer is not evidence of correctness",
+          "content": "Generative output can be plausible and wrong. Constrain its job, validate outputs, and measure failure on real examples. If a deterministic rule solves the requirement reliably, adding an LLM adds cost and a new failure mode without creating value."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

@@ -523,6 +523,59 @@
           "explanation": "The database is the shared consistency boundary. Application checks improve user experience, but constraints enforce invariants under concurrency."
         }
       ]
+    },
+    {
+      "id": "constraint-vs-application-validation-lab",
+      "title": "Decision lab: which rules belong in the database?",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "Enforce each invariant at the narrowest reliable boundary",
+          "columns": [
+            "Rule",
+            "Database mechanism",
+            "Why application validation alone is insufficient"
+          ],
+          "rows": [
+            [
+              "Email must be unique",
+              "UNIQUE constraint / unique index",
+              "Two requests can both pass a pre-check before either inserts"
+            ],
+            [
+              "Every order must reference an existing customer",
+              "FOREIGN KEY",
+              "Customer can be deleted or request can race after application checks"
+            ],
+            [
+              "Quantity cannot be negative",
+              "CHECK (quantity >= 0)",
+              "Every code path, script, worker, and future service must remember the same rule"
+            ],
+            [
+              "Required field cannot be absent",
+              "NOT NULL",
+              "Application validation may be bypassed by bulk jobs or direct SQL"
+            ],
+            [
+              "Only one active subscription per tenant",
+              "Partial unique index where status = 'active'",
+              "A normal uniqueness rule on tenant alone may be too restrictive; pre-checks race"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "Two signup requests check that `alice@example.com` is unused and then both insert it.",
+          "reasoning": [
+            "The check-then-insert sequence has a race: both can observe no matching row.",
+            "Create a UNIQUE constraint on the normalized email key. One insert wins; the other receives a uniqueness conflict.",
+            "Treat that conflict as a normal domain outcome, such as returning “email already registered,” rather than an unexplained server error.",
+            "Normalize consistently before enforcing uniqueness; case sensitivity and whitespace rules are product decisions that must be explicit."
+          ],
+          "outcome": "Application validation improves user experience; database constraints enforce invariants under concurrency and across every writer."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

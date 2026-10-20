@@ -76,3 +76,26 @@ test('Database and AI Engineering are single tracks with valid stage membership'
     for (const section of module.sections) assert.ok(stageIds.has(section.stageId), section.id + ' must reference a stage');
   }
 });
+
+test('every published Database and AI Engineering lesson contains a worked decision lab', () => {
+  const curriculum = JSON.parse(fs.readFileSync(path.join(root, 'curriculum/manifest.json'), 'utf8'));
+  const sourceFiles = [
+    ...fs.readdirSync(path.join(root, 'lessons/databases')).filter(name => name.endsWith('.json')).map(name => path.join(root, 'lessons/databases', name)),
+    ...fs.readdirSync(path.join(root, 'lessons/ai-engineering')).filter(name => name.endsWith('.json')).map(name => path.join(root, 'lessons/ai-engineering', name)),
+    ...fs.readdirSync(path.join(root, 'lessons/ai-engineering-python-data-backend')).filter(name => name.endsWith('.json')).map(name => path.join(root, 'lessons/ai-engineering-python-data-backend', name))
+  ];
+  const byId = new Map(sourceFiles.map(file => {
+    const item = JSON.parse(fs.readFileSync(file, 'utf8'));
+    return [item.id, item];
+  }));
+  for (const module of curriculum.modules.filter(item => ['databases', 'ai-engineering'].includes(item.id))) {
+    for (const section of module.sections.filter(item => item.status === 'published')) {
+      const item = byId.get(section.lessonId);
+      assert.ok(item, 'missing lesson source for ' + section.lessonId);
+      const labs = item.concepts.filter(concept => concept.title.startsWith('Decision lab:'));
+      assert.ok(labs.length > 0, section.lessonId + ' must teach a concrete decision, not only define terms');
+      assert.ok(labs.some(concept => concept.blocks.some(block => block.type === 'worked_example' || block.type === 'table')),
+        section.lessonId + ' decision lab must include a worked example or decision table');
+    }
+  }
+});

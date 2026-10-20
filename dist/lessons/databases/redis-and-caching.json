@@ -356,6 +356,61 @@
           "text": "6. Interview probes — What happens on a miss? How stale can the value become? What if invalidation fails? What if 800 requests miss the same key? What does the app do when Redis is unavailable?"
         }
       ]
+    },
+    {
+      "id": "cache-strategy-decision-lab",
+      "title": "Decision lab: decide what to cache and how stale it may be",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A product listing endpoint reads the same data thousands of times per minute. Prices change occasionally, and an admin expects price changes to appear quickly.",
+          "reasoning": [
+            "First measure database latency and repeated-read volume; a cache adds operational complexity and is not automatically valuable.",
+            "Define the acceptable staleness window. If a stale price can cause a financial or contractual problem, use stronger validation at checkout rather than trusting a listing cache.",
+            "Cache-aside is a common start: read cache, fetch on miss, then populate with a TTL. It is simple but concurrent misses can stampede the database.",
+            "Invalidate or update the key after a committed write; if invalidation is unreliable, use a short TTL plus versioning/outbox-driven invalidation as appropriate.",
+            "Use TTL jitter, request coalescing/locks, and bounded database concurrency to prevent many simultaneous misses from overwhelming the origin.",
+            "Cache keys must include tenant and authorization-sensitive dimensions where results differ by user or tenant."
+          ],
+          "outcome": "Cache policy is a consistency and failure-mode decision. Specify staleness, invalidation, stampede behavior, and the fallback path before shipping."
+        },
+        {
+          "type": "table",
+          "title": "Choose a cache strategy",
+          "columns": [
+            "Strategy",
+            "Use when",
+            "Downside"
+          ],
+          "rows": [
+            [
+              "Cache-aside",
+              "Read-heavy data and straightforward fallback to DB",
+              "Stale entries and stampede on miss"
+            ],
+            [
+              "Write-through",
+              "Want cache updated as part of the write path",
+              "Higher write latency and multi-system coordination"
+            ],
+            [
+              "Write-behind",
+              "Can tolerate delayed persistence and can recover queued writes",
+              "Data-loss/ordering risk unless durability and replay are designed carefully"
+            ],
+            [
+              "Short TTL",
+              "Staleness can be bounded by time",
+              "Repeated misses and load spikes at expiration"
+            ],
+            [
+              "No cache",
+              "Freshness/correctness dominates or reads are cheap",
+              "May leave performance available on the table"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

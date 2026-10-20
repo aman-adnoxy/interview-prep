@@ -114,6 +114,54 @@
           "text": "6. Interview probes — What was known at prediction time? What exactly is the label window? Which values are learned? Which settings are selected externally?"
         }
       ]
+    },
+    {
+      "id": "debug-the-learning-pipeline",
+      "title": "Decision lab: locate the problem before changing the model",
+      "blocks": [
+        {
+          "type": "table",
+          "title": "What to inspect when learning fails",
+          "columns": [
+            "Observation",
+            "Likely question",
+            "Next diagnostic"
+          ],
+          "rows": [
+            [
+              "Training and validation scores both poor",
+              "Can the features represent the target? Is the label correct? Is the baseline better?",
+              "Inspect labels, feature distributions, target leakage, and a simple baseline"
+            ],
+            [
+              "Training score high, validation score poor",
+              "Is the model memorizing noise or exploiting leakage?",
+              "Compare learning curves, regularization, data split, and feature complexity"
+            ],
+            [
+              "Model predicts nearly one class",
+              "Are labels imbalanced, features broken, or thresholds inappropriate?",
+              "Inspect class counts, predicted probabilities, confusion matrix, and feature pipeline"
+            ],
+            [
+              "Changing hyperparameters barely changes results",
+              "Is the training process using the expected configuration and data?",
+              "Log effective parameters, random seed, dataset version, and training metrics"
+            ]
+          ]
+        },
+        {
+          "type": "worked_example",
+          "problem": "You change max_depth from 3 to 20 and validation performance barely moves, while training accuracy increases.",
+          "reasoning": [
+            "Parameters are values learned from training data; hyperparameters configure the learning procedure.",
+            "A growing train/validation gap suggests added model capacity is fitting patterns that do not generalize.",
+            "Before trying more settings, verify the split and metric, inspect data quality, and compare against a simple baseline.",
+            "Record dataset version, code version, parameters, hyperparameters, and evaluation results so a run can be reproduced."
+          ],
+          "outcome": "Treat model development as diagnosis, not blind hyperparameter search."
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [

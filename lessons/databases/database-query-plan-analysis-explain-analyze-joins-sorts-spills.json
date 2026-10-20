@@ -327,6 +327,60 @@
           "explanation": "A strong answer connects the problem to the mechanism, states assumptions and trade-offs, and explains how to verify the decision in practice."
         }
       ]
+    },
+    {
+      "id": "explain-analyze-diagnosis-lab",
+      "title": "Decision lab: diagnose the slow node, not the scary-looking node",
+      "blocks": [
+        {
+          "type": "worked_example",
+          "problem": "A query is slow. EXPLAIN ANALYZE shows a nested loop with 2 rows on the inner node but 100,000 loops, and a sort spills to disk.",
+          "reasoning": [
+            "Read actual rows together with loops: two rows per loop across 100,000 loops can mean roughly 200,000 inner-row visits, not just two rows total.",
+            "Compare estimated rows with actual rows. Large estimate errors can lead the planner to choose a poor join order or algorithm; check statistics and skew.",
+            "A disk sort suggests the sort exceeded available memory for that operation or processed a large input. Reduce rows earlier when semantically valid, add an index that satisfies ordering when justified, or adjust memory carefully.",
+            "Do not read planner cost as milliseconds. Compare actual execution time, buffers, rows, loops, and repeated calls under realistic load.",
+            "Remember EXPLAIN ANALYZE executes the query; use caution with mutating statements and production load."
+          ],
+          "outcome": "Find the expensive repeated work and estimate error first. Then change one thing and compare plans and runtime."
+        },
+        {
+          "type": "table",
+          "title": "Signal to diagnosis",
+          "columns": [
+            "Plan signal",
+            "Question to ask",
+            "Possible action"
+          ],
+          "rows": [
+            [
+              "Estimated rows far from actual",
+              "Are statistics stale or data highly skewed?",
+              "ANALYZE, extended statistics, or query rewrite"
+            ],
+            [
+              "High loops on inner node",
+              "Is the nested loop repeatedly doing work?",
+              "Check join keys, row counts, indexes, and join alternatives"
+            ],
+            [
+              "Sort Method includes external merge / disk",
+              "Is the sort input too large or memory-limited?",
+              "Filter earlier, support order with an index, or tune memory carefully"
+            ],
+            [
+              "High shared reads",
+              "Is data coming from storage rather than cache?",
+              "Check working set, index/table size, and buffer behavior"
+            ],
+            [
+              "High actual rows returned",
+              "Is the query returning far more data than the endpoint needs?",
+              "Fix result shape/pagination before adding indexes"
+            ]
+          ]
+        }
+      ]
     }
   ],
   "tradeoffsAndPitfalls": [
