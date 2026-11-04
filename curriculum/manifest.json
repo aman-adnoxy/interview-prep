@@ -462,7 +462,7 @@
           "order": 11,
           "prerequisites": [],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
         },
         {
           "id": "data-structures-algorithmic-complexity",
@@ -474,7 +474,7 @@
             "python-for-ai-engineering"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
         },
         {
           "id": "numpy-vectorized-computation",
@@ -486,7 +486,7 @@
             "python-for-ai-engineering"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
         },
         {
           "id": "pandas-dataset-preparation",
@@ -498,7 +498,7 @@
             "numpy-vectorized-computation"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
         },
         {
           "id": "missing-values-duplicates-outliers",
@@ -510,7 +510,7 @@
             "pandas-dataset-preparation"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
         },
         {
           "id": "python-async-await",
@@ -522,7 +522,7 @@
             "python-for-ai-engineering"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "async-concurrency"
         },
         {
           "id": "concurrency-parallelism",
@@ -534,7 +534,7 @@
             "python-async-await"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "async-concurrency"
         },
         {
           "id": "http-rest-apis-contracts",
@@ -546,7 +546,7 @@
             "python-for-ai-engineering"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
         },
         {
           "id": "authentication-authorization-tenant-isolation",
@@ -558,7 +558,7 @@
             "http-rest-apis-contracts"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
         },
         {
           "id": "background-jobs-long-running-operations",
@@ -571,7 +571,324 @@
             "authentication-authorization-tenant-isolation"
           ],
           "status": "published",
-          "stageId": "python-data-backend"
+          "stageId": "python-backend-fundamentals"
+        },
+        {
+          "id": "python-runtime-and-resource-management",
+          "title": "Python Runtime, Object Lifecycle, Exceptions, Types, and Resource Management",
+          "lessonId": "python-runtime-and-resource-management",
+          "difficulty": "intermediate",
+          "order": 21,
+          "prerequisites": [
+            "python-for-ai-engineering"
+          ],
+          "status": "upcoming",
+          "stageId": "python-backend-fundamentals"
+        },
+        {
+          "id": "python-performance-profiling-and-workload-types",
+          "title": "Python Workload Types, GIL, Profiling, and Performance Diagnosis",
+          "lessonId": "python-performance-profiling-and-workload-types",
+          "difficulty": "intermediate",
+          "order": 22,
+          "prerequisites": [
+            "python-runtime-and-resource-management"
+          ],
+          "status": "upcoming",
+          "stageId": "python-backend-fundamentals"
+        },
+        {
+          "id": "asyncio-cancellation-timeouts-thread-pools",
+          "title": "Asyncio Scheduling, Cancellation, Timeouts, and Thread Pool Lifecycle",
+          "lessonId": "asyncio-cancellation-timeouts-thread-pools",
+          "difficulty": "advanced",
+          "order": 23,
+          "prerequisites": [
+            "python-async-await",
+            "concurrency-parallelism"
+          ],
+          "status": "upcoming",
+          "stageId": "async-concurrency"
+        },
+        {
+          "id": "bounded-concurrency-backpressure-and-shutdown",
+          "title": "Locks, Semaphores, Queues, Backpressure, and Graceful Shutdown",
+          "lessonId": "bounded-concurrency-backpressure-and-shutdown",
+          "difficulty": "advanced",
+          "order": 24,
+          "prerequisites": [
+            "asyncio-cancellation-timeouts-thread-pools"
+          ],
+          "status": "upcoming",
+          "stageId": "async-concurrency"
+        },
+        {
+          "id": "llm-gateway-retries-fallbacks-circuit-breakers",
+          "title": "Building a Resilient Multi-Provider LLM Gateway",
+          "lessonId": "llm-gateway-retries-fallbacks-circuit-breakers",
+          "difficulty": "advanced",
+          "order": 25,
+          "prerequisites": [
+            "http-rest-apis-contracts",
+            "python-async-await"
+          ],
+          "status": "upcoming",
+          "stageId": "resilient-backend-systems"
+        },
+        {
+          "id": "timeouts-rate-limits-idempotency-and-bulkheads",
+          "title": "Deadlines, Rate Limits, Idempotency, Bulkheads, and Failure Recovery",
+          "lessonId": "timeouts-rate-limits-idempotency-and-bulkheads",
+          "difficulty": "advanced",
+          "order": 26,
+          "prerequisites": [
+            "llm-gateway-retries-fallbacks-circuit-breakers"
+          ],
+          "status": "upcoming",
+          "stageId": "resilient-backend-systems"
+        },
+        {
+          "id": "transformers-tokenization-attention-generation",
+          "title": "Transformer Inference: Tokens, Embeddings, Attention, and Generation",
+          "lessonId": "transformers-tokenization-attention-generation",
+          "difficulty": "intermediate",
+          "order": 27,
+          "prerequisites": [
+            "ai-vs-ml-deep-learning-generative-ai"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-inference-fundamentals"
+        },
+        {
+          "id": "llm-inference-memory-prefill-decode-and-quantization",
+          "title": "LLM Prefill, Decode, GPU Memory, KV Cache, and Quantization",
+          "lessonId": "llm-inference-memory-prefill-decode-and-quantization",
+          "difficulty": "advanced",
+          "order": 28,
+          "prerequisites": [
+            "transformers-tokenization-attention-generation"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-inference-fundamentals"
+        },
+        {
+          "id": "vllm-batching-kv-cache-pagedattention",
+          "title": "vLLM Serving: Batching, KV Cache, and PagedAttention",
+          "lessonId": "vllm-batching-kv-cache-pagedattention",
+          "difficulty": "advanced",
+          "order": 29,
+          "prerequisites": [
+            "llm-inference-memory-prefill-decode-and-quantization"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-serving-infrastructure"
+        },
+        {
+          "id": "inference-scheduling-prefix-caching-and-multi-gpu",
+          "title": "Inference Scheduling, Prefix Caching, Streaming, and Multi-GPU Serving",
+          "lessonId": "inference-scheduling-prefix-caching-and-multi-gpu",
+          "difficulty": "advanced",
+          "order": 30,
+          "prerequisites": [
+            "vllm-batching-kv-cache-pagedattention"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-serving-infrastructure"
+        },
+        {
+          "id": "llm-latency-throughput-capacity-engineering",
+          "title": "LLM Latency, Throughput, Queueing, and Capacity Engineering",
+          "lessonId": "llm-latency-throughput-capacity-engineering",
+          "difficulty": "advanced",
+          "order": 31,
+          "prerequisites": [
+            "vllm-batching-kv-cache-pagedattention"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-performance-observability"
+        },
+        {
+          "id": "llm-observability-slos-cost-and-load-testing",
+          "title": "LLM Observability, Distributed Tracing, SLOs, Cost, and Load Testing",
+          "lessonId": "llm-observability-slos-cost-and-load-testing",
+          "difficulty": "advanced",
+          "order": 32,
+          "prerequisites": [
+            "llm-latency-throughput-capacity-engineering"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-performance-observability"
+        },
+        {
+          "id": "llm-evaluation-judges-rag-agents",
+          "title": "LLM-as-a-Judge, Pairwise Evaluation, RAG, and Agent Trajectories",
+          "lessonId": "llm-evaluation-judges-rag-agents",
+          "difficulty": "advanced",
+          "order": 33,
+          "prerequisites": [
+            "ml-evaluation-fundamentals"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-evaluation-quality"
+        },
+        {
+          "id": "evaluation-statistics-human-review-regression",
+          "title": "Human Evaluation, Rubrics, Statistical Confidence, and Regression Testing",
+          "lessonId": "evaluation-statistics-human-review-regression",
+          "difficulty": "advanced",
+          "order": 34,
+          "prerequisites": [
+            "llm-evaluation-judges-rag-agents"
+          ],
+          "status": "upcoming",
+          "stageId": "llm-evaluation-quality"
+        },
+        {
+          "id": "agent-tool-calling-state-machines",
+          "title": "Tool Calling, Agent State, and Workflow State Machines",
+          "lessonId": "agent-tool-calling-state-machines",
+          "difficulty": "intermediate",
+          "order": 35,
+          "prerequisites": [
+            "http-rest-apis-contracts"
+          ],
+          "status": "upcoming",
+          "stageId": "agentic-workflow-engines"
+        },
+        {
+          "id": "durable-workflows-checkpointing-retries-human-approval",
+          "title": "Durable Workflow Execution, Checkpointing, Retries, and Human Approval",
+          "lessonId": "durable-workflows-checkpointing-retries-human-approval",
+          "difficulty": "advanced",
+          "order": 36,
+          "prerequisites": [
+            "agent-tool-calling-state-machines",
+            "background-jobs-long-running-operations"
+          ],
+          "status": "upcoming",
+          "stageId": "agentic-workflow-engines"
+        },
+        {
+          "id": "multi-agent-memory-versioning-and-safety",
+          "title": "Multi-Agent Orchestration, Memory, Versioning, and Runaway Prevention",
+          "lessonId": "multi-agent-memory-versioning-and-safety",
+          "difficulty": "advanced",
+          "order": 37,
+          "prerequisites": [
+            "durable-workflows-checkpointing-retries-human-approval"
+          ],
+          "status": "upcoming",
+          "stageId": "agentic-workflow-engines"
+        },
+        {
+          "id": "ai-platform-data-modeling-connections-and-transactions",
+          "title": "AI Platform Data Models, Connection Pools, and Transaction Boundaries",
+          "lessonId": "ai-platform-data-modeling-connections-and-transactions",
+          "difficulty": "intermediate",
+          "order": 38,
+          "prerequisites": [
+            "database-transactions-isolation",
+            "background-jobs-long-running-operations"
+          ],
+          "status": "upcoming",
+          "stageId": "database-engineering-ai-platforms"
+        },
+        {
+          "id": "ai-platform-events-audit-retention-and-migrations",
+          "title": "Workflow Events, Audit Trails, Data Retention, and Safe Migrations",
+          "lessonId": "ai-platform-events-audit-retention-and-migrations",
+          "difficulty": "advanced",
+          "order": 39,
+          "prerequisites": [
+            "ai-platform-data-modeling-connections-and-transactions"
+          ],
+          "status": "upcoming",
+          "stageId": "database-engineering-ai-platforms"
+        },
+        {
+          "id": "messaging-kafka-delivery-guarantees",
+          "title": "Message Brokers, Kafka, Delivery Semantics, and Idempotent Consumers",
+          "lessonId": "messaging-kafka-delivery-guarantees",
+          "difficulty": "advanced",
+          "order": 40,
+          "prerequisites": [
+            "durable-workflows-checkpointing-retries-human-approval"
+          ],
+          "status": "upcoming",
+          "stageId": "distributed-systems-scalability"
+        },
+        {
+          "id": "distributed-consistency-sagas-replication-failover",
+          "title": "Consistency, Sagas, Replication, Failover, and Cascading Failures",
+          "lessonId": "distributed-consistency-sagas-replication-failover",
+          "difficulty": "advanced",
+          "order": 41,
+          "prerequisites": [
+            "messaging-kafka-delivery-guarantees"
+          ],
+          "status": "upcoming",
+          "stageId": "distributed-systems-scalability"
+        },
+        {
+          "id": "scaling-load-balancing-capacity-planning",
+          "title": "Load Balancing, Service Discovery, Horizontal Scaling, and Capacity Planning",
+          "lessonId": "scaling-load-balancing-capacity-planning",
+          "difficulty": "advanced",
+          "order": 42,
+          "prerequisites": [
+            "distributed-consistency-sagas-replication-failover"
+          ],
+          "status": "upcoming",
+          "stageId": "distributed-systems-scalability"
+        },
+        {
+          "id": "containers-ci-cd-kubernetes-deployments",
+          "title": "Containers, CI/CD, Kubernetes, Health Checks, and Deployment Strategies",
+          "lessonId": "containers-ci-cd-kubernetes-deployments",
+          "difficulty": "intermediate",
+          "order": 43,
+          "prerequisites": [
+            "http-rest-apis-contracts"
+          ],
+          "status": "upcoming",
+          "stageId": "production-deployment-reliability"
+        },
+        {
+          "id": "production-reliability-security-monitoring",
+          "title": "Production Security, Resource Limits, Incident Response, and Cost Controls",
+          "lessonId": "production-reliability-security-monitoring",
+          "difficulty": "advanced",
+          "order": 44,
+          "prerequisites": [
+            "containers-ci-cd-kubernetes-deployments"
+          ],
+          "status": "upcoming",
+          "stageId": "production-deployment-reliability"
+        },
+        {
+          "id": "ai-system-design-requirements-estimation-and-architecture",
+          "title": "AI System Design: Requirements, Estimation, APIs, and Architecture",
+          "lessonId": "ai-system-design-requirements-estimation-and-architecture",
+          "difficulty": "advanced",
+          "order": 45,
+          "prerequisites": [
+            "llm-gateway-retries-fallbacks-circuit-breakers",
+            "distributed-consistency-sagas-replication-failover"
+          ],
+          "status": "upcoming",
+          "stageId": "systems-design-architecture"
+        },
+        {
+          "id": "ai-system-design-case-studies",
+          "title": "AI System Design Case Studies: Gateways, Voice Agents, and Workflow Platforms",
+          "lessonId": "ai-system-design-case-studies",
+          "difficulty": "advanced",
+          "order": 46,
+          "prerequisites": [
+            "ai-system-design-requirements-estimation-and-architecture"
+          ],
+          "status": "upcoming",
+          "stageId": "systems-design-architecture"
         }
       ],
       "stages": [
@@ -582,10 +899,76 @@
           "order": 1
         },
         {
-          "id": "python-data-backend",
-          "title": "Python, Data and Backend Foundations",
-          "description": "Python, data processing, async/concurrency, APIs, security boundaries, and durable background work for AI applications.",
+          "id": "python-backend-fundamentals",
+          "title": "Python Backend Engineering Fundamentals",
+          "description": "Python execution, language mechanics, resource lifecycle, architecture, and profiling.",
           "order": 2
+        },
+        {
+          "id": "async-concurrency",
+          "title": "Asynchronous Programming and Concurrency",
+          "description": "Event loops, coroutines, threads, cancellation, bounded concurrency, and backpressure.",
+          "order": 3
+        },
+        {
+          "id": "resilient-backend-systems",
+          "title": "Resilient Backend Systems",
+          "description": "Retries, deadlines, fallbacks, circuit breakers, rate limits, idempotency, and graceful degradation.",
+          "order": 4
+        },
+        {
+          "id": "llm-inference-fundamentals",
+          "title": "LLM Inference Fundamentals",
+          "description": "Transformer inference, tokenization, attention, prefill/decode, model memory, and quantization.",
+          "order": 5
+        },
+        {
+          "id": "llm-serving-infrastructure",
+          "title": "LLM Serving Infrastructure and vLLM",
+          "description": "Batching, KV cache, PagedAttention, scheduling, prefix caching, and distributed inference.",
+          "order": 6
+        },
+        {
+          "id": "llm-performance-observability",
+          "title": "LLM Performance Engineering and Observability",
+          "description": "Latency, throughput, queueing, capacity, GPU metrics, tracing, SLOs, and cost.",
+          "order": 7
+        },
+        {
+          "id": "llm-evaluation-quality",
+          "title": "LLM Evaluation and Quality Engineering",
+          "description": "Offline/online evaluation, judge reliability, human review, statistical confidence, RAG, and agent evaluation.",
+          "order": 8
+        },
+        {
+          "id": "agentic-workflow-engines",
+          "title": "Agentic Systems and Workflow Engines",
+          "description": "Tool execution, state machines, durable workflows, checkpointing, recovery, human approval, and agent safety.",
+          "order": 9
+        },
+        {
+          "id": "database-engineering-ai-platforms",
+          "title": "Database Engineering for AI Platforms",
+          "description": "Data modelling, connection pools, workflow persistence, event history, multi-tenancy, and operational data.",
+          "order": 10
+        },
+        {
+          "id": "distributed-systems-scalability",
+          "title": "Distributed Systems and Scalability",
+          "description": "Messaging, delivery guarantees, idempotent consumers, consistency, sagas, replication, failover, and scaling.",
+          "order": 11
+        },
+        {
+          "id": "production-deployment-reliability",
+          "title": "Production Deployment and Reliability",
+          "description": "Containers, CI/CD, orchestration, rollout strategies, security, monitoring, incident response, and cost controls.",
+          "order": 12
+        },
+        {
+          "id": "systems-design-architecture",
+          "title": "Systems Design and Architecture Interviews",
+          "description": "Requirements, estimation, API/data design, architecture, failure analysis, and trade-off defence.",
+          "order": 13
         }
       ]
     }
