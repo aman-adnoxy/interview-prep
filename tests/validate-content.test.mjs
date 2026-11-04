@@ -67,8 +67,8 @@ test('Database and AI Engineering are single tracks with valid stage membership'
   assert.ok(db && ai);
   assert.equal(db.sections.length, 20);
   assert.equal(db.stages.length, 7);
-  assert.equal(ai.sections.length, 20);
-  assert.equal(ai.stages.length, 2);
+  assert.equal(ai.sections.length, 46);
+  assert.equal(ai.stages.length, 13);
   assert.equal(curriculum.modules.some(module => module.id === 'ai-engineering-python-data-backend'), false);
   for (const module of [db, ai]) {
     const stageIds = new Set(module.stages.map(stage => stage.id));
